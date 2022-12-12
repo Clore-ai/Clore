@@ -1,0 +1,6 @@
+usr/local/bin/clore-qt usr/bin
+share/pixmaps/clore32.xpm usr/share/pixmaps
+share/pixmaps/clore16.xpm usr/share/pixmaps
+share/pixmaps/clore128.png usr/share/pixmaps
+debian/clore-qt.desktop usr/share/applications
+debian/clore-qt.protocol usr/share/kde4/services/

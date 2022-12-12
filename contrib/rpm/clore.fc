@@ -1,0 +1,8 @@
+/usr/bin/clore-cli		--	gen_context(system_u:object_r:clore_exec_t,s0)
+/usr/sbin/clore_blockchaind		--	gen_context(system_u:object_r:clore_exec_t,s0)
+/usr/lib(64)?/clore/clore_blockchaind		--	gen_context(system_u:object_r:clore_exec_t,s0)
+
+/etc/clore(/.*)?		gen_context(system_u:object_r:clore_conf_t,s0)
+/var/lib/clore(/.*)?		gen_context(system_u:object_r:clore_var_lib_t,s0)
+
+(/var)?/run/clore_blockchaind(/.*)?   gen_context(system_u:object_r:clore_var_run_t,s0)

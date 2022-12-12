@@ -1,0 +1,92 @@
+#!/sbin/runscript
+
+# backward compatibility for existing gentoo layout 
+#
+if [ -d "/var/lib/clore/.clore" ]; then
+	CLORE_BLOCKCHAIND_DEFAULT_DATADIR="/var/lib/clore/.clore"
+else
+	CLORE_BLOCKCHAIND_DEFAULT_DATADIR="/var/lib/clore_blockchaind"
+fi
+
+CLORE_BLOCKCHAIND_CONFIGFILE=${CLORE_BLOCKCHAIND_CONFIGFILE:-/etc/clore/clore.conf}
+CLORE_BLOCKCHAIND_PIDDIR=${CLORE_BLOCKCHAIND_PIDDIR:-/var/run/clore_blockchaind}
+CLORE_BLOCKCHAIND_PIDFILE=${CLORE_BLOCKCHAIND_PIDFILE:-${CLORE_BLOCKCHAIND_PIDDIR}/clore_blockchaind.pid}
+CLORE_BLOCKCHAIND_DATADIR=${CLORE_BLOCKCHAIND_DATADIR:-${CLORE_BLOCKCHAIND_DEFAULT_DATADIR}}
+CLORE_BLOCKCHAIND_USER=${CLORE_BLOCKCHAIND_USER:-${CLORE_USER:-clore}}
+CLORE_BLOCKCHAIND_GROUP=${CLORE_BLOCKCHAIND_GROUP:-clore}
+CLORE_BLOCKCHAIND_BIN=${CLORE_BLOCKCHAIND_BIN:-/usr/bin/clore_blockchaind}
+CLORE_BLOCKCHAIND_NICE=${CLORE_BLOCKCHAIND_NICE:-${NICELEVEL:-0}}
+CLORE_BLOCKCHAIND_OPTS="${CLORE_BLOCKCHAIND_OPTS:-${CLORE_OPTS}}"
+
+name="Clore Core Daemon"
+description="Clore cryptocurrency P2P network daemon"
+
+command="/usr/bin/clore_blockchaind"
+command_args="-pid=\"${CLORE_BLOCKCHAIND_PIDFILE}\" \
+		-conf=\"${CLORE_BLOCKCHAIND_CONFIGFILE}\" \
+		-datadir=\"${CLORE_BLOCKCHAIND_DATADIR}\" \
+		-daemon \
+		${CLORE_BLOCKCHAIND_OPTS}"
+
+required_files="${CLORE_BLOCKCHAIND_CONFIGFILE}"
+start_stop_daemon_args="-u ${CLORE_BLOCKCHAIND_USER} \
+			-N ${CLORE_BLOCKCHAIND_NICE} -w 2000"
+pidfile="${CLORE_BLOCKCHAIND_PIDFILE}"
+
+# The retry schedule to use when stopping the daemon. Could be either
+# a timeout in seconds or multiple signal/timeout pairs (like
+# "SIGKILL/180 SIGTERM/300")
+retry="${CLORE_BLOCKCHAIND_SIGTERM_TIMEOUT}"
+
+depend() {
+	need localmount net
+}
+
+# verify
+# 1) that the datadir exists and is writable (or create it)
+# 2) that a directory for the pid exists and is writable
+# 3) ownership and permissions on the config file
+start_pre() {
+	checkpath \
+	-d \
+	--mode 0750 \
+	--owner "${CLORE_BLOCKCHAIND_USER}:${CLORE_BLOCKCHAIND_GROUP}" \
+	"${CLORE_BLOCKCHAIND_DATADIR}"
+
+	checkpath \
+	-d \
+	--mode 0755 \
+	--owner "${CLORE_BLOCKCHAIND_USER}:${CLORE_BLOCKCHAIND_GROUP}" \
+	"${CLORE_BLOCKCHAIND_PIDDIR}"
+
+	checkpath -f \
+	-o ${CLORE_BLOCKCHAIND_USER}:${CLORE_BLOCKCHAIND_GROUP} \
+	-m 0660 \
+	${CLORE_BLOCKCHAIND_CONFIGFILE}
+
+	checkconfig || return 1
+}
+
+checkconfig()
+{
+	if ! grep -qs '^rpcpassword=' "${CLORE_BLOCKCHAIND_CONFIGFILE}" ; then
+		eerror ""
+		eerror "ERROR: You must set a secure rpcpassword to run clore_blockchaind."
+		eerror "The setting must appear in ${CLORE_BLOCKCHAIND_CONFIGFILE}"
+		eerror ""
+		eerror "This password is security critical to securing wallets "
+		eerror "and must not be the same as the rpcuser setting."
+		eerror "You can generate a suitable random password using the following "
+		eerror "command from the shell:"
+		eerror ""
+		eerror "bash -c 'tr -dc a-zA-Z0-9 < /dev/urandom | head -c32 && echo'"
+		eerror ""
+		eerror "It is recommended that you also set alertnotify so you are "
+		eerror "notified of problems:"
+		eerror ""
+		eerror "ie: alertnotify=echo %%s | mail -s \"Clore Alert\"" \
+			"admin@foo.com"
+		eerror ""
+		return 1
+	fi
+}

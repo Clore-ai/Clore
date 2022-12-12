@@ -1,0 +1,22 @@
+[Unit]
+Description=Clore's distributed currency daemon
+After=network.target
+
+[Service]
+User=clore
+Group=clore
+
+Type=forking
+PIDFile=/var/lib/clore_blockchaind/clore_blockchaind.pid
+ExecStart=/usr/bin/clore_blockchaind -daemon -pid=/var/lib/clore_blockchaind/clore_blockchaind.pid \
+-conf=/etc/clore/clore.conf -datadir=/var/lib/clore_blockchaind -disablewallet
+
+Restart=always
+PrivateTmp=true
+TimeoutStopSec=60s
+TimeoutStartSec=2s
+StartLimitInterval=120s
+StartLimitBurst=5
+
+[Install]
+WantedBy=multi-user.target

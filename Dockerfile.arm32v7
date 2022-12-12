@@ -1,0 +1,23 @@
+FROM arm32v7/ubuntu:latest
+
+MAINTAINER cade <cade.call@mediciventures.com>
+
+EXPOSE $RPCPORT
+
+EXPOSE $PORT
+
+RUN useradd -ms /bin/bash clore
+
+RUN mkdir /etc/clore
+
+RUN mkdir /var/lib/clore
+
+RUN chown clore:clore /etc/clore /var/lib/clore
+
+WORKDIR /home/clore
+
+COPY --chown=clore:clore linux64/* ./run.sh /home/clore/
+
+USER clore
+
+CMD ["/home/clore/run.sh"]

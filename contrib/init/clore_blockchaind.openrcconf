@@ -1,0 +1,33 @@
+# /etc/conf.d/clore_blockchaind: config file for /etc/init.d/clore_blockchaind
+
+# Config file location
+#CLORE_BLOCKCHAIND_CONFIGFILE="/etc/clore/clore.conf"
+
+# What directory to write pidfile to?  (created and owned by $CLORE_BLOCKCHAIND_USER)
+#CLORE_BLOCKCHAIND_PIDDIR="/var/run/clore_blockchaind"
+
+# What filename to give the pidfile
+#CLORE_BLOCKCHAIND_PIDFILE="${CLORE_BLOCKCHAIND_PIDDIR}/clore_blockchaind.pid"
+
+# Where to write clore_blockchaind data (be mindful that the blockchain is large)
+#CLORE_BLOCKCHAIND_DATADIR="/var/lib/clore_blockchaind"
+
+# User and group to own clore_blockchaind process
+#CLORE_BLOCKCHAIND_USER="clore"
+#CLORE_BLOCKCHAIND_GROUP="clore"
+
+# Path to clore_blockchaind executable
+#CLORE_BLOCKCHAIND_BIN="/usr/bin/clore_blockchaind"
+
+# Nice value to run clore_blockchaind under
+#CLORE_BLOCKCHAIND_NICE=0
+
+# Additional options (avoid -conf and -datadir, use flags above)
+#CLORE_BLOCKCHAIND_OPTS=""
+
+# The timeout in seconds OpenRC will wait for clore_blockchaind to terminate
+# after a SIGTERM has been raised.
+# Note that this will be mapped as argument to start-stop-daemon's
+# '--retry' option, which means you can specify a retry schedule
+# here. For more information see man 8 start-stop-daemon.
+CLORE_BLOCKCHAIND_SIGTERM_TIMEOUT=60

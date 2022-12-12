@@ -1,0 +1,11 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Clore Core
+Comment=Connect to the Clore P2P Network
+Exec=clore-qt %u
+Terminal=false
+Type=Application
+Icon=clore128
+MimeType=x-scheme-handler/clore;
+Categories=Office;Finance;
+Name[en_US]=clore-qt.desktop

@@ -1,0 +1,67 @@
+#!/bin/bash
+#
+#  clore_blockchaind The clore core server.
+#
+#
+# chkconfig: 345 80 20
+# description: clore_blockchaind
+# processname: clore_blockchaind
+#
+
+# Source function library.
+. /etc/init.d/functions
+
+# you can override defaults in /etc/sysconfig/clore_blockchaind, see below
+if [ -f /etc/sysconfig/clore_blockchaind ]; then
+        . /etc/sysconfig/clore_blockchaind
+fi
+
+RETVAL=0
+
+prog=clore_blockchaind
+# you can override the lockfile via CLORE_BLOCKCHAIND_LOCKFILE in /etc/sysconfig/clore_blockchaind
+lockfile=${CLORE_BLOCKCHAIND_LOCKFILE-/var/lock/subsys/clore_blockchaind}
+
+# clore_blockchaind defaults to /usr/bin/clore_blockchaind, override with CLORE_BLOCKCHAIND_BIN
+clore_blockchaind=${CLORE_BLOCKCHAIND_BIN-/usr/bin/clore_blockchaind}
+
+# clore_blockchaind opts default to -disablewallet, override with CLORE_BLOCKCHAIND_OPTS
+clore_blockchaind_opts=${CLORE_BLOCKCHAIND_OPTS--disablewallet}
+
+start() {
+    echo -n $"Starting $prog: "
+    daemon $DAEMONOPTS $clore_blockchaind $clore_blockchaind_opts
+    RETVAL=$?
+    echo
+    [ $RETVAL -eq 0 ] && touch $lockfile
+    return $RETVAL
+}
+
+stop() {
+    echo -n $"Stopping $prog: "
+    killproc $prog
+    RETVAL=$?
+    echo
+    [ $RETVAL -eq 0 ] && rm -f $lockfile
+    return $RETVAL
+}
+
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    status)
+        status $prog
+        ;;
+    restart)
+        stop
+        start
+        ;;
+    *)
+        echo "Usage: service $prog {start|stop|status|restart}"
+        exit 1
+        ;;
+esac
