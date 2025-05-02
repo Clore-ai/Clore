@@ -20,6 +20,7 @@
  */
 
 extern uint32_t nKAWPOWActivationTime;
+extern uint32_t nEQUIHASHActivationTime;
 
 class BlockNetwork
 {
@@ -50,6 +51,13 @@ public:
     uint64_t nNonce64;
     uint256 mix_hash;
 
+    //EQUIHASH data
+    std::vector<unsigned char> nSolution;
+
+    //POS data
+    uint256 nAccumulatorCheckpoint;             // only for version 4, 5 and 6.
+    uint256 hashFinalSaplingRoot;               // only for version 8+
+
     CBlockHeader()
     {
         SetNull();
@@ -64,13 +72,19 @@ public:
         READWRITE(hashMerkleRoot);
         READWRITE(nTime);
         READWRITE(nBits);
-        if (nTime < nKAWPOWActivationTime) {
+        if (nTime < nEQUIHASHActivationTime) {
             READWRITE(nNonce);
         } else {
             READWRITE(nHeight);
-            READWRITE(nNonce64);
+            READWRITE(nNonce);
             READWRITE(mix_hash);
         }
+        if(nVersion > 3 && nVersion < 7)
+            READWRITE(nAccumulatorCheckpoint);
+
+        // Sapling active
+        if (nVersion >= 8)
+            READWRITE(hashFinalSaplingRoot);
     }
 
     void SetNull()
@@ -85,6 +99,8 @@ public:
         nNonce64 = 0;
         nHeight = 0;
         mix_hash.SetNull();
+        nAccumulatorCheckpoint.SetNull();
+        hashFinalSaplingRoot.SetNull();
     }
 
     bool IsNull() const
@@ -98,6 +114,7 @@ public:
 
     uint256 GetHashFull(uint256& mix_hash) const;
     uint256 GetKAWPOWHeaderHash() const;
+    uint256 GetEQUIHASHHeaderHash() const;
     std::string ToString() const;
 
     /// Use for testing algo switch
@@ -162,6 +179,12 @@ public:
         block.nHeight        = nHeight;
         block.nNonce64       = nNonce64;
         block.mix_hash       = mix_hash;
+
+        if(nVersion > 3 && nVersion < 7)
+            block.nAccumulatorCheckpoint = nAccumulatorCheckpoint;
+        if (nVersion >= 8)
+            block.hashFinalSaplingRoot   = hashFinalSaplingRoot;
+
         return block;
     }
 
@@ -170,7 +193,19 @@ public:
     //     block.hashPrevBlock = prevHash;
     // }
 
+    bool IsProofOfStake() const
+    {
+        return (vtx.size() > 1 && vtx[1]->IsCoinStake());
+    }
+
+    bool IsProofOfWork() const
+    {
+        return !IsProofOfStake();
+    }
+
     std::string ToString() const;
+
+    void print() const;
 };
 
 /** Describes a place in the block chain to another node such that if the
@@ -214,6 +249,28 @@ class CKAWPOWInput : private CBlockHeader
 {
 public:
     CKAWPOWInput(const CBlockHeader &header)
+    {
+        CBlockHeader::SetNull();
+        *((CBlockHeader*)this) = header;
+    }
+
+    ADD_SERIALIZE_METHODS;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action) {
+        READWRITE(this->nVersion);
+        READWRITE(hashPrevBlock);
+        READWRITE(hashMerkleRoot);
+        READWRITE(nTime);
+        READWRITE(nBits);
+        READWRITE(nHeight);
+    }
+};
+
+class CEQUIHASHInput : private CBlockHeader
+{
+public:
+    CEQUIHASHInput(const CBlockHeader &header)
     {
         CBlockHeader::SetNull();
         *((CBlockHeader*)this) = header;

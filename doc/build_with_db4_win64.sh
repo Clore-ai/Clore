@@ -27,7 +27,7 @@ chmod a+w ./db-4.8.30.NC/dbinc/atomic.h
 cp ./depends/patches/atomic.h db-4.8.30.NC/dbinc/
 
 # Build the library and install to our prefix
-cd db-4.8.30.NC/build_unix/
+cd db-4.8.30.NC/build_windows/
 #  Note: Do a static build so that it can be embedded into the executable, instead of having to find a .so at runtime
 ../dist/configure --enable-cxx --disable-shared --with-pic --prefix=$BDB_PREFIX
 make
@@ -36,9 +36,8 @@ make install
 # Configure Clore Core to use our own-built instance of BDB
 cd $CLORE_ROOT
 PATH=$(echo "$PATH" | sed -e 's/:\/mnt.*//g') # strip out problematic Windows %PATH% imported var
-cd depends
 make HOST=x86_64-w64-mingw32
-cd ..
+
 ./autogen.sh # not required when building from tarball
 CONFIG_SITE=$PWD/depends/x86_64-w64-mingw32/share/config.site ./configure --prefix=/ LDFLAGS="-L${BDB_PREFIX}/lib/" CPPFLAGS="-I${BDB_PREFIX}/include/" # (other args...)
 make -j4

@@ -3433,6 +3433,67 @@ UniValue generate(const JSONRPCRequest& request)
     return generateBlocks(coinbase_script, num_generate, max_tries, true);
 }
 
+UniValue getstakingstatus(const JSONRPCRequest& request)
+{
+    CWallet * const pwallet = GetWalletForJSONRPCRequest(request);
+
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp))
+        return NullUniValue;
+
+    if (request.fHelp || request.params.size() != 0)
+        throw std::runtime_error(
+            "getstakingstatus\n"
+            "\nReturns an object containing various staking information.\n"
+
+            "\nResult:\n"
+            "{\n"
+            "  \"staking_status\": true|false,      (boolean) whether the wallet is staking or not\n"
+            "  \"staking_enabled\": true|false,     (boolean) whether staking is enabled/disabled in pivx.conf\n"
+            "  \"coldstaking_enabled\": true|false, (boolean) whether cold-staking is enabled/disabled in pivx.conf\n"
+            "  \"haveconnections\": true|false,     (boolean) whether network connections are present\n"
+            "  \"walletunlocked\": true|false,      (boolean) whether the wallet is unlocked\n"
+            "  \"stakeablecoins\": n                (numeric) number of stakeable UTXOs\n"
+            "  \"stakingbalance\": d                (numeric) PIV value of the stakeable coins (minus reserve balance, if any)\n"
+            "  \"stakesplitthreshold\": d           (numeric) value of the current threshold for stake split\n"
+            "  \"lastattempt_age\": n               (numeric) seconds since last stake attempt\n"
+            "  \"lastattempt_depth\": n             (numeric) depth of the block on top of which the last stake attempt was made\n"
+            "  \"lastattempt_hash\": xxx            (hex string) hash of the block on top of which the last stake attempt was made\n"
+            "  \"lastattempt_coins\": n             (numeric) number of stakeable coins available during last stake attempt\n"
+            "  \"lastattempt_tries\": n             (numeric) number of stakeable coins checked during last stake attempt\n"
+            "}\n"
+
+            "\nExamples:\n" +
+            HelpExampleCli("getstakingstatus", "") + HelpExampleRpc("getstakingstatus", ""));
+
+
+    if (!pwallet)
+        throw JSONRPCError(RPC_IN_WARMUP, "Try again after active chain is loaded");
+    {
+        LOCK2(cs_main, &pwallet->cs_wallet);
+        UniValue obj(UniValue::VOBJ);
+        obj.pushKV("staking_status", pwallet->pStakerStatus->IsActive());
+        obj.pushKV("staking_enabled", gArgs.GetBoolArg("-staking", DEFAULT_STAKING));
+        bool fColdStaking = gArgs.GetBoolArg("-coldstaking", true);
+        obj.pushKV("coldstaking_enabled", fColdStaking);
+        obj.pushKV("haveconnections", (g_connman->GetNodeCount(CConnman::CONNECTIONS_ALL) > 0));
+        obj.pushKV("walletunlocked", !pwallet->IsLocked());
+        std::vector<CStakeableOutput> vCoins;
+        pwallet->StakeableCoins(&vCoins);
+        obj.pushKV("stakeablecoins", (int)vCoins.size());
+        obj.pushKV("stakingbalance", ValueFromAmount(pwallet->GetStakingBalance(fColdStaking)));
+        obj.pushKV("stakesplitthreshold", ValueFromAmount(pwallet->nStakeSplitThreshold));
+        CStakerStatus* ss = pwallet->pStakerStatus;
+        if (ss) {
+            obj.pushKV("lastattempt_age", (int)(GetTime() - ss->GetLastTime()));
+            obj.pushKV("lastattempt_depth", (chainActive.Height() - ss->GetLastHeight()));
+            obj.pushKV("lastattempt_hash", ss->GetLastHash().GetHex());
+            obj.pushKV("lastattempt_coins", ss->GetLastCoins());
+            obj.pushKV("lastattempt_tries", ss->GetLastTries());
+        }
+        return obj;
+    }
+}
+
 UniValue rescanblockchain(const JSONRPCRequest& request)
 {
     CWallet * const pwallet = GetWalletForJSONRPCRequest(request);
@@ -3508,6 +3569,226 @@ UniValue rescanblockchain(const JSONRPCRequest& request)
     return response;
 }
 
+std::string LabelFromValue(const UniValue& value)
+{
+    std::string label = value.get_str();
+    if (label == "*")
+        throw JSONRPCError(RPC_WALLET_INVALID_LABEL_NAME, "Invalid label name");
+    return label;
+}
+
+static CTxDestination GetNewAddressFromLabel(CWallet* const pwallet, const std::string purpose, const UniValue &params,
+                                             const CChainParams::Base58Type addrType = CChainParams::PUBKEY_ADDRESS)
+{
+    LOCK2(cs_main, pwallet->cs_wallet);
+    // Parse the label first so we don't generate a key if there's an error
+    std::string label;
+    if (!params.isNull() && params.size() > 0)
+        label = LabelFromValue(params[0]);
+
+    auto r = pwallet->getNewAddress(label, purpose);
+
+    return r;
+}
+
+static UniValue CreateColdStakeDelegation(CWallet* const pwallet, const UniValue& params, CWalletTx& wtxNew, CReserveKey& reservekey)
+{
+    LOCK2(cs_main, pwallet->cs_wallet);
+    LogPrintf("DEBUG: Entered CreateColdStakeDelegation\n");
+
+    // Check that Cold Staking has been enforced or fForceNotEnabled = true
+    bool fForceNotEnabled = false;
+    if (params.size() > 6 && !params[6].isNull())
+        fForceNotEnabled = params[6].get_bool();
+    LogPrintf("DEBUG: fForceNotEnabled = %d\n", fForceNotEnabled);
+
+    // Get Staking Address
+    bool isStaking{false};
+    CTxDestination stakeAddr = DecodeDestination(params[0].get_str());
+    LogPrintf("DEBUG: Decoded staking address = %s\n", params[0].get_str());
+    if (!IsValidDestination(stakeAddr) || isStaking)
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Clore staking address");
+
+    CKeyID* stakeKey = boost::get<CKeyID>(&stakeAddr);
+    if (!stakeKey)
+        throw JSONRPCError(RPC_WALLET_ERROR, "Unable to get stake pubkey hash from stakingaddress");
+
+    LogPrintf("DEBUG: stakeKey successfully retrieved\n");
+
+    // Get Amount
+    CAmount nValue = AmountFromValue(params[1]);
+    LogPrintf("DEBUG: Stake amount = %lld\n", nValue);
+    if (nValue < MIN_COLDSTAKING_AMOUNT)
+        throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("Invalid amount (%d). Min amount: %d",
+                                                            nValue, MIN_COLDSTAKING_AMOUNT));
+
+    // include already delegated coins
+    bool fUseDelegated = false;
+    if (params.size() > 4 && !params[4].isNull())
+        fUseDelegated = params[4].get_bool();
+    LogPrintf("DEBUG: fUseDelegated = %d\n", fUseDelegated);
+
+    // Check amount
+    CAmount currBalance = pwallet->GetAvailableBalance();
+    LogPrintf("DEBUG: Wallet balance = %lld\n", currBalance);
+
+    if (nValue > currBalance)
+        throw JSONRPCError(RPC_WALLET_INSUFFICIENT_FUNDS, "Insufficient funds");
+
+    std::string strError;
+
+    // Get Owner Address
+    std::string ownerAddressStr;
+    CKeyID ownerKey;
+    bool isStakingAddress = false;
+    bool isExchange = false;
+    CTxDestination resultAddr;
+
+    if (params.size() > 2 && !params[2].isNull() && !params[2].get_str().empty()) {
+        // Address provided
+        CTxDestination dest = DecodeDestination(params[2].get_str());
+        resultAddr = dest;
+        LogPrintf("DEBUG: Provided owner address = %s\n", params[2].get_str());
+
+        if (!IsValidDestination(dest) || isStakingAddress)
+            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid PIVX spending address");
+        ownerKey = *boost::get<CKeyID>(&dest);
+        // Check that the owner address belongs to this wallet, or fForceExternalAddr is true
+        bool fForceExternalAddr = params.size() > 3 && !params[3].isNull() ? params[3].get_bool() : false;
+        LogPrintf("DEBUG: fForceExternalAddr = %d\n", fForceExternalAddr);
+        if (!fForceExternalAddr && !pwallet->HaveKey(ownerKey)) {
+            std::string errMsg = strprintf("The provided owneraddress \"%s\" is not present in this wallet.\n", params[2].get_str());
+            errMsg += "Set 'fExternalOwner' argument to true, in order to force the stake delegation to an external owner address.\n"
+                      "e.g. delegatestake stakingaddress amount owneraddress true.\n"
+                      "WARNING: Only the owner of the key to owneraddress will be allowed to spend these coins after the delegation.";
+            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, errMsg);
+        }
+        ownerAddressStr = params[2].get_str();
+        LogPrintf("DEBUG: Using provided owner key\n");
+    } else {
+        // Get new owner address from keypool
+        CTxDestination ownerAddr = GetNewAddressFromLabel(pwallet, "delegated", NullUniValue);
+        resultAddr = ownerAddr;
+        CKeyID* pOwnerKey = boost::get<CKeyID>(&ownerAddr);
+        assert(pOwnerKey);
+        ownerKey = *pOwnerKey;
+        ownerAddressStr = EncodeDestination(ownerAddr);
+        LogPrintf("DEBUG: Generated new owner address = %s\n", ownerAddressStr);
+    }
+
+    LogPrintf("DEBUG: Preparing result\n");
+
+    CScript scriptPubKey = GetScriptForDestination(resultAddr);
+
+    // 5. Prepare transaction creation
+    CAmount nFeeRequired;
+    int nChangePosRet = -1;
+    std::vector<CRecipient> vecSend = {
+            {scriptPubKey, nValue, false}
+    };
+
+    CCoinControl coin_control; // default (no restrictions)
+    CAmount curBalance = pwallet->GetBalance();
+
+    if (!pwallet->CreateTransaction(vecSend, wtxNew, reservekey, nFeeRequired, nChangePosRet, strError, coin_control)) {
+        if (nValue + nFeeRequired > curBalance && !vecSend[0].fSubtractFeeFromAmount)
+            strError = strprintf("This transaction requires a fee of at least %s", FormatMoney(nFeeRequired));
+        throw JSONRPCError(RPC_WALLET_ERROR, strError);
+    }
+
+    // 6. Commit transaction to mempool
+    CValidationState state;
+    if (!pwallet->CommitTransaction(wtxNew, reservekey, g_connman.get(), state)) {
+        strError = strprintf("Transaction rejected: %s", state.GetRejectReason());
+        throw JSONRPCError(RPC_WALLET_ERROR, strError);
+    }
+
+
+    UniValue result(UniValue::VOBJ);
+    result.pushKV("owner_address", ownerAddressStr);
+    result.pushKV("staker_address", EncodeDestination(stakeAddr));
+    result.pushKV("txid", wtxNew.GetHash().GetHex());
+
+    LogPrintf("DEBUG: Cold stake delegation successful. txid: %s\n", wtxNew.GetHash().GetHex());
+    LogPrintf("DEBUG: Returning from CreateColdStakeDelegation\n");
+    return result;
+}
+
+UniValue delegatestake(const JSONRPCRequest& request)
+{
+    CWallet * const pwallet = GetWalletForJSONRPCRequest(request);
+
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp))
+        return NullUniValue;
+
+    if (request.fHelp || request.params.size() < 2 || request.params.size() > 7)
+        throw std::runtime_error(
+                "delegatestake \"staking_addr\" amount ( \"owner_addr\" ext_owner include_delegated from_shield force )\n"
+                "\nDelegate an amount to a given address for cold staking. The amount is a real and is rounded to the nearest 0.00000001\n" +
+                HelpRequiringPassphrase(pwallet) + "\n"
+
+               "\nArguments:\n"
+               "1. \"staking_addr\"      (string, required) The pivx staking address to delegate.\n"
+               "2. \"amount\"            (numeric, required) The amount in PIV to delegate for staking. eg 100\n"
+               "3. \"owner_addr\"        (string, optional) The pivx address corresponding to the key that will be able to spend the stake.\n"
+               "                               If not provided, or empty string, a new wallet address is generated.\n"
+               "4. \"ext_owner\"         (boolean, optional, default = false) use the provided 'owneraddress' anyway, even if not present in this wallet.\n"
+               "                               WARNING: The owner of the keys to 'owneraddress' will be the only one allowed to spend these coins.\n"
+               "5. \"include_delegated\" (boolean, optional, default = false) include already delegated inputs if needed.\n"
+               "6. \"from_shield\"       (boolean, optional, default = false) delegate shield funds.\n"
+               "7. \"force\"             (boolean, optional, default = false) ONLY FOR TESTING: force the creation even if SPORK 17 is disabled.\n"
+
+               "\nResult:\n"
+               "{\n"
+               "   \"owner_address\": \"xxx\"   (string) The owner (delegator) owneraddress.\n"
+               "   \"staker_address\": \"xxx\"  (string) The cold staker (delegate) stakingaddress.\n"
+               "   \"txid\": \"xxx\"            (string) The stake delegation transaction id.\n"
+               "}\n"
+
+               "\nExamples:\n" +
+                HelpExampleCli("delegatestake", "\"1D1ZrZNe3JUo7ZycKEYQQiQAWd9y54F4XX\" 100") +
+                HelpExampleCli("delegatestake", "\"1D1ZrZNe3JUo7ZycKEYQQiQAWd9y54F4XX\" 1000 \"DMJRSsuU9zfyrvxVaAEFQqK4MxZg34fk\"") +
+                HelpExampleRpc("delegatestake", "\"1D1ZrZNe3JUo7ZycKEYQQiQAWd9y54F4XX\", 1000, \"DMJRSsuU9zfyrvxVaAEFQqK4MxZg34fk\""));
+
+    EnsureWalletIsUnlocked(pwallet);
+
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    CWalletTx wtx;
+    CReserveKey reservekey(pwallet);
+    UniValue ret = CreateColdStakeDelegation(pwallet, request.params, wtx, reservekey);
+    ret.pushKV("txid", wtx.GetHash().GetHex());
+    return ret;
+}
+
+UniValue getcoldstakingbalance(const JSONRPCRequest& request)
+{
+    CWallet * const pwallet = GetWalletForJSONRPCRequest(request);
+
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp))
+        return NullUniValue;
+
+    if (request.fHelp || (request.params.size() != 0))
+        throw std::runtime_error(
+                "getcoldstakingbalance\n"
+                "\nReturns the server's total available cold balance.\n"
+
+                "\nResult:\n"
+                "amount              (numeric) The total amount in PIV received for this wallet in P2CS contracts.\n"
+
+                "\nExamples:\n"
+                "\nThe total amount in the wallet\n" +
+                HelpExampleCli("getcoldstakingbalance", "") +
+                "\nAs a json rpc call\n" +
+                HelpExampleRpc("getcoldstakingbalance", "\"*\""));
+
+
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    return ValueFromAmount(pwallet->GetColdStakingBalance());
+}
+
+
 extern UniValue abortrescan(const JSONRPCRequest& request); // in rpcdump.cpp
 extern UniValue dumpprivkey(const JSONRPCRequest& request); // in rpcdump.cpp
 extern UniValue importprivkey(const JSONRPCRequest& request);
@@ -3531,6 +3812,7 @@ static const CRPCCommand commands[] =
     { "wallet",             "addmultisigaddress",       &addmultisigaddress,       {"nrequired","keys","account"} },
     { "wallet",             "addwitnessaddress",        &addwitnessaddress,        {"address"} },
     { "wallet",             "backupwallet",             &backupwallet,             {"destination"} },
+    { "wallet",             "delegatestake",            &delegatestake,          {"staking_addr","amount","owner_addr","ext_owner","include_delegated","from_shield","force"} },
     { "wallet",             "bumpfee",                  &bumpfee,                  {"txid", "options"} },
     { "wallet",             "dumpprivkey",              &dumpprivkey,              {"address"}  },
     { "wallet",             "dumpwallet",               &dumpwallet,               {"filename"} },
@@ -3539,6 +3821,7 @@ static const CRPCCommand commands[] =
     { "wallet",             "getaccount",               &getaccount,               {"address"} },
     { "wallet",             "getaddressesbyaccount",    &getaddressesbyaccount,    {"account"} },
     { "wallet",             "getbalance",               &getbalance,               {"account","minconf","include_watchonly"} },
+    { "wallet",             "getcoldstakingbalance",    &getcoldstakingbalance,    {} },
     { "wallet",             "getmasterkeyinfo",         &getmasterkeyinfo,         {} },
     { "wallet",             "getmywords",               &getmywords,                        {} },
     { "wallet",             "getnewaddress",            &getnewaddress,            {"account"} },
@@ -3548,6 +3831,7 @@ static const CRPCCommand commands[] =
     { "wallet",             "gettransaction",           &gettransaction,           {"txid","include_watchonly"} },
     { "wallet",             "getunconfirmedbalance",    &getunconfirmedbalance,    {} },
     { "wallet",             "getwalletinfo",            &getwalletinfo,            {} },
+    { "wallet",             "getstakingstatus",         &getstakingstatus,         {} },
     { "wallet",             "importmulti",              &importmulti,              {"requests","options"} },
     { "wallet",             "importprivkey",            &importprivkey,            {"privkey","label","rescan"} },
     { "wallet",             "importwallet",             &importwallet,             {"filename"} },

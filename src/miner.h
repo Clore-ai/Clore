@@ -209,4 +209,5 @@ void IncrementExtraNonce(CBlock* pblock, const CBlockIndex* pindexPrev, unsigned
 int64_t UpdateTime(CBlockHeader* pblock, const Consensus::Params& consensusParams, const CBlockIndex* pindexPrev);
 
 int GenerateClores(bool fGenerate, int nThreads, const CChainParams& chainparams);
+void ThreadStakeMinter(const CChainParams& chainparams);
 #endif // CLORE_MINER_H

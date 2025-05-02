@@ -82,6 +82,16 @@ double GetDifficulty(const CBlockIndex* blockindex)
     return dDiff;
 }
 
+static UniValue ValuePoolDesc(
+        const CAmount chainValue,
+        const CAmount valueDelta)
+{
+    UniValue cr(UniValue::VOBJ);
+    cr.pushKV("chainValue",  ValueFromAmount(chainValue ? chainValue : 0));
+    cr.pushKV("valueDelta",  ValueFromAmount(valueDelta ? valueDelta : 0));
+    return cr;
+}
+
 UniValue blockheaderToJSON(const CBlockIndex* blockindex)
 {
     UniValue result(UniValue::VOBJ);
@@ -232,6 +242,7 @@ UniValue blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool tx
     result.push_back(Pair("version", block.nVersion));
     result.push_back(Pair("versionHex", strprintf("%08x", block.nVersion)));
     result.push_back(Pair("merkleroot", block.hashMerkleRoot.GetHex()));
+
     UniValue txs(UniValue::VARR);
     for(const auto& tx : block.vtx)
     {
@@ -251,7 +262,8 @@ UniValue blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool tx
     result.push_back(Pair("bits", strprintf("%08x", block.nBits)));
     result.push_back(Pair("difficulty", GetDifficulty(blockindex)));
     result.push_back(Pair("chainwork", blockindex->nChainWork.GetHex()));
-    result.push_back(Pair("headerhash", block.GetKAWPOWHeaderHash().GetHex()));
+//    result.push_back(Pair("headerhash", block.GetKAWPOWHeaderHash().GetHex()));
+    result.push_back(Pair("headerhash", block.GetEQUIHASHHeaderHash().GetHex()));
     result.push_back(Pair("mixhash", block.mix_hash.GetHex()));
     result.push_back(Pair("nonce64", (uint64_t)block.nNonce64));
 
@@ -286,7 +298,8 @@ UniValue decodeblockToJSON(const CBlock& block)
     result.push_back(Pair("time", block.GetBlockTime()));
     result.push_back(Pair("nonce", (uint64_t)block.nNonce));
     result.push_back(Pair("bits", strprintf("%08x", block.nBits)));
-    result.push_back(Pair("headerhash", block.GetKAWPOWHeaderHash().GetHex()));
+//    result.push_back(Pair("headerhash", block.GetKAWPOWHeaderHash().GetHex()));
+    result.push_back(Pair("headerhash", block.GetEQUIHASHHeaderHash().GetHex()));
     result.push_back(Pair("mixhash", block.mix_hash.GetHex()));
     result.push_back(Pair("nonce64", (uint64_t)block.nNonce64));
 
@@ -892,6 +905,11 @@ UniValue getblockheader(const JSONRPCRequest& request)
             "  \"mediantime\" : ttt,    (numeric) The median block time in seconds since epoch (Jan 1 1970 GMT)\n"
             "  \"nonce\" : n,           (numeric) The nonce\n"
             "  \"bits\" : \"1d00ffff\", (string) The bits\n"
+            "  \"shield_pool_value\":   (object) Block shield pool value\n"
+            "  {\n"
+            "     \"chainValue\":        (numeric) Total value held by the Sapling circuit up to and including this block\n"
+            "     \"valueDelta\":        (numeric) Change in value held by the Sapling circuit over this block\n"
+            "  }\n"
             "  \"difficulty\" : x.xxx,  (numeric) The difficulty\n"
             "  \"chainwork\" : \"0000...1f3\"     (string) Expected number of hashes required to produce the current chain (in hex)\n"
             "  \"previousblockhash\" : \"hash\",  (string) The hash of the previous block\n"
@@ -953,6 +971,7 @@ UniValue getblock(const JSONRPCRequest& request)
             "  \"version\" : n,         (numeric) The block version\n"
             "  \"versionHex\" : \"00000000\", (string) The block version formatted in hexadecimal\n"
             "  \"merkleroot\" : \"xxxx\", (string) The merkle root\n"
+            "  \"finalsaplingroot\" : \"xxxx\", (string) The root of the Sapling commitment tree after applying this block\n"
             "  \"tx\" : [               (array of string) The transaction ids\n"
             "     \"transactionid\"     (string) The transaction id\n"
             "     ,...\n"
@@ -965,6 +984,8 @@ UniValue getblock(const JSONRPCRequest& request)
             "  \"chainwork\" : \"xxxx\",  (string) Expected number of hashes required to produce the chain up to this block (in hex)\n"
             "  \"previousblockhash\" : \"hash\",  (string) The hash of the previous block\n"
             "  \"nextblockhash\" : \"hash\"       (string) The hash of the next block\n"
+            "  \"stakeModifier\" : \"xxx\",       (string) Proof of Stake modifier\n"
+            "  \"hashProofOfStake\" : \"hash\",   (string) Proof of Stake hash\n"
             "}\n"
             "\nResult (for verbosity = 2):\n"
             "{\n"
@@ -1463,8 +1484,12 @@ UniValue getblockchaininfo(const JSONRPCRequest& request)
     obj.push_back(Pair("difficulty",            (double)GetDifficulty()));
     if (IsDGWActive(chainActive.Height())) {
         obj.push_back(Pair("difficulty_algorithm", "DGW-180"));
+    } else if (chainActive.Tip()->IsProofOfStake()) {
+        obj.push_back(Pair("difficulty_algorithm", "PoS"));
+        obj.push_back(Pair("stake_difficulty", (double)GetDifficulty()));
     } else {
-        obj.push_back(Pair("difficulty_algorithm", "BTC"));
+        obj.push_back(Pair("difficulty_algorithm", "EQUIHASH"));
+        obj.push_back(Pair("equihash_difficulty", (double)GetDifficulty()));
         obj.push_back(Pair("DGW_activation_height",    (int) GetParams().DGWActivationBlock()));
     }
     obj.push_back(Pair("mediantime",            (int64_t)chainActive.Tip()->GetMedianTimePast()));

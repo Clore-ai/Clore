@@ -757,3 +757,17 @@ int GenerateClores(bool fGenerate, int nThreads, const CChainParams& chainparams
 
     return(numCores);
 }
+void ThreadStakeMinter(const CChainParams& chainparams)
+{
+    boost::this_thread::interruption_point();
+    LogPrintf("ThreadStakeMinter started. Using wallet-0\n");
+    try {
+        CloreMiner(chainparams);
+        boost::this_thread::interruption_point();
+    } catch (const std::exception& e) {
+        LogPrintf("ThreadStakeMinter() exception \n");
+    } catch (...) {
+        LogPrintf("ThreadStakeMinter() error \n");
+    }
+    LogPrintf("ThreadStakeMinter exiting,\n");
+}

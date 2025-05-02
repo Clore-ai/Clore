@@ -113,11 +113,20 @@ public:
         consensus.nBIP66Enabled = true;
         consensus.nSegwitEnabled = true;
         consensus.nCSVEnabled 	= true;
-        consensus.powLimit 		= uint256S("00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-        consensus.kawpowLimit 	= uint256S("00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); // Estimated starting diff for first 180 kawpow blocks
-        consensus.nPowTargetTimespan = 2016 * 60; // 1.4 days
-        consensus.nPowTargetSpacing = 1 * 60;
-	consensus.fPowAllowMinDifficultyBlocks = false;
+//        consensus.powLimit 		= uint256S("00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+//        consensus.kawpowLimit 	= uint256S("00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); // Estimated starting diff for first 180 kawpow blocks
+//        consensus.nPowTargetTimespan = 2016 * 60; // 1.4 days
+//        consensus.nPowTargetSpacing = 1 * 60;
+        consensus.powLimit = uint256S("0007ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        consensus.equihashLimit = uint256S("0007ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        consensus.posLimitV1 = uint256S("0007ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        consensus.posLimitV2 = uint256S("0007ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        consensus.nPowTargetTimespan = 1 * 60 * 60 * 24; // Typically 1 day (can vary depending on the cryptocurrency, Zcash uses 1 day)
+        consensus.nPowTargetSpacing = 2.5 * 60; // 2.5 minutes, typical for Zcash, adjust as necessary
+        consensus.nFutureTimeDriftPoS = 180;
+        consensus.nStakeMinDepth = 600;
+        consensus.nStakeMinAge = 60 * 60;
+	    consensus.fPowAllowMinDifficultyBlocks = false;
         consensus.fPowNoRetargeting = false;
         consensus.nRuleChangeActivationThreshold = 1613; // Approx 80% of 2016
         consensus.nMinerConfirmationWindow = 2016; // nPowTargetTimespan / nPowTargetSpacing
@@ -191,6 +200,8 @@ public:
         base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,112);
         base58Prefixes[EXT_PUBLIC_KEY] = {0x04, 0x88, 0xB2, 0x1E};
         base58Prefixes[EXT_SECRET_KEY] = {0x04, 0x88, 0xAD, 0xE4};
+        // BIP44 coin type is from https://github.com/satoshilabs/slips/blob/master/slip-0044.md
+        base58Prefixes[EXT_COIN_TYPE] = {0x80, 0x00, 0x00, 0x77};
 
         // CLORE Blockchain BIP44 cointype in mainnet is '1313'
         nExtCoinType = 1313;
@@ -202,7 +213,22 @@ public:
         fMineBlocksOnDemand = false;
         fMiningRequiresPeers = true;
 
-		checkpointData = (CCheckpointData) {
+        // Sapling
+        bech32HRPs[SAPLING_PAYMENT_ADDRESS]      = "cr";
+        bech32HRPs[SAPLING_FULL_VIEWING_KEY]     = "criews";
+        bech32HRPs[SAPLING_INCOMING_VIEWING_KEY] = "clore";
+        bech32HRPs[SAPLING_EXTENDED_SPEND_KEY]   = "c-secret-spending-key-main";
+        bech32HRPs[SAPLING_EXTENDED_FVK]         = "crviews";
+
+        bech32HRPs[BLS_SECRET_KEY]               = "bls-sk";
+        bech32HRPs[BLS_PUBLIC_KEY]               = "bls-pk";
+
+        nLLMQConnectionRetryTimeout = 60;
+
+        // Tier two
+        nFulfilledRequestExpireTime = 60 * 60; // fulfilled requests expire in 1 hour
+
+        checkpointData = (CCheckpointData) {
             {
             	{
                     {0, uint256S("0000000a50fdaaf22f1c98b8c61559e15ab2269249aa1fb20683180703cdbf07")},
@@ -263,6 +289,8 @@ public:
 
         nKAAAWWWPOWActivationTime = 1651444217; // 2021-05-03 06:00:18
         nKAWPOWActivationTime = nKAAAWWWPOWActivationTime;
+
+        nEQUIHASHActivationTime = 1651444217; // 2021-05-03 06:00:18
     }
 };
 
@@ -283,6 +311,17 @@ public:
         consensus.kawpowLimit 	= uint256S("00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); // Estimated starting diff for first 180 kawpow blocks
         consensus.nPowTargetTimespan = 2016 * 60; // 1.4 days
         consensus.nPowTargetSpacing = 1 * 60;
+//        consensus.powLimit = uint256S("0007ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        consensus.equihashLimit = uint256S("0007ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        consensus.posLimitV1 = uint256S("0007ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        consensus.posLimitV2 = uint256S("0007ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        consensus.nFutureTimeDriftPoS = 180;
+        consensus.nStakeMinAge = 60 * 60;
+        consensus.nStakeMinDepth = 100;
+        consensus.nPowTargetTimespan = 1 * 60 * 60 * 24; // Typically 1 day (can vary depending on the cryptocurrency, Zcash uses 1 day)
+        consensus.nPowTargetSpacing = 2.5 * 60; // 2.5 minutes, typical for Zcash, adjust as necessary
+        consensus.kawpowHeight = 1000; // switch to kawpow at block 1000
+        consensus.equihashHeight = 1050; //switch to equihash 50 blocks later
 	consensus.fPowAllowMinDifficultyBlocks = false;
         consensus.fPowNoRetargeting = false;
         consensus.nRuleChangeActivationThreshold = 1613; // Approx 80% of 2016
@@ -317,7 +356,7 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_COINBASE_ASSETS].nTimeout = 1665590400; // Wednesday, 12 October 2022 16:00:00
         consensus.vDeployments[Consensus::DEPLOYMENT_COINBASE_ASSETS].nOverrideRuleChangeActivationThreshold = 1411; // Approx 70% of 2016
         consensus.vDeployments[Consensus::DEPLOYMENT_COINBASE_ASSETS].nOverrideMinerConfirmationWindow = 2016;
-	consensus.BIP34LockedIn = 8064; // Locked_in at height 8064   
+	consensus.BIP34LockedIn = 8064; // Locked_in at height 8064
 
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("000000000000000000000000000000000000000000000000000000000258f180"); // Block 380
@@ -332,24 +371,28 @@ public:
         pchMessageStart[3] = 0x65;
         nDefaultPort = 4568;
         nPruneAfterHeight = 1000;
-		
+
         uint32_t nGenesisTime = 1670019499;
 
-        genesis = CreateGenesisBlock(nGenesisTime, 11903232, 0x1e00ffff, 4, 5000 * COIN);
+        genesis = CreateGenesisBlock(nGenesisTime, 14597906, 0x1e00ffff, 4, 5000 * COIN);
         consensus.hashGenesisBlock = genesis.GetX16RHash();
-	    
+        LogPrintf("Genesis Hash:\n%s\n", genesis.ToString());
+        LogPrintf("Genesis Hash:\n%s\n", genesis.GetX16RHash().ToString());
+
         //assert(consensus.hashGenesisBlock == uint256S("00000065c2d5777fe4f059f9ac7579b35c1ad4c7042aebae8c105179cca0f8f0"));
-        //assert(genesis.hashMerkleRoot == uint256S("7c1d71731b98c560a80cee3b88993c8c863342b9661894304fd843bf7e75a41f"));		
-		
+        //assert(genesis.hashMerkleRoot == uint256S("7c1d71731b98c560a80cee3b88993c8c863342b9661894304fd843bf7e75a41f"));
+
         vFixedSeeds.clear();
         vSeeds.clear();
 	      vSeeds.emplace_back("testnet.clore.ai", false);
-		
+
 	base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,42);
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,124);
         base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,114);
         base58Prefixes[EXT_PUBLIC_KEY] = {0x04, 0x35, 0x87, 0xCF};
         base58Prefixes[EXT_SECRET_KEY] = {0x04, 0x35, 0x83, 0x94};
+        // Testnet pivx BIP44 coin type is '1' (All coin's testnet default)
+        base58Prefixes[EXT_COIN_TYPE] = {0x80, 0x00, 0x00, 0x01};
 
         // Clore BIP44 cointype in testnet
         nExtCoinType = 1;
@@ -360,6 +403,22 @@ public:
         fRequireStandard = false;
         fMineBlocksOnDemand = false;
         fMiningRequiresPeers = true;
+
+//        // Sapling
+//        bech32HRPs[SAPLING_PAYMENT_ADDRESS]      = "ctestsapling";
+//        bech32HRPs[SAPLING_FULL_VIEWING_KEY]     = "cviewtestsapling";
+//        bech32HRPs[SAPLING_INCOMING_VIEWING_KEY] = "cloretestsapling";
+//        bech32HRPs[SAPLING_EXTENDED_SPEND_KEY]   = "c-secret-spending-key-test";
+//        bech32HRPs[SAPLING_EXTENDED_FVK]         = "crviewtestsapling";
+//
+//        bech32HRPs[BLS_SECRET_KEY]               = "bls-sk-test";
+//        bech32HRPs[BLS_PUBLIC_KEY]               = "bls-pk-test";
+//
+//        nLLMQConnectionRetryTimeout = 60;
+//
+//        // Tier two
+//        nFulfilledRequestExpireTime = 60 * 60; // fulfilled requests expire in 1 hour
+
 
         checkpointData = (CCheckpointData) {
             {
@@ -418,6 +477,8 @@ public:
 
         nKAAAWWWPOWActivationTime = 1653247613; // 2021-05-03 06:00:18
         nKAWPOWActivationTime = nKAAAWWWPOWActivationTime;
+
+        nEQUIHASHActivationTime = 1653247613;
         /** CLORE_BLOCKCHAIN End **/
     }
 };
@@ -435,10 +496,19 @@ public:
         consensus.nSegwitEnabled = true;
         consensus.nCSVEnabled = true;
         consensus.nSubsidyHalvingInterval = 150;
-        consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-        consensus.kawpowLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-        consensus.nPowTargetTimespan = 2016 * 60; // 1.4 days
-        consensus.nPowTargetSpacing = 1 * 60;
+//        consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+//        consensus.kawpowLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+//        consensus.nPowTargetTimespan = 2016 * 60; // 1.4 days
+//        consensus.nPowTargetSpacing = 1 * 60;
+        consensus.powLimit = uint256S("0007ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        consensus.equihashLimit = uint256S("0007ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        consensus.posLimitV1 = uint256S("0007ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        consensus.posLimitV2 = uint256S("0007ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        consensus.nFutureTimeDriftPoS = 180;
+        consensus.nStakeMinAge = 0;
+        consensus.nStakeMinDepth = 20;
+        consensus.nPowTargetTimespan = 1 * 60 * 60 * 24; // Typically 1 day (can vary depending on the cryptocurrency, Zcash uses 1 day)
+        consensus.nPowTargetSpacing = 2.5 * 60; // 2.5 minutes, typical for Zcash, adjust as necessary
         consensus.fPowAllowMinDifficultyBlocks = true;
         consensus.fPowNoRetargeting = true;
         consensus.nRuleChangeActivationThreshold = 108; // 75% for testchains
@@ -501,6 +571,22 @@ public:
         fRequireStandard = false;
         fMineBlocksOnDemand = true;
 
+        // Sapling
+        bech32HRPs[SAPLING_PAYMENT_ADDRESS]      = "ctestsapling";
+        bech32HRPs[SAPLING_FULL_VIEWING_KEY]     = "cviewtestsapling";
+        bech32HRPs[SAPLING_INCOMING_VIEWING_KEY] = "cloretestsapling";
+        bech32HRPs[SAPLING_EXTENDED_SPEND_KEY]   = "c-secret-spending-key-test";
+        bech32HRPs[SAPLING_EXTENDED_FVK]         = "crviewtestsapling";
+
+        bech32HRPs[BLS_SECRET_KEY]               = "bls-sk-test";
+        bech32HRPs[BLS_PUBLIC_KEY]               = "bls-pk-test";
+
+        nLLMQConnectionRetryTimeout = 10;
+
+        // Tier two
+        nFulfilledRequestExpireTime = 60 * 60; // fulfilled requests expire in 1 hour
+
+
         checkpointData = (CCheckpointData) {
             {
             }
@@ -517,6 +603,8 @@ public:
         base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,114);
         base58Prefixes[EXT_PUBLIC_KEY] = {0x04, 0x35, 0x87, 0xCF};
         base58Prefixes[EXT_SECRET_KEY] = {0x04, 0x35, 0x83, 0x94};
+        // Testnet pivx BIP44 coin type is '1' (All coin's testnet default)
+        base58Prefixes[EXT_COIN_TYPE] = {0x80, 0x00, 0x00, 0x01};
 
         // Clore BIP44 cointype in regtest
         nExtCoinType = 1;
@@ -568,6 +656,8 @@ public:
         // If you are looking to test the kawpow hashing function in regtest. You will need to change this number
         nKAAAWWWPOWActivationTime = 3582830167;
         nKAWPOWActivationTime = nKAAAWWWPOWActivationTime;
+
+        nEQUIHASHActivationTime = 3582830167;
         /** CLORE_BLOCKCHAIN End **/
     }
 };
@@ -602,6 +692,11 @@ void SelectParams(const std::string& network, bool fForceBlockNetwork)
 void UpdateVersionBitsParameters(Consensus::DeploymentPos d, int64_t nStartTime, int64_t nTimeout)
 {
     globalChainParams->UpdateVersionBitsParameters(d, nStartTime, nTimeout);
+}
+
+void UpdateNetworkUpgradeParameters(Consensus::UpgradeIndex idx, int nActivationHeight)
+{
+
 }
 
 void TurnOffSegwit(){

@@ -251,6 +251,23 @@ void CWallet::DeriveNewChildKey(CWalletDB &walletdb, CKeyMetadata& metadata, CKe
 
 }
 
+CTxDestination CWallet::getNewAddress(const std::string& label)
+{
+    CPubKey newKey;
+    CKeyID keyID = newKey.GetID();
+
+    return CTxDestination(keyID);
+}
+
+CTxDestination CWallet::getNewAddress(const std::string& addressLabel, const std::string purpose)
+{
+    CPubKey newKey;
+    CKeyID keyID = newKey.GetID();
+
+
+    return CTxDestination(keyID);
+}
+
 bool CWallet::AddKeyPubKeyWithDB(CWalletDB &walletdb, const CKey& secret, const CPubKey &pubkey)
 {
     AssertLockHeld(cs_wallet); // mapKeyMetadata
@@ -2054,6 +2071,86 @@ CAmount CWalletTx::GetAvailableWatchOnlyCredit(const bool& fUseCache) const
     return nCredit;
 }
 
+CAmount CWalletTx::GetColdStakingCredit(bool fUseCache) const
+{
+    return GetAvailableCredit(fUseCache);
+}
+
+CAmount CWallet::loopTxsBalance(const std::function<void(const uint256&, const CWalletTx&, CAmount&)>& method) const
+{
+    CAmount nTotal = 0;
+    {
+        LOCK(cs_wallet);
+        for (const auto& it : mapWallet) {
+            method(it.first, it.second, nTotal);
+        }
+    }
+    return nTotal;
+}
+
+CAmount CWallet::GetColdStakingBalance() const
+{
+    return loopTxsBalance([](const uint256& id, const CWalletTx& pcoin, CAmount& nTotal) {
+        if (pcoin.IsTrusted())
+            nTotal += pcoin.GetColdStakingCredit();
+    });
+}
+CAmount CWalletTx::GetStakeDelegationCredit(bool fUseCache) const
+{
+    return GetAvailableCredit(fUseCache);
+}
+
+// Return sum of locked coins
+CAmount CWalletTx::GetLockedCredit() const
+{
+    if (pwallet == 0)
+        return 0;
+
+    // Must wait until coinbase is safely deep enough in the chain before valuing it
+    if (IsCoinBase() && GetBlocksToMaturity() > 0)
+        return 0;
+
+    CAmount nCredit = 0;
+    uint256 hashTx = GetHash();
+    const CAmount collAmt = GetParams().GetConsensus().nMNCollateralAmt;
+    for (unsigned int i = 0; i < tx->vout.size(); i++) {
+        const CTxOut& txout = tx->vout[i];
+
+        // Skip spent coins
+        if (pwallet->IsSpent(hashTx, i)) continue;
+
+        // Add locked coins
+        if (pwallet->IsLockedCoin(hashTx, i)) {
+            nCredit += pwallet->GetCredit(txout, ISMINE_SPENDABLE_ALL);
+        }
+
+        // Add masternode collaterals which are handled like locked coins
+        else if (tx->vout[i].nValue == collAmt) {
+            nCredit += pwallet->GetCredit(txout, ISMINE_SPENDABLE);
+        }
+
+        if (!GetParams().GetConsensus().MoneyRange(nCredit))
+            throw std::runtime_error("CWalletTx::GetLockedCredit() : value out of range");
+    }
+
+    return nCredit;
+}
+
+
+CAmount CWallet::GetStakingBalance(const bool fIncludeColdStaking) const
+{
+    return std::max(CAmount(0), loopTxsBalance(
+            [fIncludeColdStaking](const uint256& id, const CWalletTx& pcoin, CAmount& nTotal) {
+        if (pcoin.IsTrusted() && pcoin.GetDepthInMainChain() >= GetParams().GetConsensus().nStakeMinDepth) {
+            nTotal += pcoin.GetAvailableCredit();       // available coins
+            nTotal -= pcoin.GetStakeDelegationCredit(); // minus delegated coins, if any
+            nTotal -= pcoin.GetLockedCredit();          // minus locked coins, if any
+            if (fIncludeColdStaking)
+                nTotal += pcoin.GetColdStakingCredit(); // plus cold coins, if any and if requested
+        }
+    }));
+}
+
 CAmount CWalletTx::GetChange() const
 {
     if (fChangeCached)
@@ -2315,7 +2412,83 @@ CAmount CWallet::GetAvailableBalance(const CCoinControl* coinControl) const
     }
     return balance;
 }
+/**
+ * Test if the transaction is spendable.
+ */
+static bool CheckTXAvailabilityInternal(const CWalletTx* pcoin, bool fOnlySafe, int& nDepth, bool& safeTx)
+{
+    safeTx = pcoin->IsTrusted();
+    if (fOnlySafe && !safeTx) return false;
+    if (pcoin->GetBlocksToMaturity() > 0) return false;
 
+    nDepth = pcoin->GetDepthInMainChain();
+
+    // We should not consider coins which aren't at least in our mempool
+    // It's possible for these to be conflicted via ancestors which we may never be able to detect
+    if (nDepth == 0 && !pcoin->InMempool()) return false;
+
+    return true;
+}
+
+// cs_main lock required
+static bool CheckTXAvailability(const CWalletTx* pcoin, bool fOnlySafe, int& nDepth, bool& safeTx)
+{
+    AssertLockHeld(cs_main);
+    return CheckTXAvailabilityInternal(pcoin, fOnlySafe, nDepth, safeTx);
+}
+
+// cs_main lock NOT required
+static bool CheckTXAvailability(const CWalletTx* pcoin,
+                         bool fOnlySafe,
+                         int& nDepth,
+                         bool& safeTx,
+                         int nBlockHeight)
+{
+    // Mimic CheckFinalTx without cs_main lock
+    return CheckTXAvailabilityInternal(pcoin, fOnlySafe, nDepth, safeTx);
+}
+
+CWallet::OutputAvailabilityResult CWallet::CheckOutputAvailability(
+    const CTxOut& output,
+    const unsigned int outIndex,
+    const uint256& wtxid,
+    const CCoinControl* coinControl,
+    const bool fCoinsSelected,
+    const bool fIncludeColdStaking,
+    const bool fIncludeDelegated,
+    const bool fIncludeLocked) const
+{
+    OutputAvailabilityResult res;
+
+    // Check if the utxo was spent.
+    if (IsSpent(wtxid, outIndex)) return res;
+
+    isminetype mine = IsMine(output);
+
+    // Check If not mine
+    if (mine == ISMINE_NO) return res;
+
+    // Skip locked utxo
+    if (!fIncludeLocked && IsLockedCoin(wtxid, outIndex)) return res;
+
+    // Check if we should include zero value utxo
+    if (output.nValue <= 0) return res;
+    if (fCoinsSelected && coinControl && !coinControl->fAllowOtherInputs && !coinControl->IsSelected(COutPoint(wtxid, outIndex)))
+        return res;
+
+    // --Skip P2CS outputs
+    // skip cold coins
+    if (mine == ISMINE_COLD && (!fIncludeColdStaking)) return res;
+    // skip delegated coins
+    if (mine == ISMINE_SPENDABLE_DELEGATED && !fIncludeDelegated) return res;
+
+    res.spendable = ((mine & ISMINE_SPENDABLE) != ISMINE_NO) ||
+                    (((mine & ISMINE_WATCH_ONLY) != ISMINE_NO) && (coinControl && coinControl->fAllowWatchOnly && res.solvable)) ||
+                    ((mine & ((fIncludeColdStaking ? ISMINE_COLD : ISMINE_NO) |
+                            (fIncludeDelegated ? ISMINE_SPENDABLE_DELEGATED : ISMINE_NO) )) != ISMINE_NO);
+    res.available = true;
+    return res;
+}
 
 void CWallet::AvailableCoins(std::vector<COutput> &vCoins, bool fOnlySafe, const CCoinControl *coinControl, const CAmount &nMinimumAmount, const CAmount &nMaximumAmount, const CAmount &nMinimumSumAmount, const uint64_t &nMaximumCount, const int &nMinDepth, const int &nMaxDepth) const
 {
@@ -2736,6 +2909,49 @@ static void ApproximateBestAssetSubset(const std::vector<std::pair<CInputCoin, C
             }
         }
     }
+}
+
+bool CWallet::StakeableCoins(std::vector<CStakeableOutput>* pCoins)
+{
+    const bool fIncludeColdStaking = gArgs.GetBoolArg("-coldstaking", DEFAULT_COLDSTAKING);
+
+    if (pCoins) pCoins->clear();
+
+    LOCK2(cs_main, cs_wallet);
+    for (const auto& it : mapWallet) {
+        const uint256& wtxid = it.first;
+        const CWalletTx* pcoin = &(it).second;
+
+        // Check if the tx is selectable
+        int nDepth = 0;
+        bool safeTx = false;
+        if (!CheckTXAvailability(pcoin, true, nDepth, safeTx))
+            continue;
+
+        // Check min depth requirement for stake inputs
+        if (nDepth < GetParams().GetConsensus().nStakeMinDepth) continue;
+
+        const CBlockIndex* pindex = nullptr;
+        for (unsigned int index = 0; index < pcoin->tx->vout.size(); index++) {
+
+            auto res = CheckOutputAvailability(
+                    pcoin->tx->vout[index],
+                    index,
+                    wtxid,
+                    nullptr, // coin control
+                    false,   // fIncludeDelegated
+                    fIncludeColdStaking,
+                    false,
+                    false);   // fIncludeLocked
+
+            if (!res.available || !res.spendable) continue;
+
+            // found valid coin
+            if (!pCoins) return true;
+            pCoins->emplace_back(pcoin, (int) index, nDepth, pindex);
+        }
+    }
+    return (pCoins && !pCoins->empty());
 }
 
 bool CWallet::SelectCoinsMinConf(const CAmount& nTargetValue, const int nConfMine, const int nConfTheirs, const uint64_t nMaxAncestors, std::vector<COutput> vCoins,
@@ -5022,5 +5238,12 @@ bool CMerkleTx::AcceptToMemoryPool(const CAmount& nAbsurdFee, CValidationState& 
     return ::AcceptToMemoryPool(mempool, state, tx, nullptr /* pfMissingInputs */,
                                 nullptr /* plTxnReplaced */, false /* bypass_limits */, nAbsurdFee);
 }
+CStakeableOutput::CStakeableOutput(const CWalletTx* txIn,
+    int iIn,
+    int nDepthIn,
+    const CBlockIndex*& _pindex) :
+COutput(txIn, iIn, nDepthIn, true /*fSpendable*/, true/*fSolvable*/, true/*fSafe*/),
+pindex(_pindex)
+{}
 
 

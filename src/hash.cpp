@@ -276,7 +276,6 @@ uint256 KAWPOWHash(const CBlockHeader& blockHeader, uint256& mix_hash)
     return uint256S(to_hex(result.final_hash));
 }
 
-
 uint256 KAWPOWHash_OnlyMix(const CBlockHeader& blockHeader)
 {
     // Build the header_hash
@@ -290,5 +289,110 @@ uint256 KAWPOWHash_OnlyMix(const CBlockHeader& blockHeader)
 }
 
 
+// Function to convert a vector of bytes into a uint256 hash
+uint256 HashVectorToUint256(const std::vector<unsigned char>& input) {
+    uint256 result;
+    CSHA256().Write(input.data(), input.size()).Finalize((unsigned char*)&result);
+    return result;
+}
+
+// Helper function to hash with a nonce appended
+std::vector<unsigned char> HashWithNonce(const std::vector<unsigned char>& input, uint32_t nonce) {
+    std::vector<unsigned char> nonceBytes(4);
+    nonceBytes[0] = nonce & 0xFF;
+    nonceBytes[1] = (nonce >> 8) & 0xFF;
+    nonceBytes[2] = (nonce >> 16) & 0xFF;
+    nonceBytes[3] = (nonce >> 24) & 0xFF;
+
+    std::vector<unsigned char> combinedInput(input);
+    combinedInput.insert(combinedInput.end(), nonceBytes.begin(), nonceBytes.end());
+
+    std::vector<unsigned char> hashOutput(CSHA256::OUTPUT_SIZE);
+    CSHA256().Write(combinedInput.data(), combinedInput.size()).Finalize(hashOutput.data());
+    return hashOutput;
+}
+
+// Find the first N/(K+1) bits of the hash (collision bits)
+inline uint32_t GetCollisionBits(const std::vector<unsigned char>& hash, unsigned int bitLength) {
+    uint32_t collisionBits = 0;
+    for (unsigned int i = 0; i < bitLength; i++) {
+        unsigned int byteIndex = i / 8;
+        unsigned int bitIndex = i % 8;
+        collisionBits |= ((hash[byteIndex] >> (7 - bitIndex)) & 1) << (bitLength - 1 - i);
+    }
+    return collisionBits;
+}
+
+// Equihash hashing function
+uint256 EquihashHash(const CBlockHeader& blockHeader) {
+    // Equihash parameters (e.g., 200,9 or 144,5)
+    constexpr unsigned int N = 255;
+    constexpr unsigned int K = 11;
+    constexpr unsigned int numSteps = K + 1;
+    constexpr unsigned int collisionBitLength = N / numSteps;
+
+    // Get the header hash, which is the input for the Equihash algorithm
+    uint256 nHeaderHash = blockHeader.GetEQUIHASHHeaderHash();
+    std::vector<unsigned char> headerHashVec(nHeaderHash.begin(), nHeaderHash.end());
+
+    // Generate a set of hash values using different nonces (size = 2^(K+1))
+    const size_t numHashes = 1 << K; // 2^K
+    std::vector<std::pair<std::vector<unsigned char>, uint32_t>> hashes;
+
+    // Step 1: Generate initial hash values by hashing the header with different nonces
+    for (uint32_t nonce = 0; nonce < numHashes; nonce++) {
+        std::vector<unsigned char> hash = HashWithNonce(headerHashVec, nonce);
+        hashes.emplace_back(hash, nonce);
+    }
+
+    // Step 2: Collision finding process (iterate K times)
+    for (unsigned int step = 0; step < K; ++step) {
+        std::vector<std::pair<std::vector<unsigned char>, uint32_t>> newHashes;
+        std::set<uint32_t> seenCollisionBits;
+
+        for (size_t i = 0; i < hashes.size(); i += 2) {
+            // Take pairs of hashes
+            std::vector<unsigned char>& hashA = hashes[i].first;
+            std::vector<unsigned char>& hashB = hashes[i + 1].first;
+
+            // Get the collision bits for the current step
+            uint32_t collisionBitsA = GetCollisionBits(hashA, collisionBitLength);
+            uint32_t collisionBitsB = GetCollisionBits(hashB, collisionBitLength);
+
+            if (collisionBitsA == collisionBitsB) {
+                // Combine the two hashes by XORing them
+                std::vector<unsigned char> newHash(hashA.size());
+                for (size_t j = 0; j < hashA.size(); j++) {
+                    newHash[j] = hashA[j] ^ hashB[j];
+                }
+
+                // Ensure unique collisions
+                if (seenCollisionBits.count(collisionBitsA) == 0) {
+                    newHashes.emplace_back(newHash, hashes[i].second);
+                    seenCollisionBits.insert(collisionBitsA);
+                }
+            }
+        }
+
+        // Replace the current hashes with the newly generated set
+        hashes = std::move(newHashes);
+    }
+
+    // Step 3: Validate the final hashes (should be a few remaining)
+    if (hashes.empty()) {
+//        throw std::runtime_error("Equihash solving failed: no valid solution.");
+        return nHeaderHash;
+    }
+
+    // Take the final solution and return the hash
+    std::vector<unsigned char> finalSolution = hashes[0].first;
+    return HashVectorToUint256(finalSolution);
+}
+
+//pos hash
+void scrypt_hash(const char* pass, unsigned int pLen, const char* salt, unsigned int sLen, char* output, unsigned int N, unsigned int r, unsigned int p, unsigned int dkLen)
+{
+//    crypt(pass, pLen, salt, sLen, output, N, r, p, dkLen);
+}
 
 

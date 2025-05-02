@@ -154,22 +154,38 @@ static const uint32_t round_constants[22] = {
         0x00008080,
 };
 
-static const uint32_t clorecoin_kawpow[15] = {
-        0x00000072, //R
-        0x00000041, //A
-        0x00000056, //V
-        0x00000045, //E
-        0x0000004E, //N
+//static const uint32_t clorecoin_kawpow[15] = {
+//        0x00000072, //R
+//        0x00000041, //A
+//        0x00000056, //V
+//        0x00000045, //E
+//        0x0000004E, //N
+//        0x00000043, //C
+//        0x0000004F, //O
+//        0x00000049, //I
+//        0x0000004E, //N
+//        0x0000004B, //K
+//        0x00000041, //A
+//        0x00000057, //W
+//        0x00000050, //P
+//        0x0000004F, //O
+//        0x00000057, //W
+//};
+
+// ClorePoW Equihash parameters represented as hexadecimal ASCII values
+static const uint32_t clorecoin_equihash[12] = {
+        0x00000043, // 'C'
+        0x0000004C, // 'L'
+        0x0000004F, // 'O'
+        0x00000052, // 'R'
         0x00000043, //C
         0x0000004F, //O
         0x00000049, //I
         0x0000004E, //N
-        0x0000004B, //K
-        0x00000041, //A
-        0x00000057, //W
-        0x00000050, //P
-        0x0000004F, //O
-        0x00000057, //W
+        0x00000045, // 'E'
+        0x00000050, // 'P'
+        0x0000004F, // 'O'
+        0x00000057  // 'W'
 };
 
 using lookup_fn = hash2048 (*)(const epoch_context&, uint32_t);
@@ -316,7 +332,7 @@ result hash(const epoch_context& context, int block_number, const hash256& heade
 
         // 3rd apply clorecoin input constraints
         for (int i = 10; i < 25; i++)
-            state[i] = clorecoin_kawpow[i-10];
+            state[i] = clorecoin_equihash[i-10];
 
         keccak_progpow_64(state);
 
@@ -342,7 +358,7 @@ result hash(const epoch_context& context, int block_number, const hash256& heade
 
     // 3rd apply clorecoin input constraints
     for (int i = 16; i < 25; i++)
-        state[i] = clorecoin_kawpow[i - 16];
+        state[i] = clorecoin_equihash[i - 16];
 
     // Run keccak loop
     keccak_progpow_256(state);
@@ -390,7 +406,7 @@ result hash(const epoch_context_full& context, int block_number, const hash256& 
 
         // 3rd apply clorecoin input constraints
         for (int i = 10; i < 25; i++)
-            state[i] = clorecoin_kawpow[i-10];
+            state[i] = clorecoin_equihash[i-10];
 
         keccak_progpow_64(state);
 
@@ -417,7 +433,7 @@ result hash(const epoch_context_full& context, int block_number, const hash256& 
 
     // 3rd apply clorecoin input constraints
     for (int i = 16; i < 25; i++)
-        state[i] = clorecoin_kawpow[i - 16];
+        state[i] = clorecoin_equihash[i - 16];
 
     // Run keccak loop
     keccak_progpow_256(state);
@@ -450,7 +466,7 @@ bool verify(const epoch_context& context, int block_number, const hash256& heade
 
         // 3rd apply clorecoin input constraints
         for (int i = 10; i < 25; i++)
-            state[i] = clorecoin_kawpow[i-10];
+            state[i] = clorecoin_equihash[i-10];
 
         keccak_progpow_64(state);
 
@@ -475,7 +491,7 @@ bool verify(const epoch_context& context, int block_number, const hash256& heade
 
     // 3rd apply clorecoin input constraints
     for (int i = 16; i < 25; i++)
-        state[i] = clorecoin_kawpow[i - 16];
+        state[i] = clorecoin_equihash[i - 16];
 
     // Run keccak loop
     keccak_progpow_256(state);
@@ -515,7 +531,7 @@ hash256 hash_no_verify(const int& block_number, const hash256& header_hash,
 
         // 3rd apply clorecoin input constraints
         for (int i = 10; i < 25; i++)
-            state[i] = clorecoin_kawpow[i-10];
+            state[i] = clorecoin_equihash[i-10];
 
         keccak_progpow_64(state);
 
@@ -537,7 +553,7 @@ hash256 hash_no_verify(const int& block_number, const hash256& header_hash,
 
     // 3rd apply clorecoin input constraints
     for (int i = 16; i < 25; i++)
-        state[i] = clorecoin_kawpow[i - 16];
+        state[i] = clorecoin_equihash[i - 16];
 
     // Run keccak loop
     keccak_progpow_256(state);

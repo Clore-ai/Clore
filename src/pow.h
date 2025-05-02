@@ -23,4 +23,6 @@ unsigned int CalculateNextWorkRequired(const CBlockIndex* pindexLast, int64_t nF
 /** Check whether a block hash satisfies the proof-of-work requirement specified by nBits */
 bool CheckProofOfWork(uint256 hash, unsigned int nBits, const Consensus::Params&);
 
+uint256 GetPOWHash(const CBlockHeader& block, int height, const Consensus::Params& params);
+
 #endif // CLORE_POW_H

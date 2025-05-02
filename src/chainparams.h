@@ -31,6 +31,9 @@ typedef std::map<int, uint256> MapCheckpoints;
 
 struct CCheckpointData {
     MapCheckpoints mapCheckpoints;
+    int64_t nTimeLastCheckpoint;
+    int64_t nTransactionsLastCheckpoint;
+    double fTransactionsPerDay;
 };
 
 struct ChainTxData {
@@ -55,8 +58,24 @@ public:
         SECRET_KEY,
         EXT_PUBLIC_KEY,
         EXT_SECRET_KEY,
+        EXT_COIN_TYPE,  // BIP44
+        STAKING_ADDRESS,
+        EXCHANGE_ADDRESS,
 
         MAX_BASE58_TYPES
+    };
+
+    enum Bech32Type {
+        SAPLING_PAYMENT_ADDRESS,
+        SAPLING_FULL_VIEWING_KEY,
+        SAPLING_INCOMING_VIEWING_KEY,
+        SAPLING_EXTENDED_SPEND_KEY,
+        SAPLING_EXTENDED_FVK,
+
+        BLS_SECRET_KEY,
+        BLS_PUBLIC_KEY,
+
+        MAX_BECH32_TYPES
     };
 
     const Consensus::Params& GetConsensus() const { return consensus; }
@@ -69,6 +88,8 @@ public:
     bool DefaultConsistencyChecks() const { return fDefaultConsistencyChecks; }
     /** Policy: Filter transactions that do not match well-defined patterns */
     bool RequireStandard() const { return fRequireStandard; }
+    /** How long to wait until we allow retrying of a LLMQ connection  */
+    int LLMQConnectionRetryTimeout() const { return nLLMQConnectionRetryTimeout; }
     uint64_t PruneAfterHeight() const { return nPruneAfterHeight; }
     /** Make miner stop after a block is found. In RPC, don't return until nGenProcLimit blocks are generated */
     bool MineBlocksOnDemand() const { return fMineBlocksOnDemand; }
@@ -79,6 +100,11 @@ public:
     int ExtCoinType() const { return nExtCoinType; }
     const std::vector<SeedSpec6>& FixedSeeds() const { return vFixedSeeds; }
     const CCheckpointData& Checkpoints() const { return checkpointData; }
+
+    /** Tier two requests blockage mark expiration time */
+    int FulfilledRequestExpireTime() const { return nFulfilledRequestExpireTime; }
+
+    void UpdateNetworkUpgradeParameters(Consensus::UpgradeIndex idx, int nActivationHeight);
     const ChainTxData& TxData() const { return chainTxData; }
     void UpdateVersionBitsParameters(Consensus::DeploymentPos d, int64_t nStartTime, int64_t nTimeout);
     void TurnOffSegwit();
@@ -157,6 +183,7 @@ protected:
     uint64_t nPruneAfterHeight;
     std::vector<CDNSSeedData> vSeeds;
     std::vector<unsigned char> base58Prefixes[MAX_BASE58_TYPES];
+    std::string bech32HRPs[MAX_BECH32_TYPES];
     int nExtCoinType;
     std::string strNetworkID;
     CBlock genesis;
@@ -167,6 +194,10 @@ protected:
     bool fMiningRequiresPeers;
     CCheckpointData checkpointData;
     ChainTxData chainTxData;
+
+    // Tier two
+    int nLLMQConnectionRetryTimeout;
+    int nFulfilledRequestExpireTime;
 
     /** CLORE Start **/
     // Burn Amounts
@@ -230,6 +261,11 @@ const CChainParams &GetParams();
  * @throws std::runtime_error when the chain is not supported.
  */
 void SelectParams(const std::string& chain, bool fForceBlockNetwork = false);
+
+/**
+ * Allows modifying the network upgrade regtest parameters.
+ */
+void UpdateNetworkUpgradeParameters(Consensus::UpgradeIndex idx, int nActivationHeight);
 
 /**
  * Allows modifying the Version Bits regtest parameters.

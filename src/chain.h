@@ -164,6 +164,13 @@ enum BlockStatus: uint32_t {
     BLOCK_OPT_WITNESS       =   128, //!< block data in blk*.data was received with a witness-enforcing client
 };
 
+// BlockIndex flags
+enum {
+    BLOCK_PROOF_OF_STAKE = (1 << 0), // is proof-of-stake block
+    BLOCK_STAKE_ENTROPY = (1 << 1),  // entropy bit for stake modifier
+    BLOCK_STAKE_MODIFIER = (1 << 2), // regenerated stake modifier
+};
+
 /** The block chain is a tree shaped structure starting with the
  * genesis block at the root, with each block potentially having multiple
  * candidates to be the next block. A blockindex may have multiple pprev pointing
@@ -208,9 +215,25 @@ public:
     //! Verification status of this block. See enum BlockStatus
     uint32_t nStatus;
 
+    // proof-of-stake specific fields
+    // char vector holding the stake modifier bytes. It is empty for PoW blocks.
+    // Modifier V1 is 64 bit while modifier V2 is 256 bit.
+    std::vector<unsigned char> vStakeModifier{};
+    unsigned int nFlags{0};
+
+    //! Change in value held by the Sapling circuit over this block.
+    //! Not a Optional because this was added before Sapling activated, so we can
+    //! rely on the invariant that every block before this was added had nSaplingValue = 0.
+    CAmount nSaplingValue{0};
+
+    //! (memory only) Total value held by the Sapling circuit up to and including this block.
+    //! Will be nullopt if nChainTx is zero.
+    CAmount nChainSaplingValue{0};
+
     //! block header
     int32_t nVersion;
     uint256 hashMerkleRoot;
+    uint256 hashFinalSaplingRoot{};
     uint32_t nTime;
     uint32_t nBits;
     uint32_t nNonce;
@@ -218,6 +241,12 @@ public:
     // KAWPOW
     uint64_t nNonce64;
     uint256 mix_hash;
+
+    // EQUIHASH
+    std::vector<unsigned char> nSolution;
+
+    // Pos
+    uint256 nAccumulatorCheckpoint{};
 
     //! (memory only) Sequential id assigned to distinguish order in which blocks are received.
     int32_t nSequenceId;
@@ -243,6 +272,7 @@ public:
 
         nVersion       = 0;
         hashMerkleRoot = uint256();
+        hashFinalSaplingRoot = uint256();
         nTime          = 0;
         nBits          = 0;
         nNonce         = 0;
@@ -250,6 +280,10 @@ public:
         //KAWPOW
         nNonce64       = 0;
         mix_hash       = uint256();
+
+        // EQUIHASH
+        nSolution.clear();
+
     }
 
     CBlockIndex()
@@ -263,6 +297,7 @@ public:
 
         nVersion       = block.nVersion;
         hashMerkleRoot = block.hashMerkleRoot;
+        hashFinalSaplingRoot = block.hashFinalSaplingRoot;
         nTime          = block.nTime;
         nBits          = block.nBits;
         nNonce         = block.nNonce;
@@ -272,6 +307,11 @@ public:
         nNonce64       = block.nNonce64;
         mix_hash       = block.mix_hash;
 
+        //EQUIHASH
+        nSolution      = block.nSolution;
+
+        //POS
+        nAccumulatorCheckpoint = block.nAccumulatorCheckpoint;
     }
 
     CDiskBlockPos GetBlockPos() const {
@@ -299,12 +339,16 @@ public:
         if (pprev)
             block.hashPrevBlock = pprev->GetBlockHash();
         block.hashMerkleRoot = hashMerkleRoot;
+        block.hashFinalSaplingRoot = hashFinalSaplingRoot;
         block.nTime          = nTime;
         block.nBits          = nBits;
         block.nNonce         = nNonce;
         block.nHeight        = nHeight;
         block.nNonce64       = nNonce64;
         block.mix_hash       = mix_hash;
+        block.nSolution      = nSolution;
+        block.nAccumulatorCheckpoint = nAccumulatorCheckpoint;
+
         return block;
     }
 
@@ -347,6 +391,27 @@ public:
             GetBlockHash().ToString());
     }
 
+    int64_t MaxFutureBlockTime() const;
+    int64_t MinPastBlockTime() const;
+
+    bool IsProofOfStake() const { return (nFlags & BLOCK_PROOF_OF_STAKE); }
+    bool IsProofOfWork() const { return !IsProofOfStake(); }
+    void SetProofOfStake() { nFlags |= BLOCK_PROOF_OF_STAKE; }
+
+    // Stake Modifier
+    unsigned int GetStakeEntropyBit() const;
+    bool SetStakeEntropyBit(unsigned int nEntropyBit);
+    bool GeneratedStakeModifier() const { return (nFlags & BLOCK_STAKE_MODIFIER); }
+    void SetStakeModifier(const uint64_t nStakeModifier, bool fGeneratedStakeModifier);
+    void SetNewStakeModifier();                             // generates and sets new v1 modifier
+    void SetStakeModifier(const uint256& nStakeModifier);
+    void SetNewStakeModifier(const uint256& prevoutId);     // generates and sets new v2 modifier
+    uint64_t GetStakeModifierV1() const;
+    uint256 GetStakeModifierV2() const;
+
+    // Update Sapling chain value
+    void SetChainSaplingValue();
+
     //! Check whether this block index entry is valid up to the passed validity level.
     bool IsValid(enum BlockStatus nUpTo = BLOCK_VALID_TRANSACTIONS) const
     {
@@ -384,6 +449,11 @@ int64_t GetBlockProofEquivalentTime(const CBlockIndex& to, const CBlockIndex& fr
 /** Find the forking point between two chain tips. */
 const CBlockIndex* LastCommonAncestor(const CBlockIndex* pa, const CBlockIndex* pb);
 
+/** Used to marshal pointers into hashes for db storage. */
+
+// New serialization introduced with 4.0.99
+static const int DBI_OLD_SER_VERSION = 4009900;
+static const int DBI_SER_VERSION_NO_ZC = 4009902;   // removes mapZerocoinSupply, nMoneySupply
 
 /** Used to marshal pointers into hashes for db storage. */
 class CDiskBlockIndex : public CBlockIndex
@@ -423,12 +493,23 @@ public:
         READWRITE(hashMerkleRoot);
         READWRITE(nTime);
         READWRITE(nBits);
-        if (nTime < nKAWPOWActivationTime) {
+        if (nTime < nEQUIHASHActivationTime) {
             READWRITE(nNonce);
         } else {
             //KAWPOW
-            READWRITE(nNonce64);
-            READWRITE(mix_hash);
+//            READWRITE(nNonce64);
+//            READWRITE(mix_hash);
+            READWRITE(nNonce);
+            READWRITE(nSolution);
+        }
+
+
+        if (nVersion > 3 && nVersion < 7)
+            READWRITE(nAccumulatorCheckpoint);
+
+        if (nVersion >= 8) {
+            READWRITE(hashFinalSaplingRoot);
+            READWRITE(nSaplingValue);
         }
 
     }
@@ -446,9 +527,15 @@ public:
         block.nHeight         = nHeight;
         block.nNonce64        = nNonce64;
         block.mix_hash        = mix_hash;
+        block.nSolution       = nSolution;
+
+        if (nVersion > 3 && nVersion < 7)
+            block.nAccumulatorCheckpoint = nAccumulatorCheckpoint;
+        if (nVersion >= 8)
+            block.hashFinalSaplingRoot = hashFinalSaplingRoot;
+
         return block.GetHash();
     }
-
 
     std::string ToString() const
     {

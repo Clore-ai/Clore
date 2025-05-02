@@ -1154,6 +1154,11 @@ bool AppInitParameterInteraction()
     RegisterWalletRPC(tableRPC);
 #endif
 
+#ifndef ENABLE_WALLET
+    if (gArgs.SoftSetBoolArg("-staking", false))
+        LogPrintf("AppInit2 : parameter interaction: wallet functionality not enabled -> setting -staking=0\n");
+#endif
+
     nConnectTimeout = gArgs.GetArg("-timeout", DEFAULT_CONNECT_TIMEOUT);
     if (nConnectTimeout <= 0)
         nConnectTimeout = DEFAULT_CONNECT_TIMEOUT;
@@ -1956,6 +1961,9 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
                 pmessagechanneldb->WriteFlag("init", true);
             }
         }
+    }
+    if (gArgs.GetBoolArg("-staking", !bNetwork.fOnRegtest && DEFAULT_STAKING)) {
+        threadGroup.create_thread(boost::bind(&ThreadStakeMinter, boost::cref(chainparams)));
     }
 #endif
 

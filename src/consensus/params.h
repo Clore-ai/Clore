@@ -7,6 +7,7 @@
 #ifndef CLORE_CONSENSUS_PARAMS_H
 #define CLORE_CONSENSUS_PARAMS_H
 
+#include "amount.h"
 #include "uint256.h"
 #include <map>
 #include <string>
@@ -43,6 +44,27 @@ struct BIP9Deployment {
     uint32_t nOverrideRuleChangeActivationThreshold;
 };
 
+enum UpgradeIndex : uint32_t {
+    BASE_NETWORK,
+    UPGRADE_POS,
+    UPGRADE_POS_V2,
+    UPGRADE_ZC,
+    UPGRADE_ZC_V2,
+    UPGRADE_BIP65,
+    UPGRADE_ZC_PUBLIC,
+    UPGRADE_V3_4,
+    UPGRADE_V4_0,
+    UPGRADE_V5_0,
+    UPGRADE_V5_2,
+    UPGRADE_V5_3,
+    UPGRADE_V5_5,
+    UPGRADE_V5_6,
+    UPGRADE_V6_0,
+    UPGRADE_TESTDUMMY,
+    // NOTE: Also add new upgrades to NetworkUpgradeInfo in upgrades.cpp
+    MAX_NETWORK_UPGRADES
+};
+
 /**
  * Parameters that influence chain consensus.
  */
@@ -70,15 +92,90 @@ struct Params {
     /** Proof of work parameters */
     uint256 powLimit;
     uint256 kawpowLimit;
+    uint256 equihashLimit;
     bool fPowAllowMinDifficultyBlocks;
     bool fPowNoRetargeting;
     int64_t nPowTargetSpacing;
     int64_t nPowTargetTimespan;
+    int64_t kawpowHeight;
+    int64_t equihashHeight;
     int64_t DifficultyAdjustmentInterval() const { return nPowTargetTimespan / nPowTargetSpacing; }
     uint256 nMinimumChainWork;
     uint256 defaultAssumeValid;
     bool nSegwitEnabled;
     bool nCSVEnabled;
+
+    /** Proof of stake parameters */
+    uint256 posLimitV1;
+    uint256 posLimitV2;
+    int nBudgetCycleBlocks;
+    int nBudgetFeeConfirmations;
+    int nCoinbaseMaturity;
+    int nFutureTimeDriftPoW;
+    int nFutureTimeDriftPoS;
+    CAmount nMaxMoneyOut;
+    CAmount nMNCollateralAmt;
+    int nMNCollateralMinConf;
+    CAmount nMNBlockReward;
+    CAmount nNewMNBlockReward;
+    int64_t nProposalEstablishmentTime;
+    int nStakeMinAge;
+    int nStakeMinDepth;
+    int64_t nTargetTimespan;
+    int64_t nTargetTimespanV2;
+    int64_t nTargetSpacing;
+    int nTimeSlotLength;
+    int nMaxProposalPayments;
+
+    // height-based activations
+    int height_last_invalid_UTXO;
+    int height_last_ZC_AccumCheckpoint;
+    int height_last_ZC_WrappedSerials;
+
+    // validation by-pass
+    int64_t nPivxBadBlockTime;
+    unsigned int nPivxBadBlockBits;
+
+    int64_t TargetTimespan(const bool fV2 = true) const { return fV2 ? nTargetTimespanV2 : nTargetTimespan; }
+    uint256 ProofOfStakeLimit(const bool fV2) const { return fV2 ? posLimitV2 : posLimitV1; }
+    bool MoneyRange(const CAmount& nValue) const { return (nValue >= 0 && nValue <= nMaxMoneyOut); }
+    bool IsTimeProtocolV2(const int nHeight) const { return NetworkUpgradeActive(nHeight, UPGRADE_V4_0); }
+    int MasternodeCollateralMinConf() const { return nMNCollateralMinConf; }
+
+    int FutureBlockTimeDrift(const int nHeight) const
+    {
+        // PoS (TimeV2): 14 seconds
+        if (IsTimeProtocolV2(nHeight)) return nTimeSlotLength - 1;
+        // PoS (TimeV1): 3 minutes - PoW: 2 hours
+        return (NetworkUpgradeActive(nHeight, UPGRADE_POS) ? nFutureTimeDriftPoS : nFutureTimeDriftPoW);
+    }
+
+    bool IsValidBlockTimeStamp(const int64_t nTime, const int nHeight) const
+    {
+        // Before time protocol V2, blocks can have arbitrary timestamps
+        if (!IsTimeProtocolV2(nHeight)) return true;
+        // Time protocol v2 requires time in slots
+        return (nTime % nTimeSlotLength) == 0;
+    }
+
+    bool HasStakeMinAgeOrDepth(const int contextHeight, const uint32_t contextTime,
+                               const int utxoFromBlockHeight, const uint32_t utxoFromBlockTime) const
+    {
+        // before stake modifier V2, we require the utxo to be nStakeMinAge old
+        if (!NetworkUpgradeActive(contextHeight, Consensus::UPGRADE_V3_4))
+            return (utxoFromBlockTime + nStakeMinAge <= contextTime);
+        // with stake modifier V2+, we require the utxo to be nStakeMinDepth deep in the chain
+        return (contextHeight - utxoFromBlockHeight >= nStakeMinDepth);
+    }
+
+
+    /**
+     * Returns true if the given network upgrade is active as of the given block
+     * height. Caller must check that the height is >= 0 (and handle unknown
+     * heights).
+     */
+    bool NetworkUpgradeActive(int nHeight, Consensus::UpgradeIndex idx) const;
+    
 };
 } // namespace Consensus
 

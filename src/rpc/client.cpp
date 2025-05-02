@@ -216,7 +216,8 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "purgesnapshot", 1, "block_height"},
     { "stop", 0, "wait"},
     { "getkawpowhash", 3, "height"},
-};
+    { "getequihash", 3, "height"},
+    };
 
 class CRPCConvertTable
 {

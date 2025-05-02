@@ -20,6 +20,8 @@
 #include "wallet/walletdb.h"
 #include "wallet/rpcwallet.h"
 #include "assets/assettypes.h"
+#include "chain.h"
+#include "util.h"
 
 #include <algorithm>
 #include <atomic>
@@ -71,6 +73,10 @@ static const unsigned int DEFAULT_TX_CONFIRM_TARGET = 6;
 static const bool DEFAULT_WALLET_RBF = false;
 static const bool DEFAULT_WALLETBROADCAST = true;
 static const bool DEFAULT_DISABLE_WALLET = false;
+//! Default for -staking
+static const bool DEFAULT_STAKING = true;
+//! Default for -coldstaking
+static const bool DEFAULT_COLDSTAKING = true;
 
 extern const char * DEFAULT_WALLET_DAT;
 
@@ -78,6 +84,7 @@ static const int64_t TIMESTAMP_MIN = 0;
 
 class CBlockIndex;
 class CCoinControl;
+class CStakeableOutput;
 class COutput;
 class CReserveKey;
 class CScript;
@@ -141,6 +148,39 @@ public:
         }
     }
 };
+
+class CStakerStatus
+{
+private:
+    const CBlockIndex* tipBlock{nullptr};
+    int64_t nTime{0};
+    int nTries{0};
+    int nCoins{0};
+
+public:
+    // Get
+    const CBlockIndex* GetLastTip() const { return tipBlock; }
+    uint256 GetLastHash() const { return (GetLastTip() == nullptr ? uint256() : GetLastTip()->GetBlockHash()); }
+    int GetLastHeight() const { return (GetLastTip() == nullptr ? 0 : GetLastTip()->nHeight); }
+    int GetLastCoins() const { return nCoins; }
+    int GetLastTries() const { return nTries; }
+    int64_t GetLastTime() const { return nTime; }
+    // Set
+    void SetLastCoins(const int coins) { nCoins = coins; }
+    void SetLastTries(const int tries) { nTries = tries; }
+    void SetLastTip(const CBlockIndex* lastTip) { tipBlock = lastTip; }
+    void SetLastTime(const uint64_t lastTime) { nTime = lastTime; }
+    void SetNull()
+    {
+        SetLastCoins(0);
+        SetLastTries(0);
+        SetLastTip(nullptr);
+        SetLastTime(0);
+    }
+    // Check whether staking status is active (last attempt earlier than 30 seconds ago)
+    bool IsActive() const { return (nTime + 30) >= GetTime(); }
+};
+
 
 /** Address book data */
 class CAddressBookData
@@ -466,11 +506,14 @@ public:
     //! filter decides which addresses will count towards the debit
     CAmount GetDebit(const isminefilter& filter) const;
     CAmount GetCredit(const isminefilter& filter) const;
+    CAmount GetColdStakingCredit(bool fUseCache = true) const;
     CAmount GetImmatureCredit(bool fUseCache=true) const;
     CAmount GetAvailableCredit(bool fUseCache=true) const;
     CAmount GetImmatureWatchOnlyCredit(const bool& fUseCache=true) const;
     CAmount GetAvailableWatchOnlyCredit(const bool& fUseCache=true) const;
     CAmount GetChange() const;
+    CAmount GetStakeDelegationCredit(bool fUseCache = true) const;
+    CAmount GetLockedCredit() const;
 
     void GetAmounts(std::list<COutputEntry>& listReceived,
                     std::list<COutputEntry>& listSent, CAmount& nFee, std::string& strSentAccount, const isminefilter& filter) const;
@@ -556,6 +599,15 @@ public:
     std::string ToString() const;
 };
 
+class CStakeableOutput : public COutput
+{
+public:
+    const CBlockIndex* pindex{nullptr};
+
+    CStakeableOutput(const CWalletTx* txIn, int iIn, int nDepthIn,
+                     const CBlockIndex*& pindex);
+
+};
 
 
 
@@ -745,6 +797,21 @@ private:
     bool AddWatchOnly(const CScript& dest) override;
 
     std::unique_ptr<CWalletDBWrapper> dbw;
+    struct OutputAvailabilityResult
+    {
+        bool available{false};
+        bool solvable{false};
+        bool spendable{false};
+    };
+
+    OutputAvailabilityResult CheckOutputAvailability(const CTxOut& output,
+                                                     const unsigned int outIndex,
+                                                     const uint256& wtxid,
+                                                     const CCoinControl* coinControl,
+                                                     const bool fCoinsSelected,
+                                                     const bool fIncludeColdStaking,
+                                                     const bool fIncludeDelegated,
+                                                     const bool fIncludeLocked) const;
 
 public:
     /*
@@ -816,6 +883,12 @@ public:
         nRelockTime = 0;
         fAbortRescan = false;
         fScanningWallet = false;
+        // Staker status (last hashed block and time)
+        if (pStakerStatus) {
+            pStakerStatus->SetNull();
+        } else {
+            pStakerStatus = new CStakerStatus();
+        }
     }
 
     std::map<uint256, CWalletTx> mapWallet;
@@ -834,6 +907,11 @@ public:
     std::set<COutPoint> setLockedCoins;
 
     const CWalletTx* GetWalletTx(const uint256& hash) const;
+
+    // Stake split threshold
+    CAmount nStakeSplitThreshold;
+    // Staker status (last hashed block and time)
+    CStakerStatus* pStakerStatus = nullptr;
 
     //! check whether we are allowed to upgrade (or already support) to the named feature
     bool CanSupportFeature(enum WalletFeature wf) const { AssertLockHeld(cs_wallet); return nWalletMaxVersion >= wf; }
@@ -870,7 +948,9 @@ public:
                         const CAmount& nMinimumAmount = 1, const CAmount& nMaximumAmount = MAX_MONEY,
                         const CAmount& nMinimumSumAmount = MAX_MONEY, const uint64_t& nMaximumCount = 0,
                         const int& nMinDepth = 0, const int& nMaxDepth = 9999999) const;
-
+    
+    //! >> Available coins (staking)
+    bool StakeableCoins(std::vector<CStakeableOutput>* pCoins = nullptr);
     /**
      * Return list of available coins and locked coins grouped by non-change output address.
      */
@@ -998,6 +1078,9 @@ public:
     CAmount GetImmatureWatchOnlyBalance() const;
     CAmount GetLegacyBalance(const isminefilter& filter, int minDepth, const std::string* account) const;
     CAmount GetAvailableBalance(const CCoinControl* coinControl = nullptr) const;
+    CAmount loopTxsBalance(const std::function<void(const uint256&, const CWalletTx&, CAmount&)>&method) const;
+    CAmount GetStakingBalance(const bool fIncludeColdStaking = true) const;
+
 
     /**
      * Insert additional inputs into the transaction by
@@ -1032,6 +1115,24 @@ public:
 
     bool CreateNewChangeAddress(CReserveKey& reservekey, CKeyID& keyID, std::string& strFailReason);
 
+    // enumeration for CommitResult (return status of CommitTransaction)
+    enum CommitStatus
+    {
+        OK,
+        Abandoned,              // Failed to accept to memory pool. Successfully removed from the wallet.
+        NotAccepted,            // Failed to accept to memory pool. Unable to abandon.
+    };
+    struct CommitResult
+    {
+        CommitResult(): status(CommitStatus::NotAccepted) {}
+        CWallet::CommitStatus status;
+        uint256 hashTx = uint256();
+        // converts CommitResult in human-readable format
+        std::string ToString() const;
+    };
+    CWallet::CommitResult CommitTransaction(CTransactionRef tx, CReserveKey& opReservekey, CConnman* connman);
+    CWallet::CommitResult CommitTransaction(CTransactionRef tx, CReserveKey* reservekey, CConnman* connman, mapValue_t* extraValues=nullptr);
+
     /** CLORE END */
 
     bool CommitTransaction(CWalletTx& wtxNew, CReserveKey& reservekey, CConnman* connman, CValidationState& state);
@@ -1052,6 +1153,10 @@ public:
     void ReserveKeyFromKeyPool(int64_t& nIndex, CKeyPool& keypool, bool fRequestedInternal);
     void KeepKey(int64_t nIndex);
     void ReturnKey(int64_t nIndex, bool fInternal, const CPubKey& pubkey);
+    //  keystore implementation
+    CTxDestination getNewAddress(const std::string& addressLabel, const std::string purpose);
+    CTxDestination getNewAddress(const std::string& label);
+
     bool GetKeyFromPool(CPubKey &key, bool internal = false);
     int64_t GetOldestKeyPoolTime();
     /**
@@ -1072,6 +1177,7 @@ public:
      */
     CAmount GetDebit(const CTxIn& txin, const isminefilter& filter) const;
     CAmount GetDebit(const CTxIn& txin, const isminefilter& filter, CAssetOutputEntry& assetData) const;
+    CAmount GetColdStakingBalance() const;  // delegated coins for which we have the staking key
     isminetype IsMine(const CTxOut& txout) const;
     CAmount GetCredit(const CTxOut& txout, const isminefilter& filter) const;
     bool IsChange(const CTxOut& txout) const;
@@ -1136,6 +1242,14 @@ public:
 
     void UpdateMyRestrictedAssets(std::string& address, std::string& asset_name,
                                   int type, uint32_t date);
+
+    /**
+    * Blocks until the wallet state is up-to-date to /at least/ the current
+    * chain at the time this function is entered
+    * Obviously holding cs_main/cs_wallet when going into this call may cause
+    * deadlock
+    */
+    void BlockUntilSyncedToCurrentChain();
 
     /** 
      * Address book entry changed.

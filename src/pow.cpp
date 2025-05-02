@@ -47,7 +47,7 @@ unsigned int static DarkGravityWave(const CBlockIndex* pindexLast, const CBlockH
     const CBlockIndex *pindex = pindexLast;
     arith_uint256 bnPastTargetAvg;
 
-    int nKAWPOWBlocksFound = 0;
+    int nEQUIHASHBlocksFound = 0;
     for (unsigned int nCountBlocks = 1; nCountBlocks <= nPastBlocks; nCountBlocks++) {
         arith_uint256 bnTarget = arith_uint256().SetCompact(pindex->nBits);
         if (nCountBlocks == 1) {
@@ -57,9 +57,9 @@ unsigned int static DarkGravityWave(const CBlockIndex* pindexLast, const CBlockH
             bnPastTargetAvg = (bnPastTargetAvg * nCountBlocks + bnTarget) / (nCountBlocks + 1);
         }
 
-        // Count how blocks are KAWPOW mined in the last 180 blocks
-        if (pindex->nTime >= nKAWPOWActivationTime) {
-            nKAWPOWBlocksFound++;
+        // Count how blocks are EQUIHASH mined in the last 180 blocks
+        if (pindex->nTime >= params.equihashHeight) {
+            nEQUIHASHBlocksFound++;
         }
 
         if(nCountBlocks != nPastBlocks) {
@@ -68,14 +68,14 @@ unsigned int static DarkGravityWave(const CBlockIndex* pindexLast, const CBlockH
         }
     }
 
-    // If we are mining a KAWPOW block. We check to see if we have mined
-    // 180 KAWPOW blocks already. If we haven't we are going to return our
-    // temp limit. This will allow us to change algos to kawpow without having to
+    // If we are mining a EQUIHASH block. We check to see if we have mined
+    // 180 EQUIHASH blocks already. If we haven't we are going to return our
+    // temp limit. This will allow us to change algos to EQUIHASH without having to
     // change the DGW math.
-    if (pblock->nTime >= nKAWPOWActivationTime) {
-        if (nKAWPOWBlocksFound != nPastBlocks) {
-            const arith_uint256 bnKawPowLimit = UintToArith256(params.kawpowLimit);
-            return bnKawPowLimit.GetCompact();
+    if (pblock->nTime >= params.equihashHeight) {
+        if (nEQUIHASHBlocksFound != nPastBlocks) {
+            const arith_uint256 bnEQUIHASHLimit = UintToArith256(params.equihashLimit);
+            return bnEQUIHASHLimit.GetCompact();
         }
     }
 
@@ -191,9 +191,21 @@ bool CheckProofOfWork(uint256 hash, unsigned int nBits, const Consensus::Params&
     if (fNegative || bnTarget == 0 || fOverflow || bnTarget > UintToArith256(params.powLimit))
         return false;
 
+
     // Check proof of work matches claimed amount
     if (UintToArith256(hash) > bnTarget)
         return false;
 
     return true;
+}
+
+uint256 GetPOWHash(const CBlockHeader& block, int height, const Consensus::Params& params)
+{
+    if (height >= params.equihashHeight) {
+        return block.GetEQUIHASHHeaderHash();  // Uses CKAWPOWInput for now
+    } else if (height >= params.kawpowHeight) {
+        return block.GetKAWPOWHeaderHash();    // KawPoW should already be implemented
+    } else {
+        return block.GetX16RHash();      // Default algorithm
+    }
 }
