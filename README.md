@@ -57,8 +57,11 @@ This alpha release lays the groundwork for a **hybrid consensus mechanism**, all
 - Network synchronization under each consensus state
 - Edge cases around staking delegation and block validation
 
+---
 
-Thank you to the Bitcoin developers.
-Thank you to the Ravencoin developers.
-Thank you to the Neoxa developers.
-Thank you to the Pivx developers.
+## Thank you to the following:
+
+- Bitcoin developers
+- Ravencoin developers
+- Neoxa developers
+- Pivx developers
