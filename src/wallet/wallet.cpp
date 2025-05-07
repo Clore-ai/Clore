@@ -4257,6 +4257,11 @@ bool CWallet::DelAddressBook(const CTxDestination& address)
     CWalletDB(*dbw).ErasePurpose(EncodeDestination(address));
     return CWalletDB(*dbw).EraseName(EncodeDestination(address));
 }
+bool CWallet::HasAddressBook(const CTxDestination& address) const
+{
+    LOCK(cs_wallet);
+    return mapAddressBook.count(address);
+}
 
 const std::string& CWallet::GetAccountName(const CScript& scriptPubKey) const
 {

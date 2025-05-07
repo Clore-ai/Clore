@@ -2747,6 +2747,110 @@ UniValue listlockunspent(const JSONRPCRequest& request)
     return ret;
 }
 
+UniValue listcoldutxos(const JSONRPCRequest& request)
+{
+    CWallet * const pwallet = GetWalletForJSONRPCRequest(request);
+
+    if (!pwallet) {
+        throw JSONRPCError(RPC_WALLET_NOT_FOUND, "Wallet not loaded");
+    }
+
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() > 1) {
+        throw std::runtime_error(
+            "listcoldutxos ( not_whitelisted )\n"
+            "\nList P2CS unspent outputs received by this wallet as cold-staker-\n"
+
+            "\nArguments:\n"
+            "1. not_whitelisted   (boolean, optional, default=false) Whether to exclude P2CS from whitelisted delegators.\n"
+
+            "\nResult:\n"
+            "[\n"
+            "  {\n"
+            "    \"txid\" : \"true\",            (string) The transaction id of the P2CS utxo\n"
+            "    \"txidn\" : n                 (numeric) The output number of the P2CS utxo\n"
+            "    \"amount\" : x.xxx,           (numeric) The amount of the P2CS utxo\n"
+            "    \"confirmations\" : n         (numeric) The number of confirmations of the P2CS utxo\n"
+            "    \"cold-staker\" : \"address\"   (string) The cold-staker address of the P2CS utxo\n"
+            "    \"coin-owner\" : \"address\"    (string) The coin-owner address of the P2CS utxo\n"
+            "    \"whitelisted\" : \"true\"      (boolean) \"true\"/\"false\" coin-owner in delegator whitelist\n"
+            "  }\n"
+            "  ,...\n"
+            "]\n"
+
+            "\nExamples:\n" +
+            HelpExampleCli("listcoldutxos", "") + HelpExampleCli("listcoldutxos", "true"));
+        }
+
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    bool fExcludeWhitelisted = false;
+    if (request.params.size() > 0) {
+        fExcludeWhitelisted = request.params[0].get_bool();
+    }
+    UniValue results(UniValue::VARR);
+
+    for (const auto& entry : pwallet->mapWallet) {
+
+        const uint256& wtxid = entry.first;
+        const CWalletTx* pcoin = &entry.second;
+        
+        if (!pcoin || !pcoin->tx) {
+            continue;
+        }
+        if (!pcoin->tx) {
+            continue;
+        }
+        if (!CheckFinalTx(*pcoin->tx) || !pcoin->IsTrusted()) {
+            continue;
+        }
+
+        // if this tx has no unspent P2CS outputs for us, skip it
+        if(pcoin->GetColdStakingCredit() == 0 && pcoin->GetStakeDelegationCredit() == 0) {
+            continue;
+        }
+
+        for (unsigned int i = 0; i < pcoin->tx->vout.size(); i++) {
+            const CTxOut& out = pcoin->tx->vout[i];
+            isminetype mine = pwallet->IsMine(out);
+            if (!bool(mine & ISMINE_COLD) && !bool(mine & ISMINE_SPENDABLE_DELEGATED)) {
+                continue;
+            }
+            txnouttype type;
+            std::vector<CTxDestination> addresses;
+            int nRequired;
+            if (!ExtractDestinations(out.scriptPubKey, type, addresses, nRequired)) {
+                continue;
+            }
+            if (addresses.size() < 2) {
+                continue;
+            }
+            if (addresses.empty()) {
+                continue;
+            }
+            const bool fWhitelisted = (addresses.size() > 1) && (pwallet->HasAddressBook(addresses[1]) > 0);
+            if (fExcludeWhitelisted && fWhitelisted) {
+                continue;
+            }
+            UniValue entry(UniValue::VOBJ);
+            entry.pushKV("txid", wtxid.GetHex());
+            entry.pushKV("txidn", (int)i);
+            entry.pushKV("amount", ValueFromAmount(out.nValue));
+            entry.pushKV("confirmations", pcoin->GetDepthInMainChain());
+            entry.pushKV("cold-staker", EncodeDestination(addresses[0]));
+            entry.pushKV("coin-owner", EncodeDestination(addresses[1]));
+            entry.pushKV("whitelisted", fWhitelisted ? "true" : "false");
+            results.push_back(entry);
+        }
+    }
+
+    return results;
+}
+
+
 UniValue settxfee(const JSONRPCRequest& request)
 {
     CWallet * const pwallet = GetWalletForJSONRPCRequest(request);
@@ -3847,6 +3951,7 @@ static const CRPCCommand commands[] =
     { "wallet",             "listsinceblock",           &listsinceblock,           {"blockhash","target_confirmations","include_watchonly","include_removed"} },
     { "wallet",             "listtransactions",         &listtransactions,         {"account","count","skip","include_watchonly"} },
     { "wallet",             "listunspent",              &listunspent,              {"minconf","maxconf","addresses","include_unsafe","query_options"} },
+    { "wallet",             "listcoldutxos",            &listcoldutxos,            {"not_whitelisted"} },
     { "wallet",             "listwallets",              &listwallets,              {} },
     { "wallet",             "lockunspent",              &lockunspent,              {"unlock","transactions"} },
     { "wallet",             "move",                     &movecmd,                  {"fromaccount","toaccount","amount","minconf","comment"} },
