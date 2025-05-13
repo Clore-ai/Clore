@@ -1358,29 +1358,28 @@ bool ReadBlockFromDisk(CBlock& block, const CBlockIndex* pindex, const Consensus
     return true;
 }
 
+int64_t IntPow(int64_t base, int64_t exp, int64_t scale) {
+    int64_t result = scale;
+    while (exp > 0) {
+        if (exp % 2 == 1) {
+            result = (result * base) / scale;
+        }
+        base = (base * base) / scale;
+        exp /= 2;
+    }
+    return result;
+}
+
 CAmount GetBlockSubsidy(int nHeight, const Consensus::Params& consensusParams)
 {
-    /*if(!log_all){
-        log_all=true;
-        CAmount lr=1;
-        int height=1;
-        while (lr!=0){
-            lr = 54193019856*pow(1-0.00000041686938347033551682078457954749861613663597381673753261566162109375,height);
-            error("block_:%i,%i",height,lr);
-            height++;
-        }
-    }*/
-    const CAmount initialReward = 54193019856;  
-    const int64_t decayFactor = 99999995;       
+    const CAmount initialReward = 54193019856;
+    const int64_t decayFactor = 99999995;  // Equivalent to (1 - 0.0000005)
     const int64_t scale = 100000000;
 
-    CAmount nSubsidy = initialReward;
-    for (int i = 0; i < nHeight; ++i) {
-        nSubsidy = (nSubsidy * decayFactor) / scale;
-        if (nSubsidy < 1) break;
-    }
+    int64_t decay = IntPow(decayFactor, nHeight, scale);
+    CAmount nSubsidy = (initialReward * decay) / scale;
 
-    return nSubsidy;
+    return nSubsidy < 1 ? 0 : nSubsidy;
 }
 
 bool IsInitialBlockDownload()
