@@ -187,25 +187,36 @@ bool CheckProofOfWork(uint256 hash, unsigned int nBits, const Consensus::Params&
 
     bnTarget.SetCompact(nBits, &fNegative, &fOverflow);
 
-    // Check range
-    if (fNegative || bnTarget == 0 || fOverflow || bnTarget > UintToArith256(params.powLimit))
+    if (fNegative || bnTarget == 0 || fOverflow || bnTarget > UintToArith256(params.powLimit)) {
+        LogPrintf("[CheckProofOfWork] Invalid target range: %s\n", bnTarget.ToString());
         return false;
+    }
 
-
-    // Check proof of work matches claimed amount
-    if (UintToArith256(hash) > bnTarget)
+    if (UintToArith256(hash) > bnTarget) {
+        LogPrintf("[CheckProofOfWork] PoW failed: hash=%s > target=%s\n", hash.ToString(), bnTarget.ToString());
         return false;
+    }
 
+    LogPrintf("[CheckProofOfWork] PoW accepted: hash=%s <= target=%s\n", hash.ToString(), bnTarget.ToString());
     return true;
 }
 
 uint256 GetPOWHash(const CBlockHeader& block, int height, const Consensus::Params& params)
 {
+    uint256 hash;
+
     if (height >= params.equihashHeight) {
-        return block.GetEQUIHASHHeaderHash();  // Uses CKAWPOWInput for now
+        hash = block.GetEQUIHASHHeaderHash();
+        LogPrintf("[GetPOWHash] Using Equihash at height %d\n", height);
     } else if (height >= params.kawpowHeight) {
-        return block.GetKAWPOWHeaderHash();    // KawPoW should already be implemented
+        hash = block.GetKAWPOWHeaderHash();
+        LogPrintf("[GetPOWHash] Using KawPoW at height %d\n", height);
     } else {
-        return block.GetX16RHash();      // Default algorithm
+        hash = block.GetX16RHash();
+        LogPrintf("[GetPOWHash] Using X16R at height %d\n", height);
     }
+
+    LogPrintf("[GetPOWHash] Block version: %08x\n", block.nVersion);
+    LogPrintf("[GetPOWHash] Computed PoW hash: %s\n", hash.ToString());
+    return hash;
 }
