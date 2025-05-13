@@ -1370,7 +1370,16 @@ CAmount GetBlockSubsidy(int nHeight, const Consensus::Params& consensusParams)
             height++;
         }
     }*/
-    CAmount nSubsidy = 54193019856*pow(1-0.00000041686938347033551682078457954749861613663597381673753261566162109375,nHeight);
+    const CAmount initialReward = 54193019856;  
+    const int64_t decayFactor = 99999995;       
+    const int64_t scale = 100000000;
+
+    CAmount nSubsidy = initialReward;
+    for (int i = 0; i < nHeight; ++i) {
+        nSubsidy = (nSubsidy * decayFactor) / scale;
+        if (nSubsidy < 1) break;
+    }
+
     return nSubsidy;
 }
 
