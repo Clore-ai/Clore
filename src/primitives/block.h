@@ -248,12 +248,10 @@ struct CBlockLocator
 class CKAWPOWInput : private CBlockHeader
 {
 public:
-    uint32_t nHeight;
     CKAWPOWInput(const CBlockHeader &header)
     {
         CBlockHeader::SetNull();
         *((CBlockHeader*)this) = header;
-        nHeight = 0;
     }
 
     ADD_SERIALIZE_METHODS;
@@ -265,6 +263,9 @@ public:
         READWRITE(hashMerkleRoot);
         READWRITE(nTime);
         READWRITE(nBits);
+        READWRITE(nHeight);
+        READWRITE(nNonce64);       
+        READWRITE(mix_hash);       
     }
 };
 
@@ -288,6 +289,9 @@ public:
         READWRITE(hashMerkleRoot);
         READWRITE(nTime);
         READWRITE(nBits);
+        READWRITE(nHeight);
+        READWRITE(nNonce64);       
+        READWRITE(mix_hash); 
     }
 };
 
