@@ -205,18 +205,7 @@ uint256 GetPOWHash(const CBlockHeader& block, int height, const Consensus::Param
 {
     uint256 hash;
 
-    if (height >= params.equihashHeight) {
-        hash = block.GetEQUIHASHHeaderHash();
-        LogPrintf("[GetPOWHash] Using Equihash at height %d\n", height);
-    } else if (height >= params.kawpowHeight) {
-        hash = block.GetKAWPOWHeaderHash();
-        LogPrintf("[GetPOWHash] Using KawPoW at height %d\n", height);
-    } else {
-        hash = block.GetX16RHash();
-        LogPrintf("[GetPOWHash] Using X16R at height %d\n", height);
-    }
+    hash = block.GetX16RHash();
 
-    LogPrintf("[GetPOWHash] Block version: %08x\n", block.nVersion);
-    LogPrintf("[GetPOWHash] Computed PoW hash: %s\n", hash.ToString());
     return hash;
 }
