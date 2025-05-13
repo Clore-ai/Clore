@@ -320,8 +320,8 @@ public:
         consensus.nStakeMinDepth = 100;
         consensus.nPowTargetTimespan = 1 * 60 * 60 * 24; // Typically 1 day (can vary depending on the cryptocurrency, Zcash uses 1 day)
         consensus.nPowTargetSpacing = 2.5 * 60; // 2.5 minutes, typical for Zcash, adjust as necessary
-        consensus.kawpowHeight = 1000; // switch to kawpow at block 1000
-        consensus.equihashHeight = 1050; //switch to equihash 50 blocks later
+        consensus.kawpowHeight = 300; // switch to kawpow at block 1000
+        consensus.equihashHeight = 350; //switch to equihash 50 blocks later
 	consensus.fPowAllowMinDifficultyBlocks = false;
         consensus.fPowNoRetargeting = false;
         consensus.nRuleChangeActivationThreshold = 1613; // Approx 80% of 2016

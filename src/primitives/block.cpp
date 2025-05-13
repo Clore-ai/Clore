@@ -94,7 +94,7 @@ uint256 CBlockHeader::GetX16RV2Hash() const
  */
 uint256 CBlockHeader::GetKAWPOWHeaderHash() const
 {
-    CEQUIHASHInput input{*this};
+    CKAWPOWInput input{*this};
 
     return SerializeHash(input);
 }
