@@ -3471,7 +3471,16 @@ bool CWallet::CreateTransaction(const std::vector<CRecipient>& vecSend, CWalletT
     CReissueAsset reissueAsset;
     CTxDestination destination;
     AssetType assetType = AssetType::INVALID;
+
     return CreateTransactionAll(vecSend, wtxNew, reservekey, nFeeRet, nChangePosInOut, strFailReason, coin_control, false,  asset, destination, false, false, reissueAsset, assetType, sign);
+}
+bool CWallet::CreateTransaction(CScript scriptPubKey, const CAmount& nValue, CWalletTx& wtxNew, CReserveKey& reservekey, CAmount& nFeeRet, std::string& strFailReason, const CCoinControl& coinControl, CAmount nFeePay, bool fIncludeDelegated, bool* fStakeDelegationVoided, int nExtraSize, int nMinDepth)
+{
+    std::vector<CRecipient> vecSend;
+    CRecipient recipient = {scriptPubKey, nValue, false};
+    vecSend.push_back(recipient);
+    int nChangePosInOut = -1;
+    return CreateTransaction(vecSend, wtxNew, reservekey, nFeeRet, nChangePosInOut, strFailReason, coinControl, true);
 }
 
 bool CWallet::CreateTransactionAll(const std::vector<CRecipient>& vecSend, CWalletTx& wtxNew, CReserveKey& reservekey,
@@ -3495,19 +3504,22 @@ bool CWallet::CreateTransactionAll(const std::vector<CRecipient>& vecSend, CWall
                                    const AssetType& assetType, bool sign)
 {
     /** CLORE START */
-    if (!AreAssetsDeployed() && (fTransferAsset || fNewAsset || fReissueAsset))
+    if (!AreAssetsDeployed() && (fTransferAsset || fNewAsset || fReissueAsset)) {
         return false;
+    }
 
-    if (fNewAsset && (assets.size() < 1 || !IsValidDestination(destination)))
+    if (fNewAsset && (assets.size() < 1 || !IsValidDestination(destination))) {
         return error("%s : Tried creating a new asset transaction and the asset was null or the destination was invalid", __func__);
+    }
 
-    if ((fNewAsset && fTransferAsset) || (fReissueAsset && fTransferAsset) || (fReissueAsset && fNewAsset))
-        return error("%s : Only one type of asset transaction allowed per transaction");
+    if ((fNewAsset && fTransferAsset) || (fReissueAsset && fTransferAsset) || (fReissueAsset && fNewAsset)) {
+        return error("%s : Only one type of asset transaction allowed per transaction", __func__);
+    }
 
-    if (fReissueAsset && (reissueAsset.IsNull() || !IsValidDestination(destination)))
+    if (fReissueAsset && (reissueAsset.IsNull() || !IsValidDestination(destination))) {
         return error("%s : Tried reissuing an asset and the reissue data was null or the destination was invalid", __func__);
+    }
     /** CLORE END */
-
     CAmount nValue = 0;
     std::map<std::string, CAmount> mapAssetValue;
     int nChangePosRequest = nChangePosInOut;
@@ -3547,7 +3559,6 @@ bool CWallet::CreateTransactionAll(const std::vector<CRecipient>& vecSend, CWall
         strFailReason = _("Transaction must have at least one recipient");
         return false;
     }
-
     wtxNew.fTimeReceivedIsTxTime = true;
     wtxNew.BindWallet(this);
     CMutableTransaction txNew;
@@ -3583,6 +3594,7 @@ bool CWallet::CreateTransactionAll(const std::vector<CRecipient>& vecSend, CWall
 
     assert(txNew.nLockTime <= (unsigned int)chainActive.Height());
     assert(txNew.nLockTime < LOCKTIME_THRESHOLD);
+
     FeeCalculation feeCalc;
     CAmount nFeeNeeded;
     unsigned int nBytes;
@@ -3599,6 +3611,7 @@ bool CWallet::CreateTransactionAll(const std::vector<CRecipient>& vecSend, CWall
                 AvailableCoinsWithAssets(vAvailableCoins, mapAssetCoins, true, &coin_control);
             else
                 AvailableCoins(vAvailableCoins, true, &coin_control);
+
             /** CLORE END */
             // Create change script that will be used if we need change
             // TODO: pass in scriptChange instead of reservekey so
@@ -3609,12 +3622,14 @@ bool CWallet::CreateTransactionAll(const std::vector<CRecipient>& vecSend, CWall
             // coin control: send change to custom address
             if (!boost::get<CNoDestination>(&coin_control.destChange)) {
                 scriptChange = GetScriptForDestination(coin_control.destChange);
+
             } else {
 
                 // no coin control: send change to newly generated address
                 CKeyID keyID;
-                if (!CreateNewChangeAddress(reservekey, keyID, strFailReason))
+                if (!CreateNewChangeAddress(reservekey, keyID, strFailReason)) {
                     return false;
+                }
 
                 scriptChange = GetScriptForDestination(keyID);
             }
@@ -3688,6 +3703,7 @@ bool CWallet::CreateTransactionAll(const std::vector<CRecipient>& vecSend, CWall
                         else {
                             strFailReason = _("Transaction amount too small");
                         }
+                        LogPrintf("Transaction amount too small error");
                         return false;
                     }
 
@@ -3695,6 +3711,7 @@ bool CWallet::CreateTransactionAll(const std::vector<CRecipient>& vecSend, CWall
                 }
 
                 // Choose coins to use
+
                 if (pick_new_inputs) {
                     nValueIn = 0;
                     setCoins.clear();
@@ -4051,7 +4068,7 @@ bool CWallet::CreateTransactionAll(const std::vector<CRecipient>& vecSend, CWall
             return false;
         }
     }
-
+    LogPrintf("DEBUG: Transaction successfully built\n");
     LogPrintf("Fee Calculation: Fee:%d Bytes:%u Needed:%d Tgt:%d (requested %d) Reason:\"%s\" Decay %.5f: Estimation: (%g - %g) %.2f%% %.1f/(%.1f %d mem %.1f out) Fail: (%g - %g) %.2f%% %.1f/(%.1f %d mem %.1f out)\n",
               nFeeRet, nBytes, nFeeNeeded, feeCalc.returnedTarget, feeCalc.desiredTarget, StringForFeeReason(feeCalc.reason), feeCalc.est.decay,
               feeCalc.est.pass.start, feeCalc.est.pass.end,
@@ -5250,5 +5267,4 @@ CStakeableOutput::CStakeableOutput(const CWalletTx* txIn,
 COutput(txIn, iIn, nDepthIn, true /*fSpendable*/, true/*fSolvable*/, true/*fSafe*/),
 pindex(_pindex)
 {}
-
 

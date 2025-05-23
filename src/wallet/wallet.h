@@ -1101,6 +1101,9 @@ public:
 
     bool CreateTransaction(const std::vector<CRecipient>& vecSend, CWalletTx& wtxNew, CReserveKey& reservekey, CAmount& nFeeRet, int& nChangePosInOut,
                            std::string& strFailReason, const CCoinControl& coin_control, bool sign = true);
+    
+    bool CreateTransaction(CScript scriptPubKey, const CAmount& nValue, CWalletTx& tx, CReserveKey& reservekey, CAmount& nFeeRet, 
+        std::string& strFailReason, const CCoinControl& coinControl, CAmount nFeePay = 0, bool fIncludeDelegated = false, bool* fStakeDelegationVoided = nullptr, int nExtraSize = 0, int nMinDepth = 0);
 
     /**
      * Create a new transaction paying the recipients with a set of coins

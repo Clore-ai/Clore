@@ -2749,7 +2749,7 @@ UniValue listlockunspent(const JSONRPCRequest& request)
 
 UniValue listcoldutxos(const JSONRPCRequest& request)
 {
-    CWallet * const pwallet = GetWalletForJSONRPCRequest(request);
+    CWallet* const pwallet = GetWalletForJSONRPCRequest(request);
 
     if (!pwallet) {
         throw JSONRPCError(RPC_WALLET_NOT_FOUND, "Wallet not loaded");
@@ -2763,10 +2763,8 @@ UniValue listcoldutxos(const JSONRPCRequest& request)
         throw std::runtime_error(
             "listcoldutxos ( not_whitelisted )\n"
             "\nList P2CS unspent outputs received by this wallet as cold-staker-\n"
-
             "\nArguments:\n"
             "1. not_whitelisted   (boolean, optional, default=false) Whether to exclude P2CS from whitelisted delegators.\n"
-
             "\nResult:\n"
             "[\n"
             "  {\n"
@@ -2780,10 +2778,10 @@ UniValue listcoldutxos(const JSONRPCRequest& request)
             "  }\n"
             "  ,...\n"
             "]\n"
-
             "\nExamples:\n" +
-            HelpExampleCli("listcoldutxos", "") + HelpExampleCli("listcoldutxos", "true"));
-        }
+            HelpExampleCli("listcoldutxos", "") +
+            HelpExampleCli("listcoldutxos", "true"));
+    }
 
     LOCK2(cs_main, pwallet->cs_wallet);
 
@@ -2791,53 +2789,53 @@ UniValue listcoldutxos(const JSONRPCRequest& request)
     if (request.params.size() > 0) {
         fExcludeWhitelisted = request.params[0].get_bool();
     }
+
     UniValue results(UniValue::VARR);
 
-    for (const auto& entry : pwallet->mapWallet) {
+    for (const auto& mapEntry : pwallet->mapWallet) {
+        const uint256& wtxid = mapEntry.first;
+        const CWalletTx* pcoin = &mapEntry.second;
 
-        const uint256& wtxid = entry.first;
-        const CWalletTx* pcoin = &entry.second;
-        
         if (!pcoin || !pcoin->tx) {
             continue;
         }
-        if (!pcoin->tx) {
-            continue;
-        }
+
         if (!CheckFinalTx(*pcoin->tx) || !pcoin->IsTrusted()) {
             continue;
         }
 
-        // if this tx has no unspent P2CS outputs for us, skip it
-        if(pcoin->GetColdStakingCredit() == 0 && pcoin->GetStakeDelegationCredit() == 0) {
+        if (pcoin->GetColdStakingCredit() == 0 && pcoin->GetStakeDelegationCredit() == 0) {
             continue;
         }
 
-        for (unsigned int i = 0; i < pcoin->tx->vout.size(); i++) {
+        for (unsigned int i = 0; i < pcoin->tx->vout.size(); ++i) {
             const CTxOut& out = pcoin->tx->vout[i];
             isminetype mine = pwallet->IsMine(out);
-            if (!bool(mine & ISMINE_COLD) && !bool(mine & ISMINE_SPENDABLE_DELEGATED)) {
+
+            if (!(mine & ISMINE_COLD) && !(mine & ISMINE_SPENDABLE_DELEGATED)) {
                 continue;
             }
+
             txnouttype type;
             std::vector<CTxDestination> addresses;
             int nRequired;
+
             if (!ExtractDestinations(out.scriptPubKey, type, addresses, nRequired)) {
                 continue;
             }
+
             if (addresses.size() < 2) {
                 continue;
             }
-            if (addresses.empty()) {
-                continue;
-            }
-            const bool fWhitelisted = (addresses.size() > 1) && (pwallet->HasAddressBook(addresses[1]) > 0);
+
+            const bool fWhitelisted = pwallet->HasAddressBook(addresses[1]) > 0;
             if (fExcludeWhitelisted && fWhitelisted) {
                 continue;
             }
+
             UniValue entry(UniValue::VOBJ);
             entry.pushKV("txid", wtxid.GetHex());
-            entry.pushKV("txidn", (int)i);
+            entry.pushKV("txidn", static_cast<int>(i));
             entry.pushKV("amount", ValueFromAmount(out.nValue));
             entry.pushKV("confirmations", pcoin->GetDepthInMainChain());
             entry.pushKV("cold-staker", EncodeDestination(addresses[0]));
@@ -3695,21 +3693,18 @@ static CTxDestination GetNewAddressFromLabel(CWallet* const pwallet, const std::
     return r;
 }
 
-static UniValue CreateColdStakeDelegation(CWallet* const pwallet, const UniValue& params, CWalletTx& wtxNew, CReserveKey& reservekey)
+static UniValue CreateColdStakeDelegation(CWallet* const pwallet, const UniValue& params, CWalletTx& txNew, CReserveKey& reservekey)
 {
     LOCK2(cs_main, pwallet->cs_wallet);
-    LogPrintf("DEBUG: Entered CreateColdStakeDelegation\n");
 
     // Check that Cold Staking has been enforced or fForceNotEnabled = true
     bool fForceNotEnabled = false;
     if (params.size() > 6 && !params[6].isNull())
         fForceNotEnabled = params[6].get_bool();
-    LogPrintf("DEBUG: fForceNotEnabled = %d\n", fForceNotEnabled);
 
     // Get Staking Address
     bool isStaking{false};
     CTxDestination stakeAddr = DecodeDestination(params[0].get_str());
-    LogPrintf("DEBUG: Decoded staking address = %s\n", params[0].get_str());
     if (!IsValidDestination(stakeAddr) || isStaking)
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Clore staking address");
 
@@ -3717,11 +3712,8 @@ static UniValue CreateColdStakeDelegation(CWallet* const pwallet, const UniValue
     if (!stakeKey)
         throw JSONRPCError(RPC_WALLET_ERROR, "Unable to get stake pubkey hash from stakingaddress");
 
-    LogPrintf("DEBUG: stakeKey successfully retrieved\n");
-
     // Get Amount
     CAmount nValue = AmountFromValue(params[1]);
-    LogPrintf("DEBUG: Stake amount = %lld\n", nValue);
     if (nValue < MIN_COLDSTAKING_AMOUNT)
         throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("Invalid amount (%d). Min amount: %d",
                                                             nValue, MIN_COLDSTAKING_AMOUNT));
@@ -3730,11 +3722,9 @@ static UniValue CreateColdStakeDelegation(CWallet* const pwallet, const UniValue
     bool fUseDelegated = false;
     if (params.size() > 4 && !params[4].isNull())
         fUseDelegated = params[4].get_bool();
-    LogPrintf("DEBUG: fUseDelegated = %d\n", fUseDelegated);
 
     // Check amount
     CAmount currBalance = pwallet->GetAvailableBalance();
-    LogPrintf("DEBUG: Wallet balance = %lld\n", currBalance);
 
     if (nValue > currBalance)
         throw JSONRPCError(RPC_WALLET_INSUFFICIENT_FUNDS, "Insufficient funds");
@@ -3768,7 +3758,6 @@ static UniValue CreateColdStakeDelegation(CWallet* const pwallet, const UniValue
             throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, errMsg);
         }
         ownerAddressStr = params[2].get_str();
-        LogPrintf("DEBUG: Using provided owner key\n");
     } else {
         // Get new owner address from keypool
         CTxDestination ownerAddr = GetNewAddressFromLabel(pwallet, "delegated", NullUniValue);
@@ -3777,44 +3766,24 @@ static UniValue CreateColdStakeDelegation(CWallet* const pwallet, const UniValue
         assert(pOwnerKey);
         ownerKey = *pOwnerKey;
         ownerAddressStr = EncodeDestination(ownerAddr);
-        LogPrintf("DEBUG: Generated new owner address = %s\n", ownerAddressStr);
     }
 
-    LogPrintf("DEBUG: Preparing result\n");
-
-    CScript scriptPubKey = GetScriptForDestination(resultAddr);
+    CScript scriptPubKey = GetScriptForStakeDelegation(*stakeKey, ownerKey);
 
     // 5. Prepare transaction creation
     CAmount nFeeRequired;
-    int nChangePosRet = -1;
-    std::vector<CRecipient> vecSend = {
-            {scriptPubKey, nValue, false}
-    };
+    CCoinControl coin_control;
 
-    CCoinControl coin_control; // default (no restrictions)
-    CAmount curBalance = pwallet->GetBalance();
-
-    if (!pwallet->CreateTransaction(vecSend, wtxNew, reservekey, nFeeRequired, nChangePosRet, strError, coin_control)) {
-        if (nValue + nFeeRequired > curBalance && !vecSend[0].fSubtractFeeFromAmount)
+    if (!pwallet->CreateTransaction(scriptPubKey, nValue, txNew, reservekey, nFeeRequired, strError, coin_control, (CAmount)0, fUseDelegated)) { 
+        if (nValue + nFeeRequired > currBalance)
             strError = strprintf("This transaction requires a fee of at least %s", FormatMoney(nFeeRequired));
         throw JSONRPCError(RPC_WALLET_ERROR, strError);
     }
 
-    // 6. Commit transaction to mempool
-    CValidationState state;
-    if (!pwallet->CommitTransaction(wtxNew, reservekey, g_connman.get(), state)) {
-        strError = strprintf("Transaction rejected: %s", state.GetRejectReason());
-        throw JSONRPCError(RPC_WALLET_ERROR, strError);
-    }
-
-
     UniValue result(UniValue::VOBJ);
     result.pushKV("owner_address", ownerAddressStr);
     result.pushKV("staker_address", EncodeDestination(stakeAddr));
-    result.pushKV("txid", wtxNew.GetHash().GetHex());
 
-    LogPrintf("DEBUG: Cold stake delegation successful. txid: %s\n", wtxNew.GetHash().GetHex());
-    LogPrintf("DEBUG: Returning from CreateColdStakeDelegation\n");
     return result;
 }
 
@@ -3861,6 +3830,10 @@ UniValue delegatestake(const JSONRPCRequest& request)
     CWalletTx wtx;
     CReserveKey reservekey(pwallet);
     UniValue ret = CreateColdStakeDelegation(pwallet, request.params, wtx, reservekey);
+    CValidationState state;
+    if(!pwallet->CommitTransaction(wtx, reservekey, g_connman.get(), state))
+        throw JSONRPCError(RPC_WALLET_ERROR, "got error commit transaction");
+
     ret.pushKV("txid", wtx.GetHash().GetHex());
     return ret;
 }

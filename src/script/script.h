@@ -190,7 +190,7 @@ enum opcodetype
     OP_CLORE_ASSET = 0xc0,
     /** CLORE END */
 
-
+    OP_CHECKCOLDSTAKEVERIFY = 0xd2,
     // template matching params
     OP_SMALLINTEGER = 0xfa,
     OP_PUBKEYS = 0xfb,

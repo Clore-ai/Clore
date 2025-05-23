@@ -143,6 +143,8 @@ CScript GetScriptForMultisig(int nRequired, const std::vector<CPubKey>& keys);
 /** Generate a script that contains an address used for qualifier, and restricted assets data transactions */
 CScript GetScriptForNullAssetDataDestination(const CTxDestination &dest);
 
+CScript GetScriptForStakeDelegation(const CKeyID& stakingKey, const CKeyID& spendingKey);
+
 /**
  * Generate a pay-to-witness script for the given redeem script. If the redeem
  * script is P2PK or P2PKH, this returns a P2WPKH script, otherwise it returns a
