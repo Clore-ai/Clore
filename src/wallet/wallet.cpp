@@ -2097,7 +2097,7 @@ CAmount CWallet::loopTxsBalance(const std::function<void(const uint256&, const C
 CAmount CWallet::GetColdStakingBalance() const
 {
     return loopTxsBalance([](const uint256& id, const CWalletTx& pcoin, CAmount& nTotal) {
-        if (pcoin.IsTrusted())
+        if (pcoin.tx->HasP2CSOutputs() && pcoin.IsTrusted())
             nTotal += pcoin.GetColdStakingCredit();
     });
 }

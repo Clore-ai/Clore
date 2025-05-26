@@ -191,6 +191,7 @@ enum opcodetype
     OP_CLORE_ASSET = 0xc0,
     /** CLORE END */
 
+    OP_CHECKCOLDSTAKEVERIFY_LOF = 0xd1,
     OP_CHECKCOLDSTAKEVERIFY = 0xd2,
     // template matching params
     OP_SMALLINTEGER = 0xfa,
@@ -662,6 +663,7 @@ public:
     bool IsPayToPublicKeyHash() const;
 
     bool IsPayToScriptHash() const;
+    bool IsPayToColdStaking() const;
     bool IsPayToWitnessScriptHash() const;
     bool IsWitnessProgram(int& version, std::vector<unsigned char>& program) const;
 

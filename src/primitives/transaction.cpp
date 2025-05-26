@@ -148,3 +148,11 @@ bool CTransaction::IsCoinStake() const
 
     return (vout.size() >= 2 && vout[0].IsEmpty());
 }
+bool CTransaction::HasP2CSOutputs() const
+{
+    for(const CTxOut& txout : vout) {
+        if (txout.scriptPubKey.IsPayToColdStaking())
+            return true;
+    }
+    return false;
+}
