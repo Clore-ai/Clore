@@ -1151,7 +1151,7 @@ public:
                          int64_t& nTxNewTime,
                          std::vector<CStakeableOutput>* availableCoins,
                          bool stopOnNewBlock = true) const;
-
+    bool SignCoinStake(CMutableTransaction& txNew) const;
     /** CLORE END */
 
     bool CommitTransaction(CWalletTx& wtxNew, CReserveKey& reservekey, CConnman* connman, CValidationState& state);

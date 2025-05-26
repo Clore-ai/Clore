@@ -33,6 +33,7 @@
 #include "wallet/fees.h"
 #include "wallet/bip39.h"
 #include "wallet/wallet.h"
+#include "script/sign.h"
 
 #include <assert.h>
 
@@ -4268,6 +4269,19 @@ bool CWallet::CreateCoinStake(
     return fKernelFound;
 }
 
+bool CWallet::SignCoinStake(CMutableTransaction& txNew) const
+{
+    // Sign it
+    int nIn = 0;
+    for (const CTxIn& txIn : txNew.vin) {
+        const CWalletTx* wtx = GetWalletTx(txIn.prevout.hash);
+        if (!wtx || !SignSignature(*this, *(wtx->tx), txNew, nIn++, SIGHASH_ALL, true))
+            return error("%s : failed to sign coinstake", __func__);
+    }
+
+    // Successfully signed coinstake
+    return true;
+}
 /**
  * Call after CreateTransaction unless you want to abort
  */
