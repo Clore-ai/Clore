@@ -393,12 +393,16 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
         pblock->hashMerkleRoot = BlockMerkleRoot(*pblock);
         LogPrintf("CPUMiner : proof-of-stake block found %s \n", pblock->GetHash().GetHex());
     }
-
+    
     {
         LOCK(cs_main);
         if (prevBlock == nullptr && chainActive.Tip() != pindexPrev) return nullptr; // new block came in, move on
 
         CValidationState state;
+        if (fProofOfStake && pblock->nTime <= pindexPrev->GetMedianTimePast()) {
+            LogPrintf("CreateNewBlock(): ERROR - block time too old, adjusting. nTime: %d, MTP: %d\n", pblock->nTime, pindexPrev->GetMedianTimePast());
+            pblock->nTime = pindexPrev->GetMedianTimePast() + 1;
+        }
         if (fTestValidity &&
             !TestBlockValidity(state, chainparams, *pblock, pindexPrev, false, false)) {
             throw std::runtime_error(
