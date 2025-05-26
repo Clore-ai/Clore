@@ -712,7 +712,6 @@ void CheckForCoins(CWallet* pwallet, std::vector<CStakeableOutput>* availableCoi
 
     // control the amount of times the client will check for mintable coins (every block)
     {
-        WAIT_LOCK(g_best_block_mutex, lock);
         if (g_best_block == pwallet->pStakerStatus->GetLastHash())
             return;
     }
