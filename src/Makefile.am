@@ -324,6 +324,8 @@ libclore_wallet_a_SOURCES = \
   wallet/wallet.cpp \
   wallet/walletdb.cpp \
   wallet/bip39.cpp \
+  stakeinput.cpp \
+  kernel.cpp \
   $(CLORE_CORE_H)
 
 # crypto primitives library
@@ -435,6 +437,8 @@ libclore_common_a_SOURCES = \
   script/sign.cpp \
   script/standard.cpp \
   warnings.cpp \
+  stakeinput.cpp \
+  kernel.cpp \
   $(CLORE_CORE_H)
 
 # util: shared between all executables.
@@ -455,7 +459,6 @@ libclore_util_a_SOURCES = \
   sync.cpp \
   threadinterrupt.cpp \
   uint256.cpp \
-  stakeinput.cpp \
   util.cpp \
   utilmoneystr.cpp \
   utilstrencodings.cpp \
