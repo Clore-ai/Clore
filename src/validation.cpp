@@ -564,7 +564,7 @@ static bool CheckInputsFromMempoolAndCache(const CTransaction& tx, CValidationSt
     LOCK(pool.cs);
 
     assert(!tx.IsCoinBase());
-    for (const CTxIn& txin : tx->vin) {
+    for (const CTxIn& txin : tx.vin) {
         const Coin& coin = view.AccessCoin(txin.prevout);
 
         // At this point we haven't actually checked if the coins are all
@@ -4302,7 +4302,7 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
  * need to check that it was unspent on the active chain before the split).
  */
 static bool IsUnspentOnFork(std::unordered_set<COutPoint, SaltedOutpointHasher>& outpoints,
-    const std::set<int>& serials,
+    const std::set<uint256>& serials,
     const CBlockIndex* startIndex, CValidationState& state, const CBlockIndex*& pindexFork)
     {
     // Go backwards on the forked chain up to the split
