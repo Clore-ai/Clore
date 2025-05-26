@@ -400,7 +400,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
 
         CValidationState state;
         if (fProofOfStake && pblock->nTime <= pindexPrev->GetMedianTimePast()) {
-            LogPrintf("CreateNewBlock(): ERROR - block time too old, adjusting. nTime: %d, MTP: %d\n", pblock->nTime, pindexPrev->GetMedianTimePast());
+            LogPrintf("CreateNewBlock() - block time too old, adjusting. nTime: %d, MTP: %d\n", pblock->nTime, pindexPrev->GetMedianTimePast());
             pblock->nTime = pindexPrev->GetMedianTimePast() + 1;
         }
         if (fTestValidity &&

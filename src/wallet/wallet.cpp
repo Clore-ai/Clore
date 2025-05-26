@@ -4117,13 +4117,24 @@ bool CWallet::CreateCoinstakeOuts(const CPivStake& stakeInput, std::vector<CTxOu
             int txSizeMax = MAX_STANDARD_TX_SIZE >> 11; // limit splits to <10% of the max TX size (/2048)
             if (nSplit > txSizeMax)
                 nSplit = txSizeMax;
+
+            CAmount splitAmount = nTotal / nSplit;
             for (int i = nSplit; i > 1; i--) {
                 LogPrintf("%s: StakeSplit: nTotal = %d; adding output %d of %d\n", __func__, nTotal, (nSplit-i)+2, nSplit);
-                vout.emplace_back(0, scriptPubKeyKernel);
+                vout.emplace_back(splitAmount, scriptPubKeyKernel);
             }
+
+            // handle any remainder
+            CAmount remainder = nTotal - (splitAmount * nSplit);
+            if (remainder > 0)
+                vout[0].nValue += remainder; // add leftover to first output
+            return true;
         }
     }
-
+    // no split
+    vout.emplace_back(nTotal, scriptPubKeyKernel);
+    if (vout.empty() || vout[0].nValue <= 0)
+        return error("%s: created output with no value", __func__);
     return true;
 }
 int CWallet::GetLastBlockHeightLockWallet() const
