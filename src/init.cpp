@@ -1952,7 +1952,7 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
     }
     // StakeMiner thread disabled by default on regtest
     if (!vpwallets.empty() && gArgs.GetBoolArg("-staking", !GetParams().IsRegTestNet() && DEFAULT_STAKING)) {
-        const CChainParams& params = Params();
+        const CChainParams& params = GetParams();
         threadGroup.create_thread(std::bind(&ThreadStakeMinter, params));
     }
 #endif

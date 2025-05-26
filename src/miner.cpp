@@ -260,7 +260,7 @@ static CMutableTransaction NewCoinbase(const int nHeight, const CScript* pScript
 {
     CMutableTransaction txCoinbase;
     txCoinbase.vout.emplace_back();
-    txCoinbase.vout[0].SetEmpty();
+    txCoinbase.vout.clear();
     if (pScriptPubKey) txCoinbase.vout[0].scriptPubKey = *pScriptPubKey;
     txCoinbase.vin.emplace_back();
     txCoinbase.vin[0].scriptSig = CScript() << nHeight << OP_0;
@@ -273,7 +273,7 @@ bool SolveProofOfStake(CBlock* pblock, CBlockIndex* pindexPrev, CWallet* pwallet
     boost::this_thread::interruption_point();
 
     assert(pindexPrev);
-    pblock->nBits = GetNextWorkRequired(pindexPrev, pblock);
+    pblock->nBits = GetNextWorkRequired(pindexPrev, pblock, GetParams().GetConsensus());
 
     CMutableTransaction txCoinStake;
     int64_t nTxNewTime = 0;
@@ -373,7 +373,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     // Fill in header
     pblock->hashPrevBlock = pindexPrev->GetBlockHash();
     if (!fProofOfStake) UpdateTime(pblock, consensus, pindexPrev);
-    pblock->nBits = GetNextWorkRequired(pindexPrev, pblock);
+    pblock->nBits = GetNextWorkRequired(pindexPrev, pblock, GetParams().GetConsensus());
     pblock->nNonce = 0;
     pblocktemplate->vTxSigOps[0] = GetLegacySigOpCount(*(pblock->vtx[0]));
 
@@ -762,7 +762,7 @@ void static CloreMiner(const CChainParams& chainparams)
     const Consensus::Params& consensus = chainparams.GetConsensus();
     const int64_t nSpacingMillis = consensus.nTargetSpacing * 1000;
     std::vector<CStakeableOutput> availableCoins;
-
+    fStakeableCoins = pwallet->StakeableCoins(availableCoins);
      try {
         while (true) {
             CBlockIndex* pindexPrev = chainActive.Tip();
