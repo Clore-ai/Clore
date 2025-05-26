@@ -4239,6 +4239,7 @@ bool CWallet::CreateCoinStake(
             continue;
         }
         txNew.vout.insert(txNew.vout.end(), vout.begin(), vout.end());
+        LogPrintf("DEBUG: txNew.vout size after insert: %d\n", txNew.vout.size());
 
         // Set output amount
         int outputs = (int) txNew.vout.size() - 1;

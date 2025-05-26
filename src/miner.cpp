@@ -403,6 +403,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
             LogPrintf("CreateNewBlock() - block time too old, adjusting. nTime: %d, MTP: %d\n", pblock->nTime, pindexPrev->GetMedianTimePast());
             pblock->nTime = pindexPrev->GetMedianTimePast() + 1;
         }
+        LogPrintf("CreateNewBlock: tx[0] outputs: %d\n", pblock->vtx[0]->vout.size());
         if (fTestValidity &&
             !TestBlockValidity(state, chainparams, *pblock, pindexPrev, false, false)) {
             throw std::runtime_error(
