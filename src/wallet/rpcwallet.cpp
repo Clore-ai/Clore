@@ -2794,7 +2794,7 @@ UniValue listcoldutxos(const JSONRPCRequest& request)
     for (const auto& entry : pwallet->mapWallet) {
         const uint256& wtxid = entry.first;
         const CWalletTx* pcoin = &entry.second;
-        if (!CheckFinalTx(pcoin) || !pcoin->IsTrusted())
+        if (!CheckFinalTx(*pcoin) || !pcoin->IsTrusted())
             continue;
 
         // if this tx has no unspent P2CS outputs for us, skip it
