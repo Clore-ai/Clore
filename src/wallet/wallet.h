@@ -1269,7 +1269,6 @@ public:
     * Obviously holding cs_main/cs_wallet when going into this call may cause
     * deadlock
     */
-    void BlockUntilSyncedToCurrentChain();
 
     /** 
      * Address book entry changed.

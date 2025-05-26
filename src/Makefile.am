@@ -455,6 +455,7 @@ libclore_util_a_SOURCES = \
   sync.cpp \
   threadinterrupt.cpp \
   uint256.cpp \
+  masternode-sync.cpp \
   stakeinput.cpp \
   util.cpp \
   utilmoneystr.cpp \
