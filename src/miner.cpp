@@ -790,7 +790,7 @@ void static CloreMiner(const CChainParams& chainparams)
                 }
 
                 if (pWallet->pStakerStatus &&
-                    pWallet->pStakerStatus->GetLastHash() == pindexPrev->GetBlockHash() &&
+                    /*pWallet->pStakerStatus->GetLastHash() == pindexPrev->GetBlockHash() &&*/
                     pWallet->pStakerStatus->GetLastTime() >= GetParams().GetConsensus().nTimeSlotLength) {
                     MilliSleep(2000);
                     continue;
