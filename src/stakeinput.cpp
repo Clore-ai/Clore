@@ -96,4 +96,3 @@ const CBlockIndex* CPivStake::GetIndexFrom() const
     return pindexFrom;
 }
 
-CStakeInput::~CStakeInput() {}
