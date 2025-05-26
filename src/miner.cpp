@@ -303,6 +303,22 @@ bool SolveProofOfStake(CBlock* pblock, CBlockIndex* pindexPrev, CWallet* pwallet
     return true;
 }
 
+CMutableTransaction CreateCoinbaseTx(const CScript& scriptPubKeyIn, CBlockIndex* pindexPrev)
+{
+    assert(pindexPrev);
+    const int nHeight = pindexPrev->nHeight + 1;
+
+    // Create coinbase tx
+    CMutableTransaction txCoinbase = NewCoinbase(nHeight, &scriptPubKeyIn);
+
+    // If no payee was detected, then the whole block value goes to the first output.
+    if (txCoinbase.vout.size() == 1) {
+        txCoinbase.vout[0].nValue = GetBlockValue(nHeight);
+    }
+
+    return txCoinbase;
+}
+
 bool CreateCoinbaseTx(CBlock* pblock, const CScript& scriptPubKeyIn, CBlockIndex* pindexPrev)
 {
     pblock->vtx.emplace_back(MakeTransactionRef(CreateCoinbaseTx(scriptPubKeyIn, pindexPrev)));
