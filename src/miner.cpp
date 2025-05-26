@@ -292,12 +292,12 @@ bool SolveProofOfStake(CBlock* pblock, CBlockIndex* pindexPrev, CWallet* pwallet
     }
     // Stake found
 
+    const int nHeight = pindexPrev->nHeight + 1;
+
     // Create coinbase tx and add masternode/budget payments
     CMutableTransaction txCoinbase = NewCoinbase(pindexPrev->nHeight + 1);
     txCoinbase.vin.emplace_back();
     txCoinbase.vin[0].scriptSig = CScript() << nHeight << OP_0;
-
-    const int nHeight = pindexPrev->nHeight + 1;
 
     CAmount blockReward = GetBlockValue(nHeight);
     LogPrintf("CreateCoinbaseTx: blockReward = %d\n", blockReward);
