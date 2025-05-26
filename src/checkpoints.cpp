@@ -25,7 +25,7 @@ namespace Checkpoints {
         if (!fEnabled)
             return true;
 
-        const MapCheckpoints& checkpoints = *Params().Checkpoints().mapCheckpoints;
+        const MapCheckpoints& checkpoints = GetParams().Checkpoints().mapCheckpoints;
 
         MapCheckpoints::const_iterator i = checkpoints.find(nHeight);
         // If looking for an exact match, then return false
