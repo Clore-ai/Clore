@@ -311,10 +311,22 @@ CMutableTransaction CreateCoinbaseTx(const CScript& scriptPubKeyIn, CBlockIndex*
     // Create coinbase tx
     CMutableTransaction txCoinbase = NewCoinbase(nHeight, &scriptPubKeyIn);
 
-    // If no payee was detected, then the whole block value goes to the first output.
-    if (txCoinbase.vout.size() == 1) {
-        txCoinbase.vout[0].nValue = GetBlockValue(nHeight);
-    }
+    txCoinbase.vin.emplace_back();
+    txCoinbase.vin[0].scriptSig = CScript() << nHeight << OP_0;
+
+    CAmount blockReward = GetBlockValue(nHeight);
+
+    // You can hardcode or calculate payee here
+    // Example: 10% to a dev address, 90% to the miner
+    CAmount devReward = blockReward / 10;  // 10%
+    CAmount minerReward = blockReward - devReward;
+
+    // Replace with actual destination scripts
+    CScript minerScript = scriptPubKeyIn;
+    CScript devScript = CScript() << OP_RETURN;  // Replace with real dev address
+
+    txCoinbase.vout.emplace_back(minerReward, minerScript);
+    txCoinbase.vout.emplace_back(devReward, devScript);
 
     return txCoinbase;
 }
@@ -323,22 +335,6 @@ bool CreateCoinbaseTx(CBlock* pblock, const CScript& scriptPubKeyIn, CBlockIndex
 {
     pblock->vtx.emplace_back(MakeTransactionRef(CreateCoinbaseTx(scriptPubKeyIn, pindexPrev)));
     return true;
-}
-
-CMutableTransaction CreateCoinbaseTx(const CScript& scriptPubKeyIn, CBlockIndex* pindexPrev)
-{
-    assert(pindexPrev);
-    const int nHeight = pindexPrev->nHeight + 1;
-
-    // Create coinbase tx
-    CMutableTransaction txCoinbase = NewCoinbase(nHeight, &scriptPubKeyIn);
-
-    // If no payee was detected, then the whole block value goes to the first output.
-    if (txCoinbase.vout.size() == 1) {
-        txCoinbase.vout[0].nValue = GetBlockValue(nHeight);
-    }
-
-    return txCoinbase;
 }
 
 std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& scriptPubKeyIn,
