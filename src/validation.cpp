@@ -118,6 +118,7 @@ uint64_t nPruneTarget = 0;
 int64_t nMaxTipAge = DEFAULT_MAX_TIP_AGE;
 bool fEnableReplacement = DEFAULT_ENABLE_REPLACEMENT;
 
+std::map<uint256, int64_t> mapRejectedBlocks;
 bool fUnitTest = false;
 bool log_all=false;
 
