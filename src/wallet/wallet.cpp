@@ -4161,9 +4161,13 @@ bool CWallet::CreateCoinStake(
     int nAttempts = 0;
     for (auto it = availableCoins->begin(); it != availableCoins->end();) {
         COutPoint outPoint = COutPoint(it->tx->GetHash(), it->i);
-        CPivStake stakeInput(it->tx->tx->vout[it->i],
-                             outPoint,
-                             it->pindex);
+        std::unique_ptr<CPivStake> stakeInput = std::unique_ptr<CPivStake>(
+            CPivStake::NewPivStake(CTxIn(outPoint), pindexPrev->nHeight + 1, GetAdjustedTime())
+        );
+        if (!stakeInput) {
+            it++;
+            continue;
+        }
 
         // New block came in, move on
         if (stopOnNewBlock && GetLastBlockHeightLockWallet() != pindexPrev->nHeight) return false;

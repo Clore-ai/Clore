@@ -40,6 +40,7 @@ public:
             CStakeInput(_pindexFrom), outputFrom(_from), outpointFrom(_outPointFrom) {}
 
     static CPivStake* NewPivStake(const CTxIn& txin, int nHeight, uint32_t nTime);
+    CPivStake() = delete; // disallow default constructor
 
     const CBlockIndex* GetIndexFrom() const override;
     bool GetTxOutFrom(CTxOut& out) const override;
