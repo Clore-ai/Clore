@@ -8,7 +8,6 @@
 #define PIVX_LIBZEROCOIN_BIGNUM_H
 
 #if defined HAVE_CONFIG_H
-#include "config/pivx-config.h"
 #endif
 
 #include <gmp.h>
