@@ -11,6 +11,7 @@
 
 #include "primitives/block.h"
 #include "txmempool.h"
+#include "wallet/wallet.h"
 
 #include <stdint.h>
 #include <memory>
