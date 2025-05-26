@@ -777,7 +777,6 @@ void static CloreMiner(const CChainParams& chainparams)
                 continue;
             }
 
-            CheckForCoins(pWallet, &availableCoins);
             const bool fPoSActive = true;
             const bool fProofOfStake = fPoSActive && fStakeableCoins;
 
@@ -801,6 +800,7 @@ void static CloreMiner(const CChainParams& chainparams)
                 LogPrintf("ThreadStakeMiner: Starting staking attempt at height=%d\n", pindexPrev->nHeight);
                 // Create PoS block
                 std::unique_ptr<CBlockTemplate> pblocktemplate(BlockAssembler(chainparams).CreateNewBlock(CScript(), pWallet, true, &availableCoins));
+                LogPrintf("Block is created");
                 if (!pblocktemplate) continue;
                 std::shared_ptr<CBlock> pblock = std::make_shared<CBlock>(pblocktemplate->block);
 
@@ -825,6 +825,7 @@ void static CloreMiner(const CChainParams& chainparams)
             // PoW path
             if (pindexPrev->nHeight > 200 && fPoSActive) {
                 LogPrintf("CloreMiner: Exiting PoW thread at height %d (PoS active)\n", pindexPrev->nHeight);
+                CheckForCoins(pWallet, &availableCoins);
                 // return;
             }
 
