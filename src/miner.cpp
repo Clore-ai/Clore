@@ -379,6 +379,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
 
     // Fill in header
     pblock->hashPrevBlock = pindexPrev->GetBlockHash();
+    const Consensus::Params& consensus = chainparams.GetConsensus();
     if (!fProofOfStake) UpdateTime(pblock, consensus, pindexPrev);
     pblock->nBits = GetNextWorkRequired(pindexPrev, pblock, GetParams().GetConsensus());
     pblock->nNonce = 0;
@@ -395,7 +396,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
 
         CValidationState state;
         if (fTestValidity &&
-            !TestBlockValidity(state, chainparams, *pblock, pindexPrev, false, false, false)) {
+            !TestBlockValidity(state, chainparams, *pblock, pindexPrev, false, false)) {
             throw std::runtime_error(
                     strprintf("%s: TestBlockValidity failed: %s", __func__, FormatStateMessage(state)));
         }
@@ -764,7 +765,6 @@ void static CloreMiner(const CChainParams& chainparams)
     const Consensus::Params& consensus = chainparams.GetConsensus();
     const int64_t nSpacingMillis = consensus.nTargetSpacing * 1000;
     std::vector<CStakeableOutput> availableCoins;
-    fStakeableCoins = pwallet->StakeableCoins(availableCoins);
      try {
         while (true) {
             CBlockIndex* pindexPrev = chainActive.Tip();

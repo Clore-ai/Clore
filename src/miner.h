@@ -30,6 +30,7 @@ struct CBlockTemplate
 {
     CBlock block;
     std::vector<CAmount> vTxFees;
+    std::vector<int64_t> vTxSigOps;
     std::vector<int64_t> vTxSigOpsCost;
     std::vector<unsigned char> vchCoinbaseCommitment;
 };
@@ -148,7 +149,7 @@ private:
 
     // Information on the current status of the block
     uint64_t nBlockWeight;
-
+    uint64_t nBlockSigOpsCost{0};
     // Chain context for the block
     int nHeight;
     int64_t nLockTimeCutoff;
