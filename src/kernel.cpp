@@ -32,16 +32,11 @@ CStakeKernel::CStakeKernel(const CBlockIndex* const pindexPrev, CStakeInput* sta
     stakeValue(stakeInput->GetValue())
 {
     // Set kernel stake modifier
-    if (!GetParams().GetConsensus().NetworkUpgradeActive(pindexPrev->nHeight + 1, Consensus::UPGRADE_V3_4)) {
-        uint64_t nStakeModifier = 0;
-        if (!GetOldStakeModifier(stakeInput, nStakeModifier))
-            LogPrintf("%s : ERROR: Failed to get kernel stake modifier\n", __func__);
-        // Modifier v1
-        stakeModifier << nStakeModifier;
-    } else {
-        // Modifier v2
-        stakeModifier << pindexPrev->GetStakeModifierV2();
-    }
+    
+    uint64_t nStakeModifier = 0;
+   
+    stakeModifier << nStakeModifier;
+    
     const CBlockIndex* pindexFrom = stakeInput->GetIndexFrom();
     nTimeBlockFrom = pindexFrom->nTime;
 }

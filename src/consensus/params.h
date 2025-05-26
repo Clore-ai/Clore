@@ -140,7 +140,7 @@ struct Params {
     int64_t TargetTimespan(const bool fV2 = true) const { return fV2 ? nTargetTimespanV2 : nTargetTimespan; }
     uint256 ProofOfStakeLimit(const bool fV2) const { return fV2 ? posLimitV2 : posLimitV1; }
     bool MoneyRange(const CAmount& nValue) const { return (nValue >= 0 && nValue <= nMaxMoneyOut); }
-    bool IsTimeProtocolV2(const int nHeight) const { return NetworkUpgradeActive(nHeight, UPGRADE_V4_0); }
+    bool IsTimeProtocolV2(const int nHeight) const { return false; }
     int MasternodeCollateralMinConf() const { return nMNCollateralMinConf; }
 
     int FutureBlockTimeDrift(const int nHeight) const
@@ -148,7 +148,6 @@ struct Params {
         // PoS (TimeV2): 14 seconds
         if (IsTimeProtocolV2(nHeight)) return nTimeSlotLength - 1;
         // PoS (TimeV1): 3 minutes - PoW: 2 hours
-        return (NetworkUpgradeActive(nHeight, UPGRADE_POS) ? nFutureTimeDriftPoS : nFutureTimeDriftPoW);
     }
 
     bool IsValidBlockTimeStamp(const int64_t nTime, const int nHeight) const
@@ -163,8 +162,6 @@ struct Params {
                                const int utxoFromBlockHeight, const uint32_t utxoFromBlockTime) const
     {
         // before stake modifier V2, we require the utxo to be nStakeMinAge old
-        if (!NetworkUpgradeActive(contextHeight, Consensus::UPGRADE_V3_4))
-            return (utxoFromBlockTime + nStakeMinAge <= contextTime);
         // with stake modifier V2+, we require the utxo to be nStakeMinDepth deep in the chain
         return (contextHeight - utxoFromBlockHeight >= nStakeMinDepth);
     }
@@ -174,9 +171,7 @@ struct Params {
      * Returns true if the given network upgrade is active as of the given block
      * height. Caller must check that the height is >= 0 (and handle unknown
      * heights).
-     */
-    bool NetworkUpgradeActive(int nHeight, Consensus::UpgradeIndex idx) const;
-    
+     */    
 };
 } // namespace Consensus
 
