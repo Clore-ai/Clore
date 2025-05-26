@@ -295,8 +295,10 @@ bool SolveProofOfStake(CBlock* pblock, CBlockIndex* pindexPrev, CWallet* pwallet
     // Create coinbase tx and add masternode/budget payments
     CMutableTransaction txCoinbase = NewCoinbase(pindexPrev->nHeight + 1);
 
-    pblock->vtx.emplace_back(MakeTransactionRef(txCoinbase));
-    pblock->vtx.emplace_back(MakeTransactionRef(txCoinStake));
+    pblock->vtx.clear();
+    pblock->vtx.emplace_back(MakeTransactionRef(CTransaction(txCoinStake)));   // Must be index 0!
+    pblock->vtx.emplace_back(MakeTransactionRef(CTransaction(txCoinbase)));    // Index 1 is fine
+
     pblock->nTime = nTxNewTime;
     return true;
 }
