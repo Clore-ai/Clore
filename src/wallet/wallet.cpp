@@ -4107,7 +4107,9 @@ bool CWallet::CreateCoinstakeOuts(const CPivStake& stakeInput, std::vector<CTxOu
             return error("%s: Unable to get staking private key", __func__);
     }
 
-    vout.emplace_back(0, scriptPubKeyKernel);
+    if (nTotal <= 0) {
+        return error("%s: total stake value is zero or negative", __func__);
+    }
 
     // Calculate if we need to split the output
     if (nStakeSplitThreshold > 0) {
@@ -4128,13 +4130,22 @@ bool CWallet::CreateCoinstakeOuts(const CPivStake& stakeInput, std::vector<CTxOu
             CAmount remainder = nTotal - (splitAmount * nSplit);
             if (remainder > 0)
                 vout[0].nValue += remainder; // add leftover to first output
-            return true;
+        } else {
+            vout.emplace_back(nTotal, scriptPubKeyKernel);
         }
+    } else {
+         // no split
+         vout.emplace_back(nTotal, scriptPubKeyKernel);
     }
-    // no split
-    vout.emplace_back(nTotal, scriptPubKeyKernel);
-    if (vout.empty() || vout[0].nValue <= 0)
-        return error("%s: created output with no value", __func__);
+   
+   // Sanity check: make sure outputs are valid
+    if (vout.empty())
+        return error("%s: no coinstake outputs created", __func__);
+
+    for (const auto& out : vout) {
+        if (out.nValue <= 0)
+            return error("%s: created output with no value", __func__);
+    }
     return true;
 }
 int CWallet::GetLastBlockHeightLockWallet() const
