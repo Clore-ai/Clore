@@ -45,6 +45,7 @@
 #include "warnings.h"
 #include "net.h"
 #include "kernel.h"
+#include "miner.h"
 
 #include <atomic>
 #include <sstream>
