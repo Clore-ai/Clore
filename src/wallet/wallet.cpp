@@ -4212,6 +4212,14 @@ bool CWallet::CreateCoinStake(
         nCredit += GetBlockValue(pindexPrev->nHeight + 1);
         nMasternodePayment = GetMasternodePayment(pindexPrev->nHeight + 1);
 
+        LogPrintf("CreateCoinStake : nCredit = %d, nMasternodePayment = %d\n", nCredit, nMasternodePayment);
+
+        CAmount nTotalOut = nCredit - nMasternodePayment;
+        if (nTotalOut <= 0) {
+            LogPrintf("%s : invalid coinstake output amount (%d), skipping\n", __func__, nTotalOut);
+            it++;
+            continue;
+        }
         // Create the output transaction(s)
         std::vector<CTxOut> vout;
         if (!CreateCoinstakeOuts(*stakeInput, vout, nCredit - nMasternodePayment)) {
