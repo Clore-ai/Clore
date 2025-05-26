@@ -33,6 +33,7 @@
 #include "wallet/fees.h"
 #include "wallet/bip39.h"
 #include "wallet/wallet.h"
+#include "kernel.h"
 
 #include <assert.h>
 

@@ -3553,6 +3553,7 @@ UniValue getstakingstatus(const JSONRPCRequest& request)
             "  \"staking_enabled\": true|false,     (boolean) whether staking is enabled/disabled in pivx.conf\n"
             "  \"coldstaking_enabled\": true|false, (boolean) whether cold-staking is enabled/disabled in pivx.conf\n"
             "  \"haveconnections\": true|false,     (boolean) whether network connections are present\n"
+            "  \"mnsync\": true|false,              (boolean) whether the required masternode/spork data is synced\n"
             "  \"walletunlocked\": true|false,      (boolean) whether the wallet is unlocked\n"
             "  \"stakeablecoins\": n                (numeric) number of stakeable UTXOs\n"
             "  \"stakingbalance\": d                (numeric) PIV value of the stakeable coins (minus reserve balance, if any)\n"
@@ -3578,6 +3579,7 @@ UniValue getstakingstatus(const JSONRPCRequest& request)
         bool fColdStaking = gArgs.GetBoolArg("-coldstaking", true);
         obj.pushKV("coldstaking_enabled", fColdStaking);
         obj.pushKV("haveconnections", (g_connman->GetNodeCount(CConnman::CONNECTIONS_ALL) > 0));
+        obj.pushKV("mnsync", !masternodeSync.NotCompleted());
         obj.pushKV("walletunlocked", !pwallet->IsLocked());
         std::vector<CStakeableOutput> vCoins;
         pwallet->StakeableCoins(&vCoins);
