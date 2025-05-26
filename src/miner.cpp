@@ -817,10 +817,14 @@ void static CloreMiner(const CChainParams& chainparams)
                 continue;
             }
 
+             LogPrintf("CloreMiner: PoS active = %d, Stakeable coins = %d, Wallet locked = %d\n",
+                fPoSActive,
+                fStakeableCoins,
+                pWallet->IsLocked());
             // PoW path
             if (pindexPrev->nHeight > 200 && fPoSActive) {
                 LogPrintf("CloreMiner: Exiting PoW thread at height %d (PoS active)\n", pindexPrev->nHeight);
-                return;
+                // return;
             }
 
             unsigned int nTransactionsUpdatedLast = mempool.GetTransactionsUpdated();
