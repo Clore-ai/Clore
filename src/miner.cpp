@@ -777,6 +777,7 @@ void static CloreMiner(const CChainParams& chainparams)
                 continue;
             }
 
+            CheckForCoins(pWallet, &availableCoins);
             const bool fPoSActive = true;
             const bool fProofOfStake = fPoSActive && fStakeableCoins;
 
