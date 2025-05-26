@@ -246,6 +246,10 @@ bool CScript::IsPayToColdStaking() const
             (*this)[50] == OP_CHECKSIG);
 }
 
+bool CScript::IsPayToColdStakingLOF() const
+{
+    return IsPayToColdStaking() && (*this)[4] == OP_CHECKCOLDSTAKEVERIFY_LOF;
+}
 
 /** CLORE START */
 bool CScript::IsAssetScript() const

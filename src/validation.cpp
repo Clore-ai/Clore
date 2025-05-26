@@ -44,6 +44,7 @@
 #include "versionbits.h"
 #include "warnings.h"
 #include "net.h"
+#include "kernel.h"
 
 #include <atomic>
 #include <sstream>
@@ -4138,6 +4139,33 @@ static bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state,
     return true;
 }
 
+bool CheckColdStakeFreeOutput(const CTransaction& tx, const int nHeight)
+{
+    assert(tx.IsCoinStake());
+    // This check applies only to coinstakes spending a P2CS_LOF script.
+    // The script-check ensures that all but the first and the last output
+    // (if the coinstake has more than 3 outputs) have the same scriptPubKey.
+    // If the second script is not a P2CS_LOF, then either this is a "regular"
+    // P2PKH stake, or it fails the script verification.
+    if (!tx.vout[1].scriptPubKey.IsPayToColdStakingLOF()) {
+        return true;
+    }
+    // If the last output is different, then it can be either a masternode
+    // or a budget proposal payment
+    const unsigned int outs = tx.vout.size();
+    const CTxOut& lastOut = tx.vout[outs-1];
+    if (outs >=3 && lastOut.scriptPubKey != tx.vout[outs-2].scriptPubKey) {
+        if (lastOut.nValue == GetMasternodePayment(nHeight))
+            return true;
+        // wrong free output
+        return error("%s: Wrong cold staking outputs: vout[%d].scriptPubKey (%s) != vout[%d].scriptPubKey (%s) - value: %s",
+                __func__, outs-1, HexStr(lastOut.scriptPubKey), outs-2, HexStr(tx.vout[outs-2].scriptPubKey), FormatMoney(lastOut.nValue).c_str());
+    }
+
+    return true;
+}
+
+
 bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::Params& consensusParams, bool fCheckPOW, bool fCheckMerkleRoot, bool fDBCheck)
 {
     // These are checks that are independent of context.
@@ -4173,6 +4201,16 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
             return state.DoS(100, false, REJECT_INVALID, "bad-txns-duplicate", true, "duplicate transaction");
     }
 
+    // Coinstake checks for PoS
+    if (IsPoS) {
+        if (block.vtx.size() < 2 || !block.vtx[1]->IsCoinStake())
+            return state.DoS(100, false, REJECT_INVALID, "bad-cs-missing", false, "second tx is not coinstake");
+        for (unsigned int i = 2; i < block.vtx.size(); ++i)
+            if (block.vtx[i]->IsCoinStake())
+                return state.DoS(100, false, REJECT_INVALID, "bad-cs-multiple", false, "more than one coinstake");
+    }
+
+
     // All potential-corruption validation must be done before we do any
     // transaction validation, as otherwise we may mark the header as invalid
     // because we receive the wrong transactions for it.
@@ -4195,6 +4233,32 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
     bool fCheckBlock = CHECK_BLOCK_TRANSACTION_TRUE;
     bool fCheckDuplicates = CHECK_DUPLICATE_TRANSACTION_TRUE;
     bool fCheckMempool = CHECK_MEMPOOL_TRANSACTION_FALSE;
+
+    // Masternode/Budget/Cold Staking logic
+    bool fColdStakingActive = true;
+    CBlockIndex* pindexPrev = chainActive.Tip();
+    int nHeight = 0;
+
+    if (pindexPrev && block.hashPrevBlock != UINT256_ZERO) {
+        if (pindexPrev->GetBlockHash() != block.hashPrevBlock) {
+            pindexPrev = LookupBlockIndex(block.hashPrevBlock);
+            if (!pindexPrev)
+                return state.Error("blk-out-of-order");
+        }
+
+        nHeight = pindexPrev->nHeight + 1;
+
+        if (nHeight > 0 && !IsInitialBlockDownload()) {
+            if (IsPoS && !CheckColdStakeFreeOutput(*block.vtx[1], nHeight)) {
+                mapRejectedBlocks.emplace(block.GetHash(), GetTime());
+                return state.DoS(0, false, REJECT_INVALID, "bad-p2cs-outs", false, "invalid cold-stake output");
+            }
+
+            fColdStakingActive = true;
+        } else {
+            LogPrintf("%s: Masternode/Budget checks skipped during sync\n", __func__);
+        }
+    }
     for (const auto& tx : block.vtx) {
         // We only want to check the blocks when they are added to our chain
         // We want to make sure when nodes shutdown and restart that they still
@@ -4698,6 +4762,52 @@ static bool IsSpentOnActiveChain(std::unordered_set<COutPoint, SaltedOutpointHas
 
     return outpoints.empty();
 }
+
+static bool CheckInBlockDoubleSpends(const CBlock& block, int nHeight, CValidationState& state,
+                                     std::unordered_set<COutPoint, SaltedOutpointHasher>& spent_outpoints,
+                                     std::set<CBigNum>& spent_serials)
+{
+    const Consensus::Params& consensus = GetParams().GetConsensus();
+
+    // First collect the tx inputs, and check double spends
+    for (size_t i = 1; i < block.vtx.size(); i++) {
+        // skip coinbase
+        CTransactionRef tx = block.vtx[i];
+        for (const CTxIn& in: tx->vin) {
+            // regular utxo
+            if (spent_outpoints.find(in.prevout) != spent_outpoints.end()) {
+                return state.DoS(100, error("%s: inputs double spent in the same block", __func__));
+            }
+            spent_outpoints.insert(in.prevout);
+        }
+    }
+
+    // Then remove from the coins_spent set, any coin that was created inside this block.
+    // In fact, if a transaction inside this block spends an output generated by another in-block tx,
+    // such output doesn't exist on chain yet, so we must not access the coins cache, or "walk the fork",
+    // to ensure that it was unspent before this block.
+    // The coinstake requires special treatment: its input cannot be the output of another in-block
+    // transaction (due to nStakeMinDepth), and no in-block tx can spend its outputs (due to nCoinbaseMaturity).
+    std::unordered_set<uint256> inblock_txes;
+    for (size_t i = 2; i < block.vtx.size(); i++) {
+        // coinbase/coinstake outputs cannot be spent inside the same block
+        inblock_txes.insert(block.vtx[i]->GetHash());
+    }
+    for (auto it = spent_outpoints.begin(); it != spent_outpoints.end(); /* no increment */) {
+        if (inblock_txes.find(it->hash) != inblock_txes.end()) {
+            // the input spent was created as output of another in-block tx
+            // this is not allowed for the coinstake input
+            if (*it == block.vtx[1]->vin[0].prevout) {
+                return state.DoS(100, error("%s: coinstake input created in the same block", __func__));
+            }
+            it = spent_outpoints.erase(it);
+        } else {
+            it++;
+        }
+    }
+
+    return true;
+}
 /** Store block on disk. If dbp is non-nullptr, the file is known to already reside on disk */
 static bool AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CValidationState& state, const CChainParams& chainparams, CBlockIndex** ppindex, bool fRequested, const CDiskBlockPos* dbp, bool* fNewBlock, bool fFromLoad = false)
 {
@@ -4710,6 +4820,20 @@ static bool AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CValidation
     CBlockIndex *&pindex = ppindex ? *ppindex : pindexDummy;
 
     const Consensus::Params& consensus = GetParams().GetConsensus();
+
+    CBlockIndex* pindexPrev = nullptr;
+    if (!GetPrevIndex(block, &pindexPrev, state))
+        return false;
+
+    bool isPoS = block.IsProofOfStake();
+    if (!isPoS && block.GetHash() != consensus.hashGenesisBlock && !CheckWork(block, pindexPrev))
+        return state.DoS(100, false, REJECT_INVALID);
+
+    if (isPoS) {
+        std::string strError;
+        if (!CheckProofOfStake(block, strError, pindexPrev))
+            return state.DoS(100, error("%s: proof of stake check failed (%s)", __func__, strError));
+    }
 
     if (!AcceptBlockHeader(block, state, chainparams, &pindex))
         return false;
@@ -4770,6 +4894,40 @@ static bool AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CValidation
         GetMainSignals().NewPoWValidBlock(pindex, pblock);
 
     int nHeight = pindex->nHeight;
+
+     if (isPoS) {
+        bool isBlockFromFork = pindexPrev != nullptr && chainActive.Tip() != pindexPrev;
+        std::unordered_set<COutPoint, SaltedOutpointHasher> spent_outpoints;
+        std::set<CBigNum> spent_serials;
+        if (!CheckInBlockDoubleSpends(block, nHeight, state, spent_outpoints, spent_serials))
+            return false;
+
+        const CBlockIndex* pindexFork{nullptr};
+        if (isBlockFromFork && !IsUnspentOnFork(spent_outpoints, spent_serials, pindexPrev, state, pindexFork))
+            return false;
+        assert(!isBlockFromFork || pindexFork != nullptr);
+
+        if (isBlockFromFork && chainActive.Height() - pindexFork->nHeight > gArgs.GetArg("-maxreorg", DEFAULT_MAX_REORG_DEPTH))
+            return error("%s: forked chain longer than maximum reorg limit", __func__);
+
+        for (const CBigNum& s : spent_serials) {
+            int nHeightTx = 0;
+        }
+
+        for (auto it = spent_outpoints.begin(); it != spent_outpoints.end();) {
+            const Coin& coin = pcoinsTip->AccessCoin(*it);
+            if (!coin.IsSpent()) {
+                if (isBlockFromFork && (int) coin.nHeight > pindexFork->nHeight)
+                    return state.DoS(100, false, REJECT_INVALID, "bad-txns-inputs-created-post-split");
+                it = spent_outpoints.erase(it);
+            } else {
+                if (!isBlockFromFork)
+                    return error("%s: tx inputs spent/not-available on main chain (%s)", __func__, it->ToString());
+                ++it;
+            }
+        }
+     }
+
 
     // Write block to history file
     try {

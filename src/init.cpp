@@ -1946,6 +1946,17 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
     SetRPCWarmupFinished();
 
 #ifdef ENABLE_WALLET
+    uiInterface.InitMessage(_("Reaccepting wallet transactions..."));
+    for (CWalletRef pwallet : vpwallets) {
+        pwallet->postInitProcess(scheduler);
+    }
+    // StakeMiner thread disabled by default on regtest
+    if (!vpwallets.empty() && gArgs.GetBoolArg("-staking", !GetParams().IsRegTestNet() && DEFAULT_STAKING)) {
+        threadGroup.create_thread(std::bind(&ThreadStakeMinter));
+    }
+#endif
+
+#ifdef ENABLE_WALLET
     StartWallets(scheduler);
 
 
