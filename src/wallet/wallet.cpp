@@ -4182,7 +4182,7 @@ bool CWallet::CreateCoinStake(
         nCredit = 0;
 
         nAttempts++;
-        fKernelFound = Stake(pindexPrev, &stakeInput, nBits, nTxNewTime);
+        fKernelFound = Stake(pindexPrev, stakeInput.get(), nBits, nTxNewTime);
 
         // update staker status (time, attempts)
         pStakerStatus->SetLastTime(nTxNewTime);
@@ -4195,7 +4195,7 @@ bool CWallet::CreateCoinStake(
 
         // Found a kernel
         LogPrintf("CreateCoinStake : kernel found\n");
-        nCredit += stakeInput.GetValue();
+        nCredit += stakeInput->GetValue();
 
         // Add block reward to the credit
         nCredit += GetBlockValue(pindexPrev->nHeight + 1);
@@ -4203,7 +4203,7 @@ bool CWallet::CreateCoinStake(
 
         // Create the output transaction(s)
         std::vector<CTxOut> vout;
-        if (!CreateCoinstakeOuts(stakeInput, vout, nCredit - nMasternodePayment)) {
+        if (!CreateCoinstakeOuts(*stakeInput, vout, nCredit - nMasternodePayment)) {
             LogPrintf("%s : failed to create output\n", __func__);
             it++;
             continue;
@@ -4226,7 +4226,7 @@ bool CWallet::CreateCoinStake(
         txNew.vout[outputs].nValue += nRemaining;
 
         // Set coinstake input
-        txNew.vin.emplace_back(stakeInput.GetTxIn());
+        txNew.vin.emplace_back(stakeInput->GetTxIn());
 
         break;
     }
