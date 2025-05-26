@@ -271,7 +271,7 @@ static CMutableTransaction NewCoinbase(const int nHeight, const CScript* pScript
 }
 
 bool SolveProofOfStake(CBlock* pblock, CBlockIndex* pindexPrev, CWallet* pwallet,
-                       std::vector<CStakeableOutput>* availableCoins, bool stopPoSOnNewBlock)
+                       std::vector<CStakeableOutput>* availableCoins, bool stopPoSOnNewBlock, const CScript& scriptPubKeyIn)
 {
     boost::this_thread::interruption_point();
 
@@ -296,6 +296,8 @@ bool SolveProofOfStake(CBlock* pblock, CBlockIndex* pindexPrev, CWallet* pwallet
     CMutableTransaction txCoinbase = NewCoinbase(pindexPrev->nHeight + 1);
     txCoinbase.vin.emplace_back();
     txCoinbase.vin[0].scriptSig = CScript() << nHeight << OP_0;
+
+    const int nHeight = pindexPrev->nHeight + 1;
 
     CAmount blockReward = GetBlockValue(nHeight);
     LogPrintf("CreateCoinbaseTx: blockReward = %d\n", blockReward);
@@ -395,7 +397,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     }
 
     // Depending on the tip height, try to find a coinstake who solves the block or create a coinbase tx.
-    if (!(fProofOfStake ? SolveProofOfStake(pblock, pindexPrev, pwallet, availableCoins, stopPoSOnNewBlock)
+    if (!(fProofOfStake ? SolveProofOfStake(pblock, pindexPrev, pwallet, availableCoins, stopPoSOnNewBlock, scriptPubKeyIn)
                         : CreateCoinbaseTx(pblock, scriptPubKeyIn, pindexPrev))) {
         return nullptr;
     }
