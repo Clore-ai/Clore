@@ -136,7 +136,6 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     // Add dummy coinbase tx as first transaction
     pblock->vtx.emplace_back();
     pblocktemplate->vTxFees.push_back(-1); // updated at end
-    pblocktemplate->vTxSigOpsCost.push_back(-1); // updated at end
 
     LOCK2(cs_main, mempool.cs);
     CBlockIndex* pindexPrev = chainActive.Tip();
@@ -298,6 +297,12 @@ bool SolveProofOfStake(CBlock* pblock, CBlockIndex* pindexPrev, CWallet* pwallet
     return true;
 }
 
+bool CreateCoinbaseTx(CBlock* pblock, const CScript& scriptPubKeyIn, CBlockIndex* pindexPrev)
+{
+    pblock->vtx.emplace_back(MakeTransactionRef(CreateCoinbaseTx(scriptPubKeyIn, pindexPrev)));
+    return true;
+}
+
 CMutableTransaction CreateCoinbaseTx(const CScript& scriptPubKeyIn, CBlockIndex* pindexPrev)
 {
     assert(pindexPrev);
@@ -338,7 +343,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     assert(pindexPrev);
     nHeight = pindexPrev->nHeight + 1;
 
-    pblock->nVersion = ComputeBlockVersion(chainparams.GetConsensus(), nHeight);
+    pblock->nVersion = ComputeBlockVersion(pindexPrev, chainparams.GetConsensus());
     // -regtest only: allow overriding block.nVersion with
     // -blockversion=N to test forking scenarios
     if (GetParams().IsRegTestNet()) {
@@ -354,7 +359,9 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     if (!fNoMempoolTx) {
         // Add transactions from mempool
         LOCK2(cs_main,mempool.cs);
-        addPackageTxs();
+        int nPackagesSelected = 0;
+        int nDescendantsUpdated = 0;
+        addPackageTxs(nPackagesSelected, nDescendantsUpdated);
     }
 
     if (!fProofOfStake) {
@@ -388,7 +395,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
 
         CValidationState state;
         if (fTestValidity &&
-            !TestBlockValidity(state, *pblock, pindexPrev, false, false, false)) {
+            !TestBlockValidity(state, chainparams, *pblock, pindexPrev, false, false, false)) {
             throw std::runtime_error(
                     strprintf("%s: TestBlockValidity failed: %s", __func__, FormatStateMessage(state)));
         }
@@ -705,6 +712,7 @@ CWallet *GetFirstWallet() {
     return(NULL);
 }
 
+bool fStakeableCoins = false;
 void CheckForCoins(CWallet* pwallet, std::vector<CStakeableOutput>* availableCoins)
 {
     if (!pwallet || !pwallet->pStakerStatus)

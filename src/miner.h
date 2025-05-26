@@ -183,12 +183,16 @@ public:
 
 
 private:
+    uint64_t nBlockSize{0};
+    uint64_t nBlockTx{0};
+    unsigned int nBlockSigOps{0};
+    CAmount nFees{0};
+    CTxMemPool::setEntries inBlock;
     // utility functions
     /** Clear the block's state and prepare for assembling a new block */
     void resetBlock();
     /** Add a tx to the block */
     void AddToBlock(CTxMemPool::txiter iter);
-
     // Methods for how to add transactions to a block.
     /** Add transactions based on feerate including unconfirmed ancestors
       * Increments nPackagesSelected / nDescendantsUpdated with corresponding
@@ -219,6 +223,11 @@ private:
 /** Modify the extranonce in a block */
 void IncrementExtraNonce(CBlock* pblock, const CBlockIndex* pindexPrev, unsigned int& nExtraNonce);
 int64_t UpdateTime(CBlockHeader* pblock, const Consensus::Params& consensusParams, const CBlockIndex* pindexPrev);
+
+
+// Visible for testing purposes only
+bool CreateCoinbaseTx(CBlock* pblock, const CScript& scriptPubKeyIn, CBlockIndex* pindexPrev);
+CMutableTransaction CreateCoinbaseTx(const CScript& scriptPubKeyIn, CBlockIndex* pindexPrev);
 
 int GenerateClores(bool fGenerate, int nThreads, const CChainParams& chainparams);
 void ThreadStakeMinter(const CChainParams& chainparams);
