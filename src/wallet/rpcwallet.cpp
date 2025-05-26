@@ -2794,7 +2794,7 @@ UniValue listcoldutxos(const JSONRPCRequest& request)
     for (const auto& entry : pwallet->mapWallet) {
         const uint256& wtxid = entry.first;
         const CWalletTx* pcoin = &entry.second;
-        if (!CheckFinalTx(pcoin->tx) || !pcoin->IsTrusted())
+        if (!CheckFinalTx(pcoin) || !pcoin->IsTrusted())
             continue;
 
         // if this tx has no unspent P2CS outputs for us, skip it
@@ -2819,7 +2819,7 @@ UniValue listcoldutxos(const JSONRPCRequest& request)
             entry.pushKV("txidn", (int)i);
             entry.pushKV("amount", ValueFromAmount(out.nValue));
             entry.pushKV("confirmations", pcoin->GetDepthInMainChain());
-            entry.pushKV("cold-staker", EncodeDestination(addresses[0], CChainParams::STAKING_ADDRESS));
+            entry.pushKV("cold-staker", EncodeDestination(addresses[0]));
             entry.pushKV("coin-owner", EncodeDestination(addresses[1]));
             entry.pushKV("whitelisted", fWhitelisted ? "true" : "false");
             results.push_back(entry);
