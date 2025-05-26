@@ -816,7 +816,7 @@ void static CloreMiner(const CChainParams& chainparams)
             }
 
             // PoW path
-            if (pindexPrev->nHeight > 6 && fPoSActive) {
+            if (pindexPrev->nHeight > 200 && fPoSActive) {
                 LogPrintf("CloreMiner: Exiting PoW thread at height %d (PoS active)\n", pindexPrev->nHeight);
                 return;
             }
