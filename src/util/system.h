@@ -16,7 +16,7 @@
 #endif
 
 #include "fs.h"
-#include "util/logging.h"
+#include "leveldb/util/logging.h"
 #include "compat.h"
 #include "optional.h"
 #include "sync.h"
