@@ -790,14 +790,14 @@ void static CloreMiner(const CChainParams& chainparams)
                     if (!fStakeableCoins) CheckForCoins(pWallet, &availableCoins);
                 }
 
-                if (pWallet->pStakerStatus &&
-                    /*pWallet->pStakerStatus->GetLastHash() == pindexPrev->GetBlockHash() &&*/
-                    pWallet->pStakerStatus->GetLastTime() >= GetParams().GetConsensus().nTimeSlotLength) {
-                    MilliSleep(2000);
-                    continue;
-                }
+                // if (pWallet->pStakerStatus &&
+                //     /*pWallet->pStakerStatus->GetLastHash() == pindexPrev->GetBlockHash() &&*/
+                //     pWallet->pStakerStatus->GetLastTime() >= GetParams().GetConsensus().nTimeSlotLength) {
+                //     MilliSleep(2000);
+                //     continue;
+                // }
 
-                LogPrintf("ThreadStakeMiner: Starting staking attempt at height=%d\n", pindexPrev->nHeight);
+                LogPrintf("ThreadStakeMiner: Starting staking attempt at aaaaaaaaaaaaaa height=%d\n", pindexPrev->nHeight);
                 // Create PoS block
                 std::unique_ptr<CBlockTemplate> pblocktemplate(BlockAssembler(chainparams).CreateNewBlock(CScript(), pWallet, true, &availableCoins));
                 LogPrintf("Block is created");
