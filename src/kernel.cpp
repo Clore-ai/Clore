@@ -12,10 +12,9 @@
 #include "policy/policy.h"
 #include "script/interpreter.h"
 #include "stakeinput.h"
-#include "util/system.h"
+#include "util.h"
 #include "utilmoneystr.h"
 #include "validation.h"
-#include "zpiv/zpos.h"
 #include "chainparams.h"
 
 /**
@@ -97,9 +96,7 @@ static bool LoadStakeInput(const CBlock& block, std::unique_ptr<CStakeInput>& st
 
     // Construct the stakeinput object
     const CTxIn& txin = block.vtx[1]->vin[0];
-    stake = txin.IsZerocoinSpend() ?
-            std::unique_ptr<CStakeInput>(CLegacyZPivStake::NewZPivStake(txin, nHeight)) :
-            std::unique_ptr<CStakeInput>(CPivStake::NewPivStake(txin, nHeight, block.nTime));
+    stake = std::unique_ptr<CStakeInput>(CPivStake::NewPivStake(txin, nHeight, block.nTime));
 
     return stake != nullptr;
 }
