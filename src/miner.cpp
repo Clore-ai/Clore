@@ -783,7 +783,7 @@ void static CloreMiner(const CChainParams& chainparams)
             if (fProofOfStake) {
                 CheckForCoins(pWallet, &availableCoins);
 
-                while ((g_connman && g_connman->GetNodeCount(CConnman::CONNECTIONS_ALL) == 0 && chainparams.MiningRequiresPeers()) ||
+                while (/*(g_connman && g_connman->GetNodeCount(CConnman::CONNECTIONS_ALL) == 0 && chainparams.MiningRequiresPeers()) ||*/
                        pWallet->IsLocked() || !fStakeableCoins) {
                     MilliSleep(5000);
                     if (!fStakeableCoins) CheckForCoins(pWallet, &availableCoins);
