@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022 The CLORE Core developers
+// Copyright (c) 2017-2022 The PIVX Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -24,30 +24,30 @@ public:
     virtual const CBlockIndex* GetIndexFrom() const = 0;
     virtual bool GetTxOutFrom(CTxOut& out) const = 0;
     virtual CAmount GetValue() const = 0;
-    virtual bool IsZClore() const = 0;
+    virtual bool IsZPIV() const = 0;
     virtual CDataStream GetUniqueness() const = 0;
 };
 
 
-class CCloreStake : public CStakeInput
+class CPivStake : public CStakeInput
 {
 private:
     const CTxOut outputFrom;
     const COutPoint outpointFrom;
 
 public:
-    CCloreStake(const CTxOut& _from, const COutPoint& _outPointFrom, const CBlockIndex* _pindexFrom) :
+    CPivStake(const CTxOut& _from, const COutPoint& _outPointFrom, const CBlockIndex* _pindexFrom) :
             CStakeInput(_pindexFrom), outputFrom(_from), outpointFrom(_outPointFrom) {}
 
-    static CCloreStake* NewCloreStake(const CTxIn& txin, int nHeight, uint32_t nTime);
+    static CPivStake* NewPivStake(const CTxIn& txin, int nHeight, uint32_t nTime);
 
     const CBlockIndex* GetIndexFrom() const override;
     bool GetTxOutFrom(CTxOut& out) const override;
     CAmount GetValue() const override;
     CDataStream GetUniqueness() const override;
     CTxIn GetTxIn() const;
-    bool IsZClore() const override { return false; }
+    bool IsZPIV() const override { return false; }
 };
 
 
-#endif //CLORE_STAKEINPUT_H
+#endif //PIVX_STAKEINPUT_H

@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022 The CLORE Core developers
+// Copyright (c) 2017-2022 The PIVX Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or https://www.opensource.org/licenses/mit-license.php.
 
@@ -7,10 +7,11 @@
 #include "chain.h"
 #include "txdb.h"
 #include "validation.h"
+#include "chainparams.h"
 
 static bool HasStakeMinAgeOrDepth(int nHeight, uint32_t nTime, const CBlockIndex* pindex)
 {
-    const Consensus::Params& consensus = Params().GetConsensus();
+    const Consensus::Params& consensus = GetParams().GetConsensus();
     if (consensus.NetworkUpgradeActive(nHeight + 1, Consensus::UPGRADE_ZC_PUBLIC) &&
             !consensus.HasStakeMinAgeOrDepth(nHeight, nTime, pindex->nHeight, pindex->nTime)) {
         return error("%s : min age violation - height=%d - time=%d, nHeightBlockFrom=%d, nTimeBlockFrom=%d",
@@ -19,10 +20,10 @@ static bool HasStakeMinAgeOrDepth(int nHeight, uint32_t nTime, const CBlockIndex
     return true;
 }
 
-CCloreStake* CCloreStake::NewCloreStake(const CTxIn& txin, int nHeight, uint32_t nTime)
+CPivStake* CPivStake::NewPivStake(const CTxIn& txin, int nHeight, uint32_t nTime)
 {
     if (txin.IsZerocoinSpend()) {
-        error("%s: unable to initialize CCloreStake from zerocoin spend", __func__);
+        error("%s: unable to initialize CPivStake from zerocoin spend", __func__);
         return nullptr;
     }
 
@@ -35,13 +36,13 @@ CCloreStake* CCloreStake::NewCloreStake(const CTxIn& txin, int nHeight, uint32_t
             return nullptr;
         }
         // All good
-        return new CCloreStake(coin.out, txin.prevout, pindexFrom);
+        return new CPivStake(coin.out, txin.prevout, pindexFrom);
     }
 
     // Otherwise find the previous transaction in database
     uint256 hashBlock;
     CTransactionRef txPrev;
-    if (!GetTransaction(txin.prevout.hash, txPrev, hashBlock, true)) {
+    if (!GetTransaction(txin.prevout.hash, txPrev, GetParams().GetConsensus(), hashBlock, true)) {
         error("%s : INFO: read txPrev failed, tx id prev: %s", __func__, txin.prevout.hash.GetHex());
         return nullptr;
     }
@@ -60,38 +61,38 @@ CCloreStake* CCloreStake::NewCloreStake(const CTxIn& txin, int nHeight, uint32_t
         return nullptr;
     }
     // All good
-    return new CCloreStake(txPrev->vout[txin.prevout.n], txin.prevout, pindexFrom);
+    return new CPivStake(txPrev->vout[txin.prevout.n], txin.prevout, pindexFrom);
 }
 
-bool CCloreStake::GetTxOutFrom(CTxOut& out) const
+bool CPivStake::GetTxOutFrom(CTxOut& out) const
 {
     out = outputFrom;
     return true;
 }
 
-CTxIn CCloreStake::GetTxIn() const
+CTxIn CPivStake::GetTxIn() const
 {
     return CTxIn(outpointFrom.hash, outpointFrom.n);
 }
 
-CAmount CCloreStake::GetValue() const
+CAmount CPivStake::GetValue() const
 {
     return outputFrom.nValue;
 }
 
-CDataStream CCloreStake::GetUniqueness() const
+CDataStream CPivStake::GetUniqueness() const
 {
-    //The unique identifier for a Clore stake is the outpoint
+    //The unique identifier for a PIV stake is the outpoint
     CDataStream ss(SER_NETWORK, 0);
     ss << outpointFrom.n << outpointFrom.hash;
     return ss;
 }
 
 //The block that the UTXO was added to the chain
-const CBlockIndex* CCloreStake::GetIndexFrom() const
+const CBlockIndex* CPivStake::GetIndexFrom() const
 {
     // Sanity check, pindexFrom is set on the constructor.
-    if (!pindexFrom) throw std::runtime_error("CCloreStake: uninitialized pindexFrom");
+    if (!pindexFrom) throw std::runtime_error("CPivStake: uninitialized pindexFrom");
     return pindexFrom;
 }
 

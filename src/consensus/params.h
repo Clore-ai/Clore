@@ -126,6 +126,7 @@ struct Params {
     int64_t nTargetSpacing;
     int nTimeSlotLength;
     int nMaxProposalPayments;
+    int nActivationHeight;
 
     // height-based activations
     int height_last_invalid_UTXO;

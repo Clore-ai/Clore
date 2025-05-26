@@ -124,6 +124,8 @@ public:
         consensus.nPowTargetTimespan = 1 * 60 * 60 * 24; // Typically 1 day (can vary depending on the cryptocurrency, Zcash uses 1 day)
         consensus.nPowTargetSpacing = 2.5 * 60; // 2.5 minutes, typical for Zcash, adjust as necessary
         consensus.nFutureTimeDriftPoS = 180;
+        consensus.nMNBlockReward = 3 * COIN;
+        consensus.nNewMNBlockReward = 6 * COIN;
         consensus.nStakeMinDepth = 600;
         consensus.nStakeMinAge = 60 * 60;
 	    consensus.fPowAllowMinDifficultyBlocks = false;
@@ -160,6 +162,7 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_COINBASE_ASSETS].nTimeout = 1653264000; // Monday, 23 May 2022 00:00:00
         consensus.vDeployments[Consensus::DEPLOYMENT_COINBASE_ASSETS].nOverrideRuleChangeActivationThreshold = 1411; // Approx 70% of 2016
         consensus.vDeployments[Consensus::DEPLOYMENT_COINBASE_ASSETS].nOverrideMinerConfirmationWindow = 2016;
+        consensus.nActivationHeight = 100;
 	
 	consensus.BIP34LockedIn = 6048; // Locked_in at height 6048
 
@@ -317,6 +320,8 @@ public:
         consensus.posLimitV1 = uint256S("0007ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.posLimitV2 = uint256S("0007ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.nFutureTimeDriftPoS = 180;
+        consensus.nMNBlockReward = 3 * COIN;
+        consensus.nNewMNBlockReward = 6 * COIN;
         consensus.nStakeMinAge = 60 * 60;
         consensus.nStakeMinDepth = 100;
         consensus.nPowTargetTimespan = 1 * 60 * 60 * 24; // Typically 1 day (can vary depending on the cryptocurrency, Zcash uses 1 day)
@@ -357,6 +362,8 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_COINBASE_ASSETS].nTimeout = 1665590400; // Wednesday, 12 October 2022 16:00:00
         consensus.vDeployments[Consensus::DEPLOYMENT_COINBASE_ASSETS].nOverrideRuleChangeActivationThreshold = 1411; // Approx 70% of 2016
         consensus.vDeployments[Consensus::DEPLOYMENT_COINBASE_ASSETS].nOverrideMinerConfirmationWindow = 2016;
+
+        consensus.nActivationHeight = 100;
 	consensus.BIP34LockedIn = 8064; // Locked_in at height 8064
 
         // The best chain should have at least this much work.
@@ -507,6 +514,8 @@ public:
         consensus.posLimitV1 = uint256S("0007ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.posLimitV2 = uint256S("0007ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.nFutureTimeDriftPoS = 180;
+        consensus.nMNBlockReward = 3 * COIN;
+        consensus.nNewMNBlockReward = 6 * COIN;
         consensus.nStakeMinAge = 0;
         consensus.nStakeMinDepth = 20;
         consensus.nPowTargetTimespan = 1 * 60 * 60 * 24; // Typically 1 day (can vary depending on the cryptocurrency, Zcash uses 1 day)
@@ -546,6 +555,7 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_COINBASE_ASSETS].nOverrideRuleChangeActivationThreshold = 400;
         consensus.vDeployments[Consensus::DEPLOYMENT_COINBASE_ASSETS].nOverrideMinerConfirmationWindow = 500;
 
+        consensus.nActivationHeight = 100;
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x00");
 

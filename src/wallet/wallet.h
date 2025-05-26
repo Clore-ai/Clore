@@ -14,6 +14,7 @@
 #include "ui_interface.h"
 #include "utilstrencodings.h"
 #include "validationinterface.h"
+#include "stakeinput.h"
 #include "script/ismine.h"
 #include "script/sign.h"
 #include "wallet/crypter.h"
@@ -749,9 +750,12 @@ private:
     //! the maximum wallet format version: memory-only variable that specifies to what version this wallet may be upgraded
     int nWalletMaxVersion;
 
+    int m_last_block_processed_height GUARDED_BY(cs_wallet) = -1;
+
     int64_t nNextResend;
     int64_t nLastResend;
     bool fBroadcastTransactions;
+
 
     /**
      * Used to keep track of spent outpoints, and
@@ -916,6 +920,9 @@ public:
     //! check whether we are allowed to upgrade (or already support) to the named feature
     bool CanSupportFeature(enum WalletFeature wf) const { AssertLockHeld(cs_wallet); return nWalletMaxVersion >= wf; }
 
+    /** Get last block processed height locking the wallet */
+    int GetLastBlockHeightLockWallet() const;
+
     /**
      * populate vCoins with vector of available COutputs, and populates vAssetCoins in fWithAssets is set to true.
      */
@@ -976,6 +983,7 @@ public:
     bool SelectCoinsMinConf(const CAmount& nTargetValue, int nConfMine, int nConfTheirs, uint64_t nMaxAncestors, std::vector<COutput> vCoins, std::set<CInputCoin>& setCoinsRet, CAmount& nValueRet) const;
     bool SelectAssetsMinConf(const CAmount& nTargetValue, const int nConfMine, const int nConfTheirs, const uint64_t nMaxAncestors, const std::string& strAssetName, std::vector<COutput> vCoins, std::set<CInputCoin>& setCoinsRet, CAmount& nValueRet) const;
 
+    bool IsSpent(const COutPoint& outpoint) const;
     bool IsSpent(const uint256& hash, unsigned int n) const;
 
     bool IsLockedCoin(uint256 hash, unsigned int n) const;
@@ -1135,6 +1143,14 @@ public:
     };
     CWallet::CommitResult CommitTransaction(CTransactionRef tx, CReserveKey& opReservekey, CConnman* connman);
     CWallet::CommitResult CommitTransaction(CTransactionRef tx, CReserveKey* reservekey, CConnman* connman, mapValue_t* extraValues=nullptr);
+
+    bool CreateCoinstakeOuts(const CPivStake& stakeInput, std::vector<CTxOut>& vout, CAmount nTotal) const;
+    bool CreateCoinStake(const CBlockIndex* pindexPrev,
+                         unsigned int nBits,
+                         CMutableTransaction& txNew,
+                         int64_t& nTxNewTime,
+                         std::vector<CStakeableOutput>* availableCoins,
+                         bool stopOnNewBlock = true) const;
 
     /** CLORE END */
 

@@ -72,6 +72,7 @@ public:
         return PARENT::try_lock();
     }
 };
+using RecursiveMutex = AnnotatedMixin<std::recursive_mutex>;
 
 #ifdef DEBUG_LOCKORDER
 void EnterCritical(const char* pszName, const char* pszFile, int nLine, void* cs, bool fTry = false);
@@ -190,6 +191,7 @@ typedef CMutexLock<CCriticalSection> CCriticalBlock;
         (cs).unlock();             \
         LeaveCritical();           \
     }
+#define WITH_LOCK(cs, code) [&] { LOCK(cs); code; }()
 
 class CSemaphore
 {

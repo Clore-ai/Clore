@@ -420,6 +420,52 @@ double ConvertBitsToDouble(unsigned int nBits)
     return dDiff;
 }
 
+CAmount GetBlockValue(int nHeight)
+{
+    // Set V5.5 upgrade block for regtest as well as testnet and mainnet
+    const int nLast = GetParams().GetConsensus().nActivationHeight;
+
+    // Regtest block reward reduction schedule
+    if (GetParams().IsRegTestNet()) {
+        // Reduce regtest block value after V5.5 upgrade
+        if (nHeight > nLast) return 10 * COIN;
+        return 250 * COIN;
+    }
+    // Testnet high-inflation blocks [2, 200] with value 250k PIV
+    const bool isTestnet = GetParams().IsTestnet();
+    if (isTestnet && nHeight < 201 && nHeight > 1) {
+        return 250000 * COIN;
+    }
+    // Mainnet/Testnet block reward reduction schedule
+    const int nZerocoinV2 = GetParams().GetConsensus().nActivationHeight;
+    if (nHeight > nLast) return 10 * COIN;
+    if (nHeight > nZerocoinV2) return 5 * COIN;
+    if (nHeight > 648000) return 4.5 * COIN;
+    if (nHeight > 604800) return 9 * COIN;
+    if (nHeight > 561600) return 13.5 * COIN;
+    if (nHeight > 518400) return 18 * COIN;
+    if (nHeight > 475200) return 22.5 * COIN;
+    if (nHeight > 432000) return 27 * COIN;
+    if (nHeight > 388800) return 31.5 * COIN;
+    if (nHeight > 345600) return 36 * COIN;
+    if (nHeight > 302400) return 40.5 * COIN;
+    if (nHeight > 151200) return 45 * COIN;
+    if (nHeight > 86400) return 225 * COIN;
+    if (nHeight != 1) return 250 * COIN;
+    // Premine for 6 masternodes at block 1
+    return 60001 * COIN;
+}
+int64_t GetMasternodePayment(int nHeight)
+{
+    if (nHeight > GetParams().GetConsensus().nActivationHeight) {
+        return GetParams().GetConsensus().nNewMNBlockReward;
+    }
+
+    // Future: refactor function callers to use this line directly.
+    return GetParams().GetConsensus().nMNBlockReward;
+}
+
+
 static void LimitMempoolSize(CTxMemPool& pool, size_t limit, unsigned long age) {
     int expired = pool.Expire(GetTime() - age);
     if (expired != 0) {

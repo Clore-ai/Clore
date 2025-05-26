@@ -172,6 +172,9 @@ public:
     int MinReorganizationAge() const { return nMinReorganizationAge; }
 
     int GetAssetActivationHeight() const { return nAssetActivationHeight; }
+
+    bool IsRegTestNet() const { return NetworkIDString() == CBaseChainParams::REGTEST; }
+    bool IsTestnet() const { return NetworkIDString() == CBaseChainParams::TESTNET; }
     /** CLORE End **/
 
 protected:

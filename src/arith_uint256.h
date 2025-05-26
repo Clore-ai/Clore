@@ -296,4 +296,8 @@ public:
 uint256 ArithToUint256(const arith_uint256 &);
 arith_uint256 UintToArith256(const uint256 &);
 
+const arith_uint256 ARITH_UINT256_ZERO = arith_uint256();
+const arith_uint256 ARITH_UINT256_ONE = arith_uint256(1);
+
+
 #endif // CLORE_ARITH_UINT256_H
