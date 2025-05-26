@@ -148,7 +148,6 @@ private:
 
     // Information on the current status of the block
     uint64_t nBlockWeight;
-    CTxMemPool::setEntries inBlock;
 
     // Chain context for the block
     int nHeight;
