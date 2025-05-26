@@ -783,6 +783,7 @@ void static CloreMiner(const CChainParams& chainparams)
             if (fProofOfStake) {
                 CheckForCoins(pWallet, &availableCoins);
 
+                LogPrintf("ThreadStakeMiner: Starting staking attempt at height=%d\n", pindexPrev->nHeight);
                 while (/*(g_connman && g_connman->GetNodeCount(CConnman::CONNECTIONS_ALL) == 0 && chainparams.MiningRequiresPeers()) ||*/
                        pWallet->IsLocked() || !fStakeableCoins) {
                     MilliSleep(5000);
@@ -796,6 +797,7 @@ void static CloreMiner(const CChainParams& chainparams)
                     continue;
                 }
 
+                LogPrintf("ThreadStakeMiner: Starting staking attempt at height=%d\n", pindexPrev->nHeight);
                 // Create PoS block
                 std::unique_ptr<CBlockTemplate> pblocktemplate(BlockAssembler(chainparams).CreateNewBlock(CScript(), pWallet, true, &availableCoins));
                 if (!pblocktemplate) continue;
