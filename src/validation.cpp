@@ -45,6 +45,7 @@
 #include "warnings.h"
 #include "net.h"
 #include "kernel.h"
+#include "bignum.h"
 
 #include <atomic>
 #include <sstream>
@@ -564,7 +565,7 @@ static bool CheckInputsFromMempoolAndCache(const CTransaction& tx, CValidationSt
     LOCK(pool.cs);
 
     assert(!tx.IsCoinBase());
-    for (const CTxIn& txin : tx.vin) {
+    for (const CTxIn& txin : tx->vin) {
         const Coin& coin = view.AccessCoin(txin.prevout);
 
         // At this point we haven't actually checked if the coins are all
