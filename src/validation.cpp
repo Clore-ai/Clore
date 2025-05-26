@@ -45,7 +45,6 @@
 #include "warnings.h"
 #include "net.h"
 #include "kernel.h"
-#include "bignum.h"
 
 #include <atomic>
 #include <sstream>
@@ -4766,7 +4765,7 @@ static bool IsSpentOnActiveChain(std::unordered_set<COutPoint, SaltedOutpointHas
 
 static bool CheckInBlockDoubleSpends(const CBlock& block, int nHeight, CValidationState& state,
                                      std::unordered_set<COutPoint, SaltedOutpointHasher>& spent_outpoints,
-                                     std::set<CBigNum>& spent_serials)
+                                     std::set<uint256>& spent_serials)
 {
     const Consensus::Params& consensus = GetParams().GetConsensus();
 
@@ -4899,7 +4898,7 @@ static bool AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CValidation
      if (isPoS) {
         bool isBlockFromFork = pindexPrev != nullptr && chainActive.Tip() != pindexPrev;
         std::unordered_set<COutPoint, SaltedOutpointHasher> spent_outpoints;
-        std::set<CBigNum> spent_serials;
+        std::set<uint256> spent_serials;
         if (!CheckInBlockDoubleSpends(block, nHeight, state, spent_outpoints, spent_serials))
             return false;
 
@@ -4911,7 +4910,7 @@ static bool AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CValidation
         if (isBlockFromFork && chainActive.Height() - pindexFork->nHeight > gArgs.GetArg("-maxreorg", DEFAULT_MAX_REORG_DEPTH))
             return error("%s: forked chain longer than maximum reorg limit", __func__);
 
-        for (const CBigNum& s : spent_serials) {
+        for (const uint256& s : spent_serials) {
             int nHeightTx = 0;
         }
 
