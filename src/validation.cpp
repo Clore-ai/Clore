@@ -4901,8 +4901,6 @@ static bool AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CValidation
     if (!IsInitialBlockDownload() && chainActive.Tip() == pindex->pprev)
         GetMainSignals().NewPoWValidBlock(pindex, pblock);
 
-    int nHeight = pindex->nHeight;
-
      if (isPoS) {
         bool isBlockFromFork = pindexPrev != nullptr && chainActive.Tip() != pindexPrev;
         std::unordered_set<COutPoint, SaltedOutpointHasher> spent_outpoints;
