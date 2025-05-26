@@ -28,6 +28,7 @@
 #include "wallet/feebumper.h"
 #include "wallet/wallet.h"
 #include "wallet/walletdb.h"
+#include "masternode-sync.h"
 
 #include <init.h>  // For StartShutdown
 

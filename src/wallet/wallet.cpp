@@ -2001,16 +2001,19 @@ CAmount CWalletTx::GetImmatureCredit(bool fUseCache) const
     return 0;
 }
 
-CAmount CWalletTx::GetAvailableCredit(bool fUseCache) const
+CAmount CWalletTx::GetAvailableCredit(bool fUseCache, const isminefilter& filter) const
 {
     if (pwallet == nullptr)
         return 0;
+
+    bool allow_cache = filter == ISMINE_SPENDABLE || filter == ISMINE_WATCH_ONLY ||
+            filter == ISMINE_SPENDABLE_SHIELDED || filter == ISMINE_WATCH_ONLY_SHIELDED;
 
     // Must wait until coinbase is safely deep enough in the chain before valuing it
     if (IsCoinBase() && GetBlocksToMaturity() > 0)
         return 0;
 
-    if (fUseCache && fAvailableCreditCached)
+    if (allow_cache && fUseCache && fAvailableCreditCached)
         return nAvailableCreditCached;
 
     CAmount nCredit = 0;
@@ -2020,7 +2023,7 @@ CAmount CWalletTx::GetAvailableCredit(bool fUseCache) const
         if (!pwallet->IsSpent(hashTx, i))
         {
             const CTxOut &txout = tx->vout[i];
-            nCredit += pwallet->GetCredit(txout, ISMINE_SPENDABLE);
+            nCredit += pwallet->GetCredit(txout, filter);
             if (!MoneyRange(nCredit))
                 throw std::runtime_error(std::string(__func__) + " : value out of range");
         }
@@ -2076,7 +2079,7 @@ CAmount CWalletTx::GetAvailableWatchOnlyCredit(const bool& fUseCache) const
 
 CAmount CWalletTx::GetColdStakingCredit(bool fUseCache) const
 {
-    return GetAvailableCredit(fUseCache);
+    return GetAvailableCredit(fUseCache, ISMINE_COLD);
 }
 
 CAmount CWallet::loopTxsBalance(const std::function<void(const uint256&, const CWalletTx&, CAmount&)>& method) const
@@ -2100,7 +2103,7 @@ CAmount CWallet::GetColdStakingBalance() const
 }
 CAmount CWalletTx::GetStakeDelegationCredit(bool fUseCache) const
 {
-    return GetAvailableCredit(fUseCache);
+    return GetAvailableCredit(fUseCache, ISMINE_SPENDABLE_DELEGATED);
 }
 
 // Return sum of locked coins
