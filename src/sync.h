@@ -171,6 +171,100 @@ public:
     }
 };
 
+/** Wrapper around std::unique_lock style lock for Mutex. */
+template <typename Mutex, typename Base = typename Mutex::UniqueLock>
+class SCOPED_LOCKABLE UniqueLock  : public Base
+{
+private:
+    void Enter(const char* pszName, const char* pszFile, int nLine)
+    {
+        EnterCritical(pszName, pszFile, nLine, (void*)(Base::mutex()));
+#ifdef DEBUG_LOCKCONTENTION
+        if (!Base::try_lock()) {
+            PrintLockContention(pszName, pszFile, nLine);
+#endif
+        Base::lock();
+#ifdef DEBUG_LOCKCONTENTION
+        }
+#endif
+    }
+
+    bool TryEnter(const char* pszName, const char* pszFile, int nLine)
+    {
+        EnterCritical(pszName, pszFile, nLine, (void*)(Base::mutex()), true);
+        Base::try_lock();
+        if (!Base::owns_lock())
+            LeaveCritical();
+        return Base::owns_lock();
+    }
+
+public:
+    UniqueLock(Mutex& mutexIn, const char* pszName, const char* pszFile, int nLine, bool fTry = false) EXCLUSIVE_LOCK_FUNCTION(mutexIn) : Base(mutexIn, std::defer_lock)
+    {
+        if (fTry)
+            TryEnter(pszName, pszFile, nLine);
+        else
+            Enter(pszName, pszFile, nLine);
+    }
+
+    UniqueLock(Mutex* pmutexIn, const char* pszName, const char* pszFile, int nLine, bool fTry = false) EXCLUSIVE_LOCK_FUNCTION(pmutexIn)
+    {
+        if (!pmutexIn) return;
+
+        *static_cast<Base*>(this) = Base(*pmutexIn, std::defer_lock);
+        if (fTry)
+            TryEnter(pszName, pszFile, nLine);
+        else
+            Enter(pszName, pszFile, nLine);
+    }
+
+    ~UniqueLock() UNLOCK_FUNCTION()
+    {
+        if (Base::owns_lock())
+            LeaveCritical();
+    }
+
+    operator bool()
+    {
+        return Base::owns_lock();
+    }
+
+protected:
+    // needed for reverse_lock
+    UniqueLock() { }
+
+public:
+    /**
+     * An RAII-style reverse lock. Unlocks on construction and locks on destruction.
+     */
+    class reverse_lock {
+    public:
+        explicit reverse_lock(UniqueLock& _lock, const char* _guardname, const char* _file, int _line) : lock(_lock), file(_file), line(_line) {
+            CheckLastCritical((void*)lock.mutex(), lockname, _guardname, _file, _line);
+            lock.unlock();
+            LeaveCritical();
+            lock.swap(templock);
+        }
+
+        ~reverse_lock() {
+            templock.swap(lock);
+            EnterCritical(lockname.c_str(), file.c_str(), line, (void*)lock.mutex());
+            lock.lock();
+        }
+
+     private:
+        reverse_lock(reverse_lock const&);
+        reverse_lock& operator=(reverse_lock const&);
+
+        UniqueLock& lock;
+        UniqueLock templock;
+        std::string lockname;
+        const std::string file;
+        const int line;
+     };
+     friend class reverse_lock;
+};
+
 typedef CMutexLock<CCriticalSection> CCriticalBlock;
 
 #define PASTE(x, y) x ## y
