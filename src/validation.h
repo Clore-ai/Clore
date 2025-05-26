@@ -191,12 +191,6 @@ extern BlockMap mapBlockIndex;
 extern uint64_t nLastBlockTx;
 extern uint64_t nLastBlockWeight;
 
-// Best block section
-extern Mutex g_best_block_mutex;
-extern std::condition_variable g_best_block_cv;
-extern uint256 g_best_block;
-extern int64_t g_best_block_time;
-
 extern const std::string strMessageMagic;
 extern CWaitableCriticalSection csBestBlock;
 extern CConditionVariable cvBlockChange;
