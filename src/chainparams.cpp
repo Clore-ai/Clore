@@ -124,8 +124,8 @@ public:
         consensus.nPowTargetTimespan = 1 * 60 * 60 * 24; // Typically 1 day (can vary depending on the cryptocurrency, Zcash uses 1 day)
         consensus.nPowTargetSpacing = 2.5 * 60; // 2.5 minutes, typical for Zcash, adjust as necessary
         consensus.nFutureTimeDriftPoS = 180;
-        consensus.nMNBlockReward = 3 * COIN;
-        consensus.nNewMNBlockReward = 6 * COIN;
+        consensus.nMNBlockReward = 1 * COIN;
+        consensus.nNewMNBlockReward = 1 * COIN;
         consensus.nStakeMinDepth = 600;
         consensus.nStakeMinAge = 60 * 60;
 	    consensus.fPowAllowMinDifficultyBlocks = false;
@@ -320,8 +320,8 @@ public:
         consensus.posLimitV1 = uint256S("0007ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.posLimitV2 = uint256S("0007ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.nFutureTimeDriftPoS = 180;
-        consensus.nMNBlockReward = 3 * COIN;
-        consensus.nNewMNBlockReward = 6 * COIN;
+        consensus.nMNBlockReward = 1 * COIN;
+        consensus.nNewMNBlockReward = 1 * COIN;
         consensus.nStakeMinAge = 60 * 60;
         consensus.nStakeMinDepth = 100;
         consensus.nPowTargetTimespan = 1 * 60 * 60 * 24; // Typically 1 day (can vary depending on the cryptocurrency, Zcash uses 1 day)
@@ -514,8 +514,8 @@ public:
         consensus.posLimitV1 = uint256S("0007ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.posLimitV2 = uint256S("0007ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.nFutureTimeDriftPoS = 180;
-        consensus.nMNBlockReward = 3 * COIN;
-        consensus.nNewMNBlockReward = 6 * COIN;
+        consensus.nMNBlockReward = 1 * COIN;
+        consensus.nNewMNBlockReward = 1 * COIN;
         consensus.nStakeMinAge = 0;
         consensus.nStakeMinDepth = 20;
         consensus.nPowTargetTimespan = 1 * 60 * 60 * 24; // Typically 1 day (can vary depending on the cryptocurrency, Zcash uses 1 day)
