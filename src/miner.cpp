@@ -220,6 +220,9 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     pblock->nNonce         = 0;
     pblock->nNonce64         = 0;
     pblock->nHeight          = nHeight;
+    if (pblocktemplate->vTxSigOpsCost.empty()) {
+        pblocktemplate->vTxSigOpsCost.push_back(0);
+    }
     pblocktemplate->vTxSigOpsCost[0] = WITNESS_SCALE_FACTOR * GetLegacySigOpCount(*pblock->vtx[0]);
 
     CValidationState state;
