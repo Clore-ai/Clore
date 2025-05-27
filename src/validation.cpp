@@ -4641,8 +4641,10 @@ static bool AcceptBlockHeader(const CBlockHeader& block, CValidationState& state
             return true;
         }
 
-        if (!CheckBlockHeader(block, state, chainparams.GetConsensus(), fCheckPow))
+        if (!CheckBlockHeader(block, state, chainparams.GetConsensus(), fCheckPow)) {
+            LogPrintf("AcceptBlockHeader: CheckBlockHeader failed for block %s\n", hash.ToString());
             return error("%s: Consensus::CheckBlockHeader: %s, %s", __func__, hash.ToString(), FormatStateMessage(state));
+        }
 
         // Get prev block index
         CBlockIndex* pindexPrev = nullptr;
@@ -4652,8 +4654,10 @@ static bool AcceptBlockHeader(const CBlockHeader& block, CValidationState& state
         pindexPrev = (*mi).second;
         if (pindexPrev->nStatus & BLOCK_FAILED_MASK)
             return state.DoS(100, error("%s: prev block invalid", __func__), REJECT_INVALID, "bad-prevblk");
-        if (!ContextualCheckBlockHeader(block, state, chainparams, pindexPrev, GetAdjustedTime()))
+        if (!ContextualCheckBlockHeader(block, state, chainparams, pindexPrev, GetAdjustedTime())) {
+            LogPrintf("AcceptBlockHeader: ContextualCheckBlockHeader failed for block %s\n", hash.ToString());
             return error("%s: Consensus::ContextualCheckBlockHeader: %s, %s", __func__, hash.ToString(), FormatStateMessage(state));
+        }
 
         if (!pindexPrev->IsValid(BLOCK_VALID_SCRIPTS)) {
             for (const CBlockIndex* failedit : g_failed_blocks) {
