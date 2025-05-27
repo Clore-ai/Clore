@@ -34,9 +34,7 @@ CStakeKernel::CStakeKernel(const CBlockIndex* const pindexPrev, CStakeInput* sta
     // Set kernel stake modifier
     
    
-    uint64_t nStakeModifier = 0;
-    if (!GetOldStakeModifier(stakeInput, nStakeModifier))
-        LogPrintf("%s : ERROR: Failed to get kernel stake modifier\n", __func__);
+    uint64_t nStakeModifier = 0xabcdef1234567890;
     // Modifier v1
     stakeModifier << nStakeModifier;
     
