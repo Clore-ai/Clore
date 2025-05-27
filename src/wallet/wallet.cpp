@@ -4242,7 +4242,7 @@ bool CWallet::CreateCoinStake(
         txNew.vout[outputs].nValue += nRemaining;
 
         // Set coinstake input
-        txNew.vin.emplace_back(stakeInput.GetTxIn());
+        txNew.vin.emplace_back(stakeInput->GetTxIn());
 
         // Limit size
         unsigned int nBytes = ::GetSerializeSize(txNew, PROTOCOL_VERSION);
