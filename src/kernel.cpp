@@ -36,7 +36,7 @@ CStakeKernel::CStakeKernel(const CBlockIndex* const pindexPrev, CStakeInput* sta
     uint64_t nStakeModifier = 0;
    
      // Retrieve stake modifier from pindexPrev
-    if (!GetKernelStakeModifier(pindexPrev, nStakeModifier)) {
+    if (!GetOldStakeModifier(stakeInput, nStakeModifier)) {
         // fallback? you may log or handle an error
         nStakeModifier = 0;
     }
