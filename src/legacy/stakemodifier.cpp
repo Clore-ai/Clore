@@ -125,7 +125,7 @@ bool GetOldStakeModifier(const CStakeInput* stake, uint64_t& nStakeModifier)
 {
     const CBlockIndex* pindexFrom = stake->GetIndexFrom();
     if (!pindexFrom) return error("%s : failed to get index from", __func__);
-    if (stake->IsZPIV()) {
+    if (!stake->IsZPIV()) {
         int64_t nTimeBlockFrom = pindexFrom->GetBlockTime();
         const int nHeightStop = std::min(chainActive.Height(), GetParams().GetConsensus().height_last_ZC_AccumCheckpoint-1);
         while (pindexFrom && pindexFrom->nHeight + 1 <= nHeightStop) {
