@@ -2510,21 +2510,7 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
     if (isPoSBlock && (block.vtx[0]->vout.size() != 1 || !block.vtx[0]->vout[0].IsEmpty()))
         return state.DoS(100, false, REJECT_INVALID, "bad-cb-pos", false, "coinbase output not empty for proof-of-stake block");
 
-    // Compute and set stake modifier for PoS blocks starting at height 201
-    if (block.IsProofOfStake() && pindex->nHeight >= 201) {
-        uint64_t nStakeModifier = 0;
-        bool fGeneratedStakeModifier = false;
-
-        if (!ComputeNextStakeModifier(pindex->pprev, nStakeModifier, fGeneratedStakeModifier)) {
-            return error("ConnectBlock(): failed to compute stake modifier at height %d", pindex->nHeight);
-        }
-
-        if (fGeneratedStakeModifier) {
-            pindex->SetStakeModifier(nStakeModifier, fGeneratedStakeModifier);
-            pindex->nFlags |= BLOCK_STAKE_MODIFIER;
-            LogPrintf("StakeModifier: Set at height %d: %016x\n", pindex->nHeight, nStakeModifier);
-        }
-    }
+   
     // Special case for the genesis block, skipping connection of its transactions
     // (its coinbase is unspendable)
     if (block.GetHash() == chainparams.GetConsensus().hashGenesisBlock) {
