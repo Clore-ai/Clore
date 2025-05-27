@@ -279,7 +279,7 @@ bool SolveProofOfStake(CBlock* pblock, CBlockIndex* pindexPrev, CWallet* pwallet
     pblock->nBits = GetNextWorkRequired(pindexPrev, pblock, GetParams().GetConsensus());
 
     CMutableTransaction txCoinStake;
-    int64_t nTxNewTime = 0;
+    int64_t nTxNewTime = GetAdjustedTime();
     if (!pwallet->CreateCoinStake(pindexPrev,
                                   pblock->nBits,
                                   txCoinStake,
