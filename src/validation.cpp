@@ -3439,6 +3439,10 @@ bool static ConnectTip(CValidationState& state, const CChainParams& chainparams,
         int64_t nTimeConnectStart = GetTimeMicros();
 
         bool rv = ConnectBlock(blockConnecting, state, pindexNew, view, chainparams, &assetCache);
+        LogPrintf("ConnectBlock failed: Block %s rejected. Reason: %s — %s\n",
+                  blockConnecting.GetHash().ToString(),
+                  state.GetRejectReason(),
+                  FormatStateMessage(state));
         GetMainSignals().BlockChecked(blockConnecting, state);
         if (!rv) {
             if (state.IsInvalid())
