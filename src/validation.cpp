@@ -3015,6 +3015,8 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
     int64_t nTime6 = GetTimeMicros(); nTimeCallbacks += nTime6 - nTime5;
     LogPrint(BCLog::BENCH, "    - Callbacks: %.2fms [%.2fs (%.2fms/blk)]\n", MILLI * (nTime6 - nTime5), nTimeCallbacks * MICRO, nTimeCallbacks * MILLI / nBlocksTotal);
 
+    LogPrintf("StakeModifier DEBUG: Height=%d Hash=%s Modifier=%016x Generated=%d\n",
+    pindex->nHeight, pindex->GetBlockHash().ToString(), nStakeModifier, fGeneratedStakeModifier);
     return true;
 }
 
@@ -4868,7 +4870,6 @@ static bool AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CValidation
         std::string strError;
         if (!CheckProofOfStake(block, strError, pindexPrev))
             return state.DoS(100, error("%s: proof of stake check failed (%s)", __func__, strError));
-        return true;
     }
 
     if (!AcceptBlockHeader(block, state, chainparams, &pindex, !isPoS))
@@ -4909,7 +4910,7 @@ static bool AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CValidation
 
     auto currentActiveAssetCache = GetCurrentAssetCache();
     // Dont force the CheckBlock asset duplciates when checking from this state
-    if (!CheckBlock(block, state, chainparams.GetConsensus(), true, true) ||
+    if (!CheckBlock(block, state, chainparams.GetConsensus(), !isPoS, true) ||
         !ContextualCheckBlock(block, state, chainparams.GetConsensus(), pindex->pprev, currentActiveAssetCache)) {
         if (fFromLoad && state.GetRejectReason() == "bad-txns-transfer-asset-bad-deserialize") {
             // keep going, we are only loading blocks from database
