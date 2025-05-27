@@ -4176,8 +4176,6 @@ bool CWallet::CreateCoinStake(
     pStakerStatus->SetLastCoins((int) availableCoins->size());
 
     // Kernel Search
-    CAmount nCredit;
-    CAmount nMasternodePayment;
     CScript scriptPubKeyKernel;
     bool fKernelFound = false;
     int nAttempts = 0;
@@ -4217,11 +4215,15 @@ bool CWallet::CreateCoinStake(
 
         // Found a kernel
         LogPrintf("CreateCoinStake : kernel found\n");
-        nCredit += stakeInput->GetValue();
+        CAmount nStakeValue = stakeInput->GetValue();
+        CAmount nReward = GetBlockValue(pindexPrev->nHeight + 1);
+        CAmount nMasternodePayment = GetMasternodePayment(pindexPrev->nHeight + 1);
 
-        // Add block reward to the credit
-        nCredit += GetBlockValue(pindexPrev->nHeight + 1);
-        nMasternodePayment = GetMasternodePayment(pindexPrev->nHeight + 1);
+        CAmount nCredit = nStakeValue + nReward;
+        CAmount nStakerOut = nCredit - nMasternodePayment;
+
+        LogPrintf("CreateCoinStake : stake=%d, reward=%d, masternode=%d, stakerOut=%d\n",
+                  nStakeValue, nReward, nMasternodePayment, nStakerOut);
 
         LogPrintf("CreateCoinStake : nCredit = %d, nMasternodePayment = %d\n", nCredit, nMasternodePayment);
 
@@ -4233,7 +4235,7 @@ bool CWallet::CreateCoinStake(
         }
         // Create the output transaction(s)
         std::vector<CTxOut> vout;
-        if (!CreateCoinstakeOuts(*stakeInput, vout, nCredit - nMasternodePayment)) {
+        if (!CreateCoinstakeOuts(*stakeInput, vout, nTotalOut)) {
             LogPrintf("%s : failed to create output\n", __func__);
             it++;
             continue;
