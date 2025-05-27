@@ -887,6 +887,8 @@ public:
         nRelockTime = 0;
         fAbortRescan = false;
         fScanningWallet = false;
+        nStakeSplitThreshold = 300 * COIN;
+
         // Staker status (last hashed block and time)
         if (pStakerStatus) {
             pStakerStatus->SetNull();

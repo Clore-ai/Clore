@@ -4112,7 +4112,6 @@ bool CWallet::CreateCoinstakeOuts(const CPivStake& stakeInput, std::vector<CTxOu
         return error("%s: total stake value is zero or negative", __func__);
     }
 
-    nStakeSplitThreshold = 300 * COIN
     // Calculate if we need to split the output
     if (nStakeSplitThreshold > 0) {
         int nSplit = static_cast<int>(nTotal / nStakeSplitThreshold);
