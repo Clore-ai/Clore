@@ -4199,8 +4199,6 @@ bool CWallet::CreateCoinStake(
             continue;
         }
 
-        nCredit = 0;
-
         nAttempts++;
         fKernelFound = Stake(pindexPrev, stakeInput.get(), nBits, nTxNewTime);
 
