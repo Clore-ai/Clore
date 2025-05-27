@@ -159,11 +159,6 @@ void CBlockIndex::BuildSkip()
 
 arith_uint256 GetBlockProof(const CBlockIndex& block)
 {
-    if (block.IsProofOfStake()) {
-        // Return at least minimal PoS work (e.g., 1 unit)
-        return arith_uint256(1);
-    }
-
     arith_uint256 bnTarget;
     bool fNegative;
     bool fOverflow;

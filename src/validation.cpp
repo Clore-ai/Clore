@@ -3752,7 +3752,7 @@ bool ActivateBestChain(CValidationState &state, const CChainParams& chainparams,
             // Whether we have anything to do at all.
             if (pindexMostWork == nullptr || pindexMostWork == chainActive.Tip()) {
                 LogPrintf("ActivateBestChain: No new work to do. Tip: %s\n", chainActive.Tip() ? chainActive.Tip()->GetBlockHash().ToString() : "nullptr");
-                return true;
+                break;
             }
 
             bool fInvalidFound = false;
