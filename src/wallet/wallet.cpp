@@ -4126,10 +4126,13 @@ bool CWallet::CreateCoinstakeOuts(const CPivStake& stakeInput, std::vector<CTxOu
                 LogPrintf("%s: StakeSplit: nTotal = %d; adding output %d of %d\n", __func__, nTotal, (nSplit-i)+2, nSplit);
                 vout.emplace_back(0, scriptPubKeyKernel);
             }
+        }
     }
     
     return true;
 }
+
+
 int CWallet::GetLastBlockHeightLockWallet() const
 {
     return WITH_LOCK(cs_wallet, return m_last_block_processed_height;);
