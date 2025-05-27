@@ -35,7 +35,14 @@ CStakeKernel::CStakeKernel(const CBlockIndex* const pindexPrev, CStakeInput* sta
     
     uint64_t nStakeModifier = 0;
    
-    stakeModifier << nStakeModifier;
+     // Retrieve stake modifier from pindexPrev
+    if (!GetKernelStakeModifier(pindexPrev, nStakeModifier)) {
+        // fallback? you may log or handle an error
+        nStakeModifier = 0;
+    }
+
+    // Correct way to store modifier
+    stakeModifier = std::vector<unsigned char>((unsigned char*)&nStakeModifier, (unsigned char*)&nStakeModifier + sizeof(nStakeModifier));
     
     const CBlockIndex* pindexFrom = stakeInput->GetIndexFrom();
     nTimeBlockFrom = pindexFrom->nTime;
@@ -135,7 +142,6 @@ bool CheckProofOfStake(const CBlock& block, std::string& strError, const CBlockI
     }
     // Verify Proof Of Stake
     CStakeKernel stakeKernel(pindexPrev, stakeInput.get(), block.nBits, block.nTime);
-    stakeKernel.nTime = block.nTime;
     if (!stakeKernel.CheckKernelHash()) {
         strError = "kernel hash check fails";
         return false;
