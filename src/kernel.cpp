@@ -61,7 +61,7 @@ bool CStakeKernel::CheckKernelHash(bool fSkipLog) const
     const arith_uint256& hashProofOfStake = UintToArith256(GetHash());
     const bool res = hashProofOfStake < bnTarget;
 
-    if (!fSkipLog || res) {
+    if (!fSkipLog || !res) {
         LogPrint(BCLog::STAKING, "%s : Proof Of Stake:"
                             "\nstakeModifier=%s"
                             "\nnTimeBlockFrom=%d"
