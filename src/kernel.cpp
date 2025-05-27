@@ -16,6 +16,7 @@
 #include "utilmoneystr.h"
 #include "validation.h"
 #include "chainparams.h"
+#include "timedata.h"
 
 /**
  * CStakeKernel Constructor
@@ -62,7 +63,7 @@ bool CStakeKernel::CheckKernelHash(bool fSkipLog) const
     const arith_uint256& hashProofOfStake = UintToArith256(GetHash());
     const bool res = hashProofOfStake < bnTarget;
 
-    if (!fSkipLog || !res) {
+    if (!fSkipLog || res) {
         LogPrint(BCLog::STAKING, "%s : Proof Of Stake:"
                             "\nstakeModifier=%s"
                             "\nnTimeBlockFrom=%d"
@@ -109,7 +110,7 @@ static bool LoadStakeInput(const CBlock& block, std::unique_ptr<CStakeInput>& st
 bool Stake(const CBlockIndex* pindexPrev, CStakeInput* stakeInput, unsigned int nBits, int64_t& nTimeTx)
 {
     if (!stakeInput) return false;
-
+    nTimeTx = GetAdjustedTime();
     // Verify Proof Of Stake
     CStakeKernel stakeKernel(pindexPrev, stakeInput, nBits, nTimeTx);
     return stakeKernel.CheckKernelHash(true);
