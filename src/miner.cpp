@@ -300,6 +300,8 @@ bool SolveProofOfStake(CBlock* pblock, CBlockIndex* pindexPrev, CWallet* pwallet
     txCoinbase.vin[0].prevout.SetNull();
     txCoinbase.vin[0].scriptSig = CScript() << nHeight << OP_0;
     txCoinbase.vout.clear(); // No value in PoS coinbase
+    txCoinbase.vout.emplace_back(GetBlockValue(nHeight), scriptPubKeyIn);
+    txCoinbase.vout[0].nValue = GetBlockValue(nHeight);
 
     // Sign coinstake
     if (!pwallet->SignCoinStake(txCoinStake)) {
