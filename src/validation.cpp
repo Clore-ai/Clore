@@ -4845,7 +4845,7 @@ static bool CheckInBlockDoubleSpends(const CBlock& block, int nHeight, CValidati
 /** Store block on disk. If dbp is non-nullptr, the file is known to already reside on disk */
 static bool AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CValidationState& state, const CChainParams& chainparams, CBlockIndex** ppindex, bool fRequested, const CDiskBlockPos* dbp, bool* fNewBlock, bool fFromLoad = false)
 {
-    LogPrintf("AcceptBlock: ENTERED for block %s\n", block.GetHash().ToString());
+    LogPrintf("AcceptBlock: ENTERED for block %s\n", pblock->GetHash().ToString());
     const CBlock& block = *pblock;
 
     if (fNewBlock) *fNewBlock = false;
