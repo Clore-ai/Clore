@@ -725,9 +725,15 @@ static bool ProcessBlockFound(const CBlock* pblock, const CChainParams& chainpar
 
     // Found a solution
     {
-        LOCK(cs_main);
-        if (pblock->hashPrevBlock != chainActive.Tip()->GetBlockHash())
-            return error("ProcessBlockFound -- generated block is stale");
+       LOCK(cs_main);
+        if (pblock->hashPrevBlock != chainActive.Tip()->GetBlockHash()) {
+            LogPrintf("ProcessBlockFound -- generated block is stale\n");
+            return false;
+        }
+        if (pblock->GetHash() == chainActive.Tip()->GetBlockHash()) {
+            LogPrintf("ProcessBlockFound -- already at tip, skipping\n");
+            return false;
+        }
     }
 
     // Inform about the new block

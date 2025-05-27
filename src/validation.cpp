@@ -3737,6 +3737,14 @@ bool ActivateBestChain(CValidationState &state, const CChainParams& chainparams,
                 pindexMostWork = FindMostWorkChain();
             }
 
+            LogPrintf("ABC: Tip is %s height=%d\n",
+                chainActive.Tip() ? chainActive.Tip()->GetBlockHash().ToString() : "nullptr",
+                chainActive.Tip() ? chainActive.Tip()->nHeight : -1);
+
+            LogPrintf("ABC: pindexMostWork is %s height=%d\n",
+                pindexMostWork ? pindexMostWork->GetBlockHash().ToString() : "nullptr",
+                pindexMostWork ? pindexMostWork->nHeight : -1);
+
             // Whether we have anything to do at all.
             if (pindexMostWork == nullptr || pindexMostWork == chainActive.Tip()) {
                 LogPrintf("ActivateBestChain: No new work to do. Tip: %s\n", chainActive.Tip() ? chainActive.Tip()->GetBlockHash().ToString() : "nullptr");
