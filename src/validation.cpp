@@ -3583,7 +3583,7 @@ static CBlockIndex* FindMostWorkChain() {
             }
             pindexTest = pindexTest->pprev;
         }
-        if (!fInvalidAncestor && pindexNew->IsProofOfStake())
+        if (!fInvalidAncestor)
             return pindexNew;
     } while(true);
 }
