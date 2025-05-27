@@ -291,6 +291,11 @@ bool SolveProofOfStake(CBlock* pblock, CBlockIndex* pindexPrev, CWallet* pwallet
         return false;
     }
     // Stake found
+    if (nTxNewTime <= pindexPrev->GetMedianTimePast()) {
+        nTxNewTime = pindexPrev->GetMedianTimePast() + 1;
+    }
+    pblock->nTime = nTxNewTime;
+    txCoinStake.nTime = nTxNewTime;  // If applicable
 
     const int nHeight = pindexPrev->nHeight + 1;
 
