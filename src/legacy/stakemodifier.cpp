@@ -89,24 +89,37 @@ static bool SelectBlockFromCandidates(
 // modifier about a selection interval later than the coin generating the kernel
 bool GetOldModifier(const CBlockIndex* pindexFrom, uint64_t& nStakeModifier)
 {
+    if (!pindexFrom)
+        return error("%s: null pindexFrom", __func__);
+
     int64_t nStakeModifierTime = pindexFrom->GetBlockTime();
     const CBlockIndex* pindex = pindexFrom;
-    CBlockIndex* pindexNext = chainActive[pindex->nHeight + 1];
 
-    // loop to find the stake modifier later by a selection interval
-    do {
+    // Avoid accessing out-of-bounds
+    while (true) {
+        int nextHeight = pindex->nHeight + 1;
+        if (nextHeight > chainActive.Height())
+            break; // We're at the tip
+
+        const CBlockIndex* pindexNext = chainActive[nextHeight];
         if (!pindexNext) {
-            // Should never happen
-            return error("%s : Null pindexNext, current block %s ", __func__, pindex->phashBlock->GetHex());
+            return error("%s : Null pindexNext at height=%d, current block %s",
+                         __func__, nextHeight, pindex->GetBlockHash().ToString());
         }
+
         pindex = pindexNext;
-        if (pindex->GeneratedStakeModifier()) nStakeModifierTime = pindex->GetBlockTime();
-        pindexNext = chainActive[pindex->nHeight + 1];
-    } while (nStakeModifierTime < pindexFrom->GetBlockTime() + OLD_MODIFIER_INTERVAL);
+
+        if (pindex->GeneratedStakeModifier())
+            nStakeModifierTime = pindex->GetBlockTime();
+
+        if (nStakeModifierTime >= pindexFrom->GetBlockTime() + OLD_MODIFIER_INTERVAL)
+            break;
+    }
 
     nStakeModifier = pindex->GetStakeModifierV1();
     return true;
 }
+
 
 bool GetOldStakeModifier(const CStakeInput* stake, uint64_t& nStakeModifier)
 {
