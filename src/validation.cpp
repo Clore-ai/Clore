@@ -3015,8 +3015,6 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
     int64_t nTime6 = GetTimeMicros(); nTimeCallbacks += nTime6 - nTime5;
     LogPrint(BCLog::BENCH, "    - Callbacks: %.2fms [%.2fs (%.2fms/blk)]\n", MILLI * (nTime6 - nTime5), nTimeCallbacks * MICRO, nTimeCallbacks * MILLI / nBlocksTotal);
 
-    LogPrintf("StakeModifier DEBUG: Height=%d Hash=%s Modifier=%016x Generated=%d\n",
-    pindex->nHeight, pindex->GetBlockHash().ToString(), nStakeModifier, fGeneratedStakeModifier);
     return true;
 }
 
