@@ -428,10 +428,10 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
         if (prevBlock == nullptr && chainActive.Tip() != pindexPrev) return nullptr; // new block came in, move on
 
         CValidationState state;
-        if (fProofOfStake && pblock->nTime <= pindexPrev->GetMedianTimePast()) {
-            LogPrintf("CreateNewBlock() - block time too old, adjusting. nTime: %d, MTP: %d\n", pblock->nTime, pindexPrev->GetMedianTimePast());
-            pblock->nTime = pindexPrev->GetMedianTimePast() + 1;
-        }
+        // if (fProofOfStake && pblock->nTime <= pindexPrev->GetMedianTimePast()) {
+        //     LogPrintf("CreateNewBlock() - block time too old, adjusting. nTime: %d, MTP: %d\n", pblock->nTime, pindexPrev->GetMedianTimePast());
+        //     pblock->nTime = pindexPrev->GetMedianTimePast() + 1;
+        // }
         LogPrintf("CreateNewBlock: tx[0] outputs: %d\n", pblock->vtx[0]->vout.size());
         // if (fTestValidity &&
         //     !TestBlockValidity(state, chainparams, *pblock, pindexPrev, false, false)) {
