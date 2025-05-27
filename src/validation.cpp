@@ -4969,9 +4969,11 @@ bool ProcessNewBlock(const CChainParams& chainparams, const std::shared_ptr<cons
         if (fNewBlock) *fNewBlock = false;
         CValidationState state;
 
+        bool isPoS = pblock->IsProofOfStake();
+        LogPrintf("ProcessNewBlock: isPoS = %d\n", isPoS);
         // Ensure that CheckBlock() passes before calling AcceptBlock, as
         // belt-and-suspenders.
-        bool ret = CheckBlock(*pblock, state, chainparams.GetConsensus(), true, true);
+        bool ret = CheckBlock(*pblock, state, chainparams.GetConsensus(), !isPos, true);
 
         LOCK(cs_main);
 
