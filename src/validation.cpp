@@ -4204,9 +4204,11 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
 
     // Check that the header is valid (particularly PoW).  This is mostly
     // redundant with the call in AcceptBlockHeader.
-    uint256 powHash = GetPOWHash(block, block.nHeight, consensusParams);
-    if (!IsPoS && fCheckPOW && !CheckProofOfWork(powHash, block.nBits, GetParams().GetConsensus()))
-        return state.DoS(50, false, REJECT_INVALID, "high-hash", false, "proof of work failed");
+    if (!IsPoS) {
+        uint256 powHash = GetPOWHash(block, block.nHeight, consensusParams);
+        if (!IsPoS && fCheckPOW && !CheckProofOfWork(powHash, block.nBits, GetParams().GetConsensus()))
+            return state.DoS(50, false, REJECT_INVALID, "high-hash", false, "proof of work failed");
+    }
 
     // Check that the header is valid (particularly PoW).  This is mostly
     // redundant with the call in AcceptBlockHeader.
@@ -4274,16 +4276,16 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
 
         nHeight = pindexPrev->nHeight + 1;
 
-        if (nHeight > 0 && !IsInitialBlockDownload()) {
-            if (IsPoS && !CheckColdStakeFreeOutput(*block.vtx[1], nHeight)) {
-                mapRejectedBlocks.emplace(block.GetHash(), GetTime());
-                return state.DoS(0, false, REJECT_INVALID, "bad-p2cs-outs", false, "invalid cold-stake output");
-            }
+        // if (nHeight > 0 && !IsInitialBlockDownload()) {
+        //     if (IsPoS && !CheckColdStakeFreeOutput(*block.vtx[1], nHeight)) {
+        //         mapRejectedBlocks.emplace(block.GetHash(), GetTime());
+        //         return state.DoS(0, false, REJECT_INVALID, "bad-p2cs-outs", false, "invalid cold-stake output");
+        //     }
 
-            fColdStakingActive = true;
-        } else {
-            LogPrintf("%s: Masternode/Budget checks skipped during sync\n", __func__);
-        }
+        //     fColdStakingActive = true;
+        // } else {
+        //     LogPrintf("%s: Masternode/Budget checks skipped during sync\n", __func__);
+        // }
     }
     for (const auto& tx : block.vtx) {
         // We only want to check the blocks when they are added to our chain
@@ -4843,6 +4845,7 @@ static bool CheckInBlockDoubleSpends(const CBlock& block, int nHeight, CValidati
 /** Store block on disk. If dbp is non-nullptr, the file is known to already reside on disk */
 static bool AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CValidationState& state, const CChainParams& chainparams, CBlockIndex** ppindex, bool fRequested, const CDiskBlockPos* dbp, bool* fNewBlock, bool fFromLoad = false)
 {
+    LogPrintf("AcceptBlock: ENTERED for block %s\n", block.GetHash().ToString());
     const CBlock& block = *pblock;
 
     if (fNewBlock) *fNewBlock = false;
@@ -5010,6 +5013,8 @@ bool ProcessNewBlock(const CChainParams& chainparams, const std::shared_ptr<cons
         LOCK(cs_main);
 
         if (ret) {
+            LogPrintf("ProcessNewBlock: calling AcceptBlock for block %s\n", pblock->GetHash().ToString());
+
             // Store to disk
             ret = AcceptBlock(pblock, state, chainparams, &pindex, fForceProcessing, nullptr, fNewBlock);
         }
