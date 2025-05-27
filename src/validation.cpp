@@ -3749,19 +3749,24 @@ bool ActivateBestChain(CValidationState &state, const CChainParams& chainparams,
             }
 
             // Whether we have anything to do at all.
-            if (pindexMostWork == nullptr || pindexMostWork == chainActive.Tip())
+            if (pindexMostWork == nullptr || pindexMostWork == chainActive.Tip()) {
+                LogPrintf("ActivateBestChain: No new work to do. Tip: %s\n", chainActive.Tip() ? chainActive.Tip()->GetBlockHash().ToString() : "nullptr");
                 return true;
+            }
 
             bool fInvalidFound = false;
             std::shared_ptr<const CBlock> nullBlockPtr;
-            if (!ActivateBestChainStep(state, chainparams, pindexMostWork, pblock && pblock->GetHash() == pindexMostWork->GetBlockHash() ? pblock : nullBlockPtr, fInvalidFound, connectTrace))
+            if (!ActivateBestChainStep(state, chainparams, pindexMostWork, pblock && pblock->GetHash() == pindexMostWork->GetBlockHash() ? pblock : nullBlockPtr, fInvalidFound, connectTrace)) {
+                LogPrintf("ActivateBestChain: ActivateBestChainStep FAILED at height=%d\n", pindexMostWork ? pindexMostWork->nHeight : -1);
                 return false;
+            }
 
             if (fInvalidFound) {
                 // Wipe cache, we may need another branch now.
                 pindexMostWork = nullptr;
             }
             pindexNewTip = chainActive.Tip();
+            LogPrintf("ActivateBestChain: New tip is %s at height %d\n", pindexNewTip->GetBlockHash().ToString(), pindexNewTip->nHeight);
             pindexFork = chainActive.FindFork(pindexOldTip);
             fInitialDownload = IsInitialBlockDownload();
 
