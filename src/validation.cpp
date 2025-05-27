@@ -2520,7 +2520,7 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
         }
 
         if (fGeneratedStakeModifier) {
-            pindex->SetStakeModifierV1(nStakeModifier);
+            pindex->SetStakeModifier(nStakeModifier);
             pindex->nFlags |= BLOCK_STAKE_MODIFIER;
             LogPrintf("StakeModifier: Set at height %d: %016x\n", pindex->nHeight, nStakeModifier);
         }
