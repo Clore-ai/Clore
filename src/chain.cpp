@@ -53,6 +53,14 @@ CBlockLocator CChain::GetLocator(const CBlockIndex *pindex) const {
     return CBlockLocator(vHave);
 }
 
+bool CBlockIndex::SetStakeEntropyBit(unsigned int nEntropyBit)
+{
+    if (nEntropyBit > 1)
+        return false;
+    nFlags |= (nEntropyBit ? BLOCK_STAKE_ENTROPY : 0);
+    return true;
+}
+
 unsigned int CBlockIndex::GetStakeEntropyBit() const
 {
     unsigned int nEntropyBit = ((GetBlockHash().GetCheapHash()) & 1);
