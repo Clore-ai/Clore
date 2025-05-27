@@ -854,7 +854,6 @@ void static CloreMiner(const CChainParams& chainparams)
                 SetThreadPriority(THREAD_PRIORITY_NORMAL);
                 if (!ProcessBlockFound(pblock.get(), chainparams)) {
                     LogPrintf("CloreMiner: New PoS block orphaned\n");
-                    return;
                     // continue;
                 }
                 SetThreadPriority(THREAD_PRIORITY_LOWEST);

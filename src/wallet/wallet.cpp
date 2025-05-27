@@ -4112,6 +4112,7 @@ bool CWallet::CreateCoinstakeOuts(const CPivStake& stakeInput, std::vector<CTxOu
         return error("%s: total stake value is zero or negative", __func__);
     }
 
+    nStakeSplitThreshold = 300 * COIN
     // Calculate if we need to split the output
     if (nStakeSplitThreshold > 0) {
         int nSplit = static_cast<int>(nTotal / nStakeSplitThreshold);
@@ -4124,29 +4125,10 @@ bool CWallet::CreateCoinstakeOuts(const CPivStake& stakeInput, std::vector<CTxOu
             CAmount splitAmount = nTotal / nSplit;
             for (int i = nSplit; i > 1; i--) {
                 LogPrintf("%s: StakeSplit: nTotal = %d; adding output %d of %d\n", __func__, nTotal, (nSplit-i)+2, nSplit);
-                vout.emplace_back(splitAmount, scriptPubKeyKernel);
+                vout.emplace_back(0, scriptPubKeyKernel);
             }
-
-            // handle any remainder
-            CAmount remainder = nTotal - (splitAmount * nSplit);
-            if (remainder > 0)
-                vout[0].nValue += remainder; // add leftover to first output
-        } else {
-            vout.emplace_back(nTotal, scriptPubKeyKernel);
-        }
-    } else {
-         // no split
-         vout.emplace_back(nTotal, scriptPubKeyKernel);
     }
-   
-   // Sanity check: make sure outputs are valid
-    if (vout.empty())
-        return error("%s: no coinstake outputs created", __func__);
-
-    for (const auto& out : vout) {
-        if (out.nValue <= 0)
-            return error("%s: created output with no value", __func__);
-    }
+    
     return true;
 }
 int CWallet::GetLastBlockHeightLockWallet() const
@@ -4242,8 +4224,28 @@ bool CWallet::CreateCoinStake(
         txNew.vout.insert(txNew.vout.end(), vout.begin(), vout.end());
         LogPrintf("DEBUG: txNew.vout size after insert: %d\n", txNew.vout.size());
 
+         // Set output amount
+        int outputs = (int) txNew.vout.size() - 1;
+        CAmount nRemaining = nCredit;
+        if (outputs > 1) {
+            // Split the stake across the outputs
+            CAmount nShare = nRemaining / outputs;
+            for (int i = 1; i < outputs; i++) {
+                // loop through all but the last one.
+                txNew.vout[i].nValue = nShare;
+                nRemaining -= nShare;
+            }
+        }
+        // put the remaining on the last output (which all into the first if only one output)
+        txNew.vout[outputs].nValue += nRemaining;
+
         // Set coinstake input
-        txNew.vin.emplace_back(stakeInput->GetTxIn());
+        txNew.vin.emplace_back(stakeInput.GetTxIn());
+
+        // Limit size
+        unsigned int nBytes = ::GetSerializeSize(txNew, PROTOCOL_VERSION);
+        if (nBytes >= DEFAULT_BLOCK_MAX_SIZE / 5)
+            return error("%s : exceeded coinstake size limit", __func__);
 
         break;
     }
