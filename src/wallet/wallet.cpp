@@ -4170,8 +4170,6 @@ bool CWallet::CreateCoinStake(
     // Mark coin stake transaction
     txNew.vin.clear();
     txNew.vout.clear();
-    txNew.vout.emplace_back(0, CScript());
-
     // update staker status (hash)
     pStakerStatus->SetLastTip(pindexPrev);
     pStakerStatus->SetLastCoins((int) availableCoins->size());
