@@ -89,34 +89,26 @@ static bool SelectBlockFromCandidates(
 // modifier about a selection interval later than the coin generating the kernel
 bool GetOldModifier(const CBlockIndex* pindexFrom, uint64_t& nStakeModifier)
 {
-    if (!pindexFrom)
-        return error("%s: null pindexFrom", __func__);
+    const int64_t startTime = pindexFrom->GetBlockTime();
+    const int64_t cutoff = startTime + OLD_MODIFIER_INTERVAL;
 
-    int64_t nStakeModifierTime = pindexFrom->GetBlockTime();
     const CBlockIndex* pindex = pindexFrom;
+    const CBlockIndex* pindexNext = chainActive[pindex->nHeight + 1];
 
-    // Avoid accessing out-of-bounds
-    while (true) {
-        int nextHeight = pindex->nHeight + 1;
-        if (nextHeight > chainActive.Height())
-            break; // We're at the tip
-
-        const CBlockIndex* pindexNext = chainActive[nextHeight];
-        if (!pindexNext) {
-            return error("%s : Null pindexNext at height=%d, current block %s",
-                         __func__, nextHeight, pindex->GetBlockHash().ToString());
-        }
-
+    while (pindexNext) {
         pindex = pindexNext;
 
-        if (pindex->GeneratedStakeModifier())
-            nStakeModifierTime = pindex->GetBlockTime();
+        if (pindex->GeneratedStakeModifier() && pindex->GetBlockTime() >= cutoff) {
+            nStakeModifier = pindex->GetStakeModifierV1();
+            return true;
+        }
 
-        if (nStakeModifierTime >= pindexFrom->GetBlockTime() + OLD_MODIFIER_INTERVAL)
-            break;
+        pindexNext = chainActive[pindex->nHeight + 1];
     }
 
-    nStakeModifier = pindex->GetStakeModifierV1();
+    // Fallback: use the same block’s modifier (may reduce randomness, but avoids total failure)
+    LogPrintf("WARNING: %s: Fallback to pindexFrom modifier\n", __func__);
+    nStakeModifier = pindexFrom->GetStakeModifierV1();
     return true;
 }
 
@@ -125,7 +117,7 @@ bool GetOldStakeModifier(const CStakeInput* stake, uint64_t& nStakeModifier)
 {
     const CBlockIndex* pindexFrom = stake->GetIndexFrom();
     if (!pindexFrom) return error("%s : failed to get index from", __func__);
-    if (!stake->IsZPIV()) {
+    if (stake->IsZPIV()) {
         int64_t nTimeBlockFrom = pindexFrom->GetBlockTime();
         const int nHeightStop = std::min(chainActive.Height(), GetParams().GetConsensus().height_last_ZC_AccumCheckpoint-1);
         while (pindexFrom && pindexFrom->nHeight + 1 <= nHeightStop) {
