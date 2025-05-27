@@ -102,7 +102,6 @@ bool GetOldModifier(const CBlockIndex* pindexFrom, uint64_t& nStakeModifier)
             nStakeModifier = pindex->GetStakeModifierV1();
             return true;
         }
-
         pindexNext = chainActive[pindex->nHeight + 1];
     }
 

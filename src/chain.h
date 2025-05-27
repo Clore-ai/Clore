@@ -405,7 +405,6 @@ public:
     void SetStakeModifier(const uint64_t nStakeModifier, bool fGeneratedStakeModifier);
     void SetNewStakeModifier();                             // generates and sets new v1 modifier
     void SetStakeModifier(const uint256& nStakeModifier);
-    void SetNewStakeModifier(const uint256& prevoutId);     // generates and sets new v2 modifier
     uint64_t GetStakeModifierV1() const;
     uint256 GetStakeModifierV2() const;
 

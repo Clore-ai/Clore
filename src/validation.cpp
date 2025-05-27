@@ -46,6 +46,7 @@
 #include "net.h"
 #include "kernel.h"
 #include "miner.h"
+#include "legacy/stakemodifier.h"
 
 #include <atomic>
 #include <sstream>
@@ -2999,6 +3000,19 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
     int64_t nTime6 = GetTimeMicros(); nTimeCallbacks += nTime6 - nTime5;
     LogPrint(BCLog::BENCH, "    - Callbacks: %.2fms [%.2fs (%.2fms/blk)]\n", MILLI * (nTime6 - nTime5), nTimeCallbacks * MICRO, nTimeCallbacks * MILLI / nBlocksTotal);
 
+    if (block.IsProofOfStake()) {
+        uint64_t nStakeModifier = 0;
+        bool fGenerated = false;
+
+        if (!ComputeNextStakeModifier(pindex->pprev, nStakeModifier, fGenerated)) {
+            return error("ConnectBlock(): failed to compute stake modifier");
+        }
+
+        if (fGenerated) {
+            pindex->SetStakeModifier(nStakeModifier, true);
+            LogPrint(BCLog::STAKE, "Stake modifier computed and set at height %d: %016x\n", pindex->nHeight, nStakeModifier);
+        }
+    }
     return true;
 }
 
@@ -3931,7 +3945,6 @@ static CBlockIndex* AddToBlockIndex(const CBlockHeader& block)
     pindexNew->nTimeMax = (pindexNew->pprev ? std::max(pindexNew->pprev->nTimeMax, pindexNew->nTime) : pindexNew->nTime);
     pindexNew->nChainWork = (pindexNew->pprev ? pindexNew->pprev->nChainWork : 0) + GetBlockProof(*pindexNew);
     pindexNew->RaiseValidity(BLOCK_VALID_TREE);
-    pindexNew->SetNewStakeModifier();
     if (pindexBestHeader == nullptr || pindexBestHeader->nChainWork < pindexNew->nChainWork)
         pindexBestHeader = pindexNew;
 
