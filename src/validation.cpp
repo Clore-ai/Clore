@@ -3010,7 +3010,7 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
 
         if (fGenerated) {
             pindex->SetStakeModifier(nStakeModifier, true);
-            LogPrint("Stake modifier computed and set at height %d: %016x\n", pindex->nHeight, nStakeModifier);
+            LogPrint("Stake modifier computed and set at height %d: %d\n", pindex->nHeight, nStakeModifier);
         }
     }
     return true;
