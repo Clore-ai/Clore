@@ -78,19 +78,6 @@ void CBlockIndex::SetStakeModifier(const uint64_t nStakeModifier, bool fGenerate
 
 }
 
-// Generates and sets new V1 stake modifier
-void CBlockIndex::SetNewStakeModifier()
-{
-    // compute stake entropy bit for stake modifier
-    if (!SetStakeEntropyBit(GetStakeEntropyBit()))
-        LogPrintf("%s : SetStakeEntropyBit() failed\n", __func__);
-    uint64_t nStakeModifier = 0;
-    bool fGeneratedStakeModifier = false;
-    if (!ComputeNextStakeModifier(pprev, nStakeModifier, fGeneratedStakeModifier))
-        LogPrintf("%s : ComputeNextStakeModifier() failed \n",  __func__);
-    return SetStakeModifier(nStakeModifier, fGeneratedStakeModifier);
-}
-
 // Returns V1 stake modifier (uint64_t)
 uint64_t CBlockIndex::GetStakeModifierV1() const
 {
