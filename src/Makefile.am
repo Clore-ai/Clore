@@ -326,6 +326,7 @@ libclore_wallet_a_SOURCES = \
   wallet/bip39.cpp \
   stakeinput.cpp \
   kernel.cpp \
+  legacy/stakemodifier.cpp \
   $(CLORE_CORE_H)
 
 # crypto primitives library
