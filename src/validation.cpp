@@ -2874,13 +2874,13 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
 	LogPrintf("==>scriptPubKeyCommunityAutonomous Should Be: %s \n", HexStr(scriptPubKeyCommunityAutonomous));
 	*/
 	//Check 10% Amount
-	if(block.vtx[0]->vout[1].nValue != nCommunityAutonomousAmountValue )		{
+	if(!isPoS &&block.vtx[0]->vout[1].nValue != nCommunityAutonomousAmountValue )		{
 		return state.DoS(100,
                          error("ConnectBlock(): coinbase Community Autonomous Amount Is Invalid. Actual: %ld Should be:%ld ",block.vtx[0]->vout[1].nValue, nCommunityAutonomousAmountValue),
                          REJECT_INVALID, "bad-cb-community-autonomous-amount");
 	}
 	//Check 10% Address
-	if( HexStr(block.vtx[0]->vout[1].scriptPubKey) != HexStr(scriptPubKeyCommunityAutonomous) )		{
+	if( !isPoS && HexStr(block.vtx[0]->vout[1].scriptPubKey) != HexStr(scriptPubKeyCommunityAutonomous) )		{
 		return state.DoS(100,
                          error("ConnectBlock(): coinbase Community Autonomous Address Is Invalid. Actual: %s Should Be: %s \n",HexStr(block.vtx[0]->vout[1].scriptPubKey), HexStr(scriptPubKeyCommunityAutonomous)),
                          REJECT_INVALID, "bad-cb-community-autonomous-address");
