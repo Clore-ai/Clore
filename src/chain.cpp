@@ -7,6 +7,8 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "chain.h"
+#include "legacy/stakemodifier.h"
+#include "util.h"
 
 /**
  * CChain implementation
@@ -55,6 +57,30 @@ unsigned int CBlockIndex::GetStakeEntropyBit() const
 {
     unsigned int nEntropyBit = ((GetBlockHash().GetCheapHash()) & 1);
     return nEntropyBit;
+}
+
+void CBlockIndex::SetStakeModifier(const uint64_t nStakeModifier, bool fGeneratedStakeModifier)
+{
+    vStakeModifier.clear();
+    const size_t modSize = sizeof(nStakeModifier);
+    vStakeModifier.resize(modSize);
+    std::memcpy(vStakeModifier.data(), &nStakeModifier, modSize);
+    if (fGeneratedStakeModifier)
+        nFlags |= BLOCK_STAKE_MODIFIER;
+
+}
+
+// Generates and sets new V1 stake modifier
+void CBlockIndex::SetNewStakeModifier()
+{
+    // compute stake entropy bit for stake modifier
+    if (!SetStakeEntropyBit(GetStakeEntropyBit()))
+        LogPrintf("%s : SetStakeEntropyBit() failed\n", __func__);
+    uint64_t nStakeModifier = 0;
+    bool fGeneratedStakeModifier = false;
+    if (!ComputeNextStakeModifier(pprev, nStakeModifier, fGeneratedStakeModifier))
+        LogPrintf("%s : ComputeNextStakeModifier() failed \n",  __func__);
+    return SetStakeModifier(nStakeModifier, fGeneratedStakeModifier);
 }
 
 // Returns V1 stake modifier (uint64_t)
