@@ -4242,21 +4242,6 @@ bool CWallet::CreateCoinStake(
         txNew.vout.insert(txNew.vout.end(), vout.begin(), vout.end());
         LogPrintf("DEBUG: txNew.vout size after insert: %d\n", txNew.vout.size());
 
-        // Set output amount
-        int outputs = (int) txNew.vout.size() - 1;
-        CAmount nRemaining = nCredit;
-        if (outputs > 1) {
-            // Split the stake across the outputs
-            CAmount nShare = nRemaining / outputs;
-            for (int i = 1; i < outputs; i++) {
-                // loop through all but the last one.
-                txNew.vout[i].nValue = nShare;
-                nRemaining -= nShare;
-            }
-        }
-        // put the remaining on the last output (which all into the first if only one output)
-        txNew.vout[outputs].nValue += nRemaining;
-
         // Set coinstake input
         txNew.vin.emplace_back(stakeInput->GetTxIn());
 
