@@ -4108,9 +4108,7 @@ bool CWallet::CreateCoinstakeOuts(const CPivStake& stakeInput, std::vector<CTxOu
             return error("%s: Unable to get staking private key", __func__);
     }
 
-    if (nTotal <= 0) {
-        return error("%s: total stake value is zero or negative", __func__);
-    }
+    vout.emplace_back(0, scriptPubKeyKernel);
 
     // Calculate if we need to split the output
     if (nStakeSplitThreshold > 0) {
@@ -4228,7 +4226,7 @@ bool CWallet::CreateCoinStake(
 
          // Set output amount
         int outputs = (int) txNew.vout.size() - 1;
-        CAmount nRemaining = nCredit;
+        CAmount nRemaining = nReward;
         if (outputs > 1) {
             // Split the stake across the outputs
             CAmount nShare = nRemaining / outputs;

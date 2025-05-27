@@ -437,8 +437,8 @@ CAmount GetBlockValue(int nHeight)
     }
     // Testnet high-inflation blocks [2, 200] with value 250k PIV
     const bool isTestnet = GetParams().IsTestnet();
-    if (isTestnet && nHeight < 201 && nHeight > 1) {
-        return 250000 * COIN;
+    if (isTestnet && nHeight < 401 && nHeight > 201) {
+        return 250 * COIN;
     }
     // Mainnet/Testnet block reward reduction schedule
     const int nZerocoinV2 = GetParams().GetConsensus().nActivationHeight;
