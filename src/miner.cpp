@@ -294,25 +294,12 @@ bool SolveProofOfStake(CBlock* pblock, CBlockIndex* pindexPrev, CWallet* pwallet
 
     const int nHeight = pindexPrev->nHeight + 1;
 
-    // Create coinbase tx and add masternode/budget payments
-    CMutableTransaction txCoinbase = NewCoinbase(pindexPrev->nHeight + 1);
+   // Minimal coinbase transaction — must be tx[0] for PoS blocks
+    CMutableTransaction txCoinbase;
     txCoinbase.vin.emplace_back();
+    txCoinbase.vin[0].prevout.SetNull();
     txCoinbase.vin[0].scriptSig = CScript() << nHeight << OP_0;
-
-    CAmount blockReward = GetBlockValue(nHeight);
-    LogPrintf("CreateCoinbaseTx: blockReward = %d\n", blockReward);
-
-    // You can hardcode or calculate payee here
-    // Example: 10% to a dev address, 90% to the miner
-    CAmount devReward = blockReward / 10;  // 10%
-    CAmount minerReward = blockReward - devReward;
-
-    // Replace with actual destination scripts
-    CScript minerScript = scriptPubKeyIn;
-    CScript devScript = CScript() << OP_RETURN;  // Replace with real dev address
-
-    txCoinbase.vout.emplace_back(minerReward, minerScript);
-    txCoinbase.vout.emplace_back(devReward, devScript);
+    txCoinbase.vout.clear(); // No value in PoS coinbase
 
     // Sign coinstake
     if (!pwallet->SignCoinStake(txCoinStake)) {
