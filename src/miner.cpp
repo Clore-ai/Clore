@@ -279,7 +279,7 @@ bool SolveProofOfStake(CBlock* pblock, CBlockIndex* pindexPrev, CWallet* pwallet
     pblock->nBits = GetNextWorkRequired(pindexPrev, pblock, GetParams().GetConsensus());
 
     CMutableTransaction txCoinStake;
-    int64_t nTxNewTime = GetAdjustedTime();
+    int64_t nTxNewTime = 0;
     if (!pwallet->CreateCoinStake(pindexPrev,
                                   pblock->nBits,
                                   txCoinStake,
@@ -291,11 +291,6 @@ bool SolveProofOfStake(CBlock* pblock, CBlockIndex* pindexPrev, CWallet* pwallet
         return false;
     }
     // Stake found
-    if (nTxNewTime <= pindexPrev->GetMedianTimePast()) {
-        nTxNewTime = pindexPrev->GetMedianTimePast() + 1;
-    }
-    pblock->nTime = nTxNewTime;
-    txCoinStake.nLockTime = nTxNewTime;  // If applicable
 
     const int nHeight = pindexPrev->nHeight + 1;
 
@@ -306,8 +301,7 @@ bool SolveProofOfStake(CBlock* pblock, CBlockIndex* pindexPrev, CWallet* pwallet
     txCoinbase.vin[0].scriptSig = CScript() << nHeight << OP_0;
     txCoinbase.vout.clear(); // No value in PoS coinbase
     txCoinbase.vout.emplace_back(0, CScript());
-    txCoinbase.nLockTime = nTxNewTime;
-
+    
     // Sign coinstake
     if (!pwallet->SignCoinStake(txCoinStake)) {
         const COutPoint& stakeIn = txCoinStake.vin[0].prevout;
