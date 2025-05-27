@@ -4847,6 +4847,7 @@ static bool AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CValidation
         std::string strError;
         if (!CheckProofOfStake(block, strError, pindexPrev))
             return state.DoS(100, error("%s: proof of stake check failed (%s)", __func__, strError));
+        return true;
     }
 
     if (!AcceptBlockHeader(block, state, chainparams, &pindex, !isPoS))
