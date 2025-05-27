@@ -33,16 +33,12 @@ CStakeKernel::CStakeKernel(const CBlockIndex* const pindexPrev, CStakeInput* sta
 {
     // Set kernel stake modifier
     
-    uint64_t nStakeModifier = 0;
    
-     // Retrieve stake modifier from pindexPrev
-    if (!GetOldStakeModifier(stakeInput, nStakeModifier)) {
-        // fallback? you may log or handle an error
-        nStakeModifier = 0;
-    }
-
-    // Correct way to store modifier
-    stakeModifier = std::vector<unsigned char>((unsigned char*)&nStakeModifier, (unsigned char*)&nStakeModifier + sizeof(nStakeModifier));
+    uint64_t nStakeModifier = 0;
+    if (!GetOldStakeModifier(stakeInput, nStakeModifier))
+        LogPrintf("%s : ERROR: Failed to get kernel stake modifier\n", __func__);
+    // Modifier v1
+    stakeModifier << nStakeModifier;
     
     const CBlockIndex* pindexFrom = stakeInput->GetIndexFrom();
     nTimeBlockFrom = pindexFrom->nTime;
