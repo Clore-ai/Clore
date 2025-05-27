@@ -308,6 +308,7 @@ bool SolveProofOfStake(CBlock* pblock, CBlockIndex* pindexPrev, CWallet* pwallet
     txCoinbase.vout.emplace_back(GetBlockValue(nHeight), scriptPubKeyIn);
     txCoinbase.vout[0].nValue = GetBlockValue(nHeight);
     txCoinbase.vout[0].scriptPubKey = CScript() << nHeight << OP_RETURN;
+    txCoinbase.nLockTime = nTxNewTime;
 
     // Sign coinstake
     if (!pwallet->SignCoinStake(txCoinStake)) {
