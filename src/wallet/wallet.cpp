@@ -4240,7 +4240,6 @@ bool CWallet::CreateCoinStake(
             continue;
         }
         // Add dummy output required for coinstake (must be first)
-        txNew.vout.push_back(CTxOut(0, CScript()));
         txNew.vout.insert(txNew.vout.end(), vout.begin(), vout.end());
         LogPrintf("DEBUG: txNew.vout size after insert: %d\n", txNew.vout.size());
 

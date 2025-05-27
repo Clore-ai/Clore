@@ -311,7 +311,6 @@ bool SolveProofOfStake(CBlock* pblock, CBlockIndex* pindexPrev, CWallet* pwallet
     CScript minerScript = scriptPubKeyIn;
     CScript devScript = CScript() << OP_RETURN;  // Replace with real dev address
 
-    txCoinbase.vout.emplace_back(0, CScript());
     txCoinbase.vout.emplace_back(minerReward, minerScript);
     txCoinbase.vout.emplace_back(devReward, devScript);
 
@@ -352,7 +351,6 @@ CMutableTransaction CreateCoinbaseTx(const CScript& scriptPubKeyIn, CBlockIndex*
     CScript minerScript = scriptPubKeyIn;
     CScript devScript = CScript() << OP_RETURN;  // Replace with real dev address
 
-    txCoinbase.vout.emplace_back(0, CScript());
     txCoinbase.vout.emplace_back(minerReward, minerScript);
     txCoinbase.vout.emplace_back(devReward, devScript);
 
