@@ -4113,10 +4113,6 @@ bool CheckWork(const CBlock& block, const CBlockIndex* const pindexPrev)
 
 static bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state, const Consensus::Params& consensusParams, bool fCheckPOW = true)
 {
-    if (block.IsProofOfStake()) {
-        // Other PoS-specific checks can go here if needed in the future
-        return true;
-    }
     // If we are checking a KAWPOW block below a know checkpoint height. We can validate the proof of work using the mix_hash
     if (fCheckPOW && block.nTime >= nEQUIHASHActivationTime) {
         CBlockIndex* pcheckpoint = Checkpoints::GetLastCheckpoint(GetParams().Checkpoints());
@@ -4973,7 +4969,7 @@ bool ProcessNewBlock(const CChainParams& chainparams, const std::shared_ptr<cons
         LogPrintf("ProcessNewBlock: isPoS = %d\n", isPoS);
         // Ensure that CheckBlock() passes before calling AcceptBlock, as
         // belt-and-suspenders.
-        bool ret = CheckBlock(*pblock, state, chainparams.GetConsensus(), !isPos, true);
+        bool ret = CheckBlock(*pblock, state, chainparams.GetConsensus(), !isPoS, true);
 
         LOCK(cs_main);
 
