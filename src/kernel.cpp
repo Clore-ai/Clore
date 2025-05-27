@@ -133,9 +133,9 @@ bool CheckProofOfStake(const CBlock& block, std::string& strError, const CBlockI
         strError = "stake input initialization failed";
         return false;
     }
-
     // Verify Proof Of Stake
     CStakeKernel stakeKernel(pindexPrev, stakeInput.get(), block.nBits, block.nTime);
+    stakeKernel.nTime = block.nTime;
     if (!stakeKernel.CheckKernelHash()) {
         strError = "kernel hash check fails";
         return false;
