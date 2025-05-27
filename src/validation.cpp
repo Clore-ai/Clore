@@ -4609,7 +4609,7 @@ static bool AcceptBlockHeader(const CBlockHeader& block, CValidationState& state
                     LogPrintf("Warning: PoS block %s was previously marked failed, forcing retry\n", hash.ToString());
                     pindex->nStatus &= ~BLOCK_FAILED_MASK;
                 } else {
-                    return state.Invalid(error("%s: block %s is marked invalid", __func__, hash.ToString()), 0, "duplicate");
+                    // return state.Invalid(error("%s: block %s is marked invalid", __func__, hash.ToString()), 0, "duplicate");
                 }
             }
             return true;
