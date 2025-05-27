@@ -295,7 +295,7 @@ bool SolveProofOfStake(CBlock* pblock, CBlockIndex* pindexPrev, CWallet* pwallet
         nTxNewTime = pindexPrev->GetMedianTimePast() + 1;
     }
     pblock->nTime = nTxNewTime;
-    txCoinStake.nTime = nTxNewTime;  // If applicable
+    txCoinStake.nLockTime = nTxNewTime;  // If applicable
 
     const int nHeight = pindexPrev->nHeight + 1;
 
