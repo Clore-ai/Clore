@@ -51,6 +51,22 @@ CBlockLocator CChain::GetLocator(const CBlockIndex *pindex) const {
     return CBlockLocator(vHave);
 }
 
+unsigned int CBlockIndex::GetStakeEntropyBit() const
+{
+    unsigned int nEntropyBit = ((GetBlockHash().GetCheapHash()) & 1);
+    return nEntropyBit;
+}
+
+// Returns V1 stake modifier (uint64_t)
+uint64_t CBlockIndex::GetStakeModifierV1() const
+{
+    if (vStakeModifier.empty())
+        return 0;
+    uint64_t nStakeModifier;
+    std::memcpy(&nStakeModifier, vStakeModifier.data(), vStakeModifier.size());
+    return nStakeModifier;
+}
+
 const CBlockIndex *CChain::FindFork(const CBlockIndex *pindex) const {
     if (pindex == nullptr) {
         return nullptr;
