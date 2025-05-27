@@ -3583,7 +3583,7 @@ static CBlockIndex* FindMostWorkChain() {
             }
             pindexTest = pindexTest->pprev;
         }
-        if (!fInvalidAncestor)
+        if (!fInvalidAncestor && pindexNew->IsProofOfStake())
             return pindexNew;
     } while(true);
 }
@@ -3744,6 +3744,10 @@ bool ActivateBestChain(CValidationState &state, const CChainParams& chainparams,
             LogPrintf("ABC: pindexMostWork is %s height=%d\n",
                 pindexMostWork ? pindexMostWork->GetBlockHash().ToString() : "nullptr",
                 pindexMostWork ? pindexMostWork->nHeight : -1);
+
+            LogPrintf("pindexMostWork = %s, chainActive.Tip() = %s\n",
+                pindexMostWork ? pindexMostWork->GetBlockHash().ToString() : "nullptr",
+                chainActive.Tip() ? chainActive.Tip()->GetBlockHash().ToString() : "nullptr");
 
             // Whether we have anything to do at all.
             if (pindexMostWork == nullptr || pindexMostWork == chainActive.Tip()) {
@@ -4001,6 +4005,11 @@ static bool ReceivedBlockTransactions(const CBlock &block, CValidationState& sta
             mapBlocksUnlinked.insert(std::make_pair(pindexNew->pprev, pindexNew));
         }
     }
+
+    LogPrintf("ReceivedBlockTransactions: block %s height=%d chainWork=%s\n",
+    pindexNew->GetBlockHash().ToString(),
+    pindexNew->nHeight,
+    pindexNew->nChainWork.GetHex());
 
     return true;
 }
