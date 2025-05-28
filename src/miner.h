@@ -21,6 +21,7 @@
 class CBlockIndex;
 class CChainParams;
 class CScript;
+class CStakeableOutput;
 
 namespace Consensus { struct Params; };
 
