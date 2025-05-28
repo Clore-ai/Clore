@@ -130,6 +130,7 @@ public:
         consensus.nNewMNBlockReward = 1 * COIN;
         consensus.nStakeMinDepth = 600;
         consensus.nStakeMinAge = 60 * 60;
+        consensus.nTimeSlotLength = 15;
         consensus.posHeight = 200;
 	    consensus.fPowAllowMinDifficultyBlocks = false;
         consensus.fPowNoRetargeting = false;
@@ -318,6 +319,7 @@ public:
         consensus.kawpowLimit 	= uint256S("00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); // Estimated starting diff for first 180 kawpow blocks
         consensus.nPowTargetTimespan = 2016 * 60; // 1.4 days
         consensus.nPowTargetSpacing = 1 * 60;
+        consensus.nTimeSlotLength = 15;
 //        consensus.powLimit = uint256S("0007ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.equihashLimit = uint256S("0007ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.posLimitV1 = uint256S("0007ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
@@ -526,6 +528,7 @@ public:
         consensus.nNewMNBlockReward = 1 * COIN;
         consensus.nStakeMinAge = 0;
         consensus.nStakeMinDepth = 20;
+        consensus.nTimeSlotLength = 15;
         consensus.nPowTargetTimespan = 1 * 60 * 60 * 24; // Typically 1 day (can vary depending on the cryptocurrency, Zcash uses 1 day)
         consensus.nPowTargetSpacing = 2.5 * 60; // 2.5 minutes, typical for Zcash, adjust as necessary
         consensus.nTargetTimespanV2 = 30 * 60;

@@ -112,10 +112,12 @@ static bool LoadStakeInput(const CBlock& block, std::unique_ptr<CStakeInput>& st
 bool Stake(const CBlockIndex* pindexPrev, CStakeInput* stakeInput, unsigned int nBits, int64_t& nTimeTx)
 {
     if (!stakeInput) return false;
-    const bool fRegTest = GetParams().IsRegTestNet();
-    nTimeTx = GetAdjustedTime();
 
+    const bool fRegTest = GetParams().IsRegTestNet();
+    nTimeTx = (fRegTest ? GetAdjustedTime() : GetCurrentTimeSlot());
+    LogPrintf("%s : nTimeTx = %d %d\n", __func__, nTimeTx, pindexPrev->nTime);
     if (nTimeTx <= pindexPrev->nTime && !fRegTest) return false;
+
     // Verify Proof Of Stake
     CStakeKernel stakeKernel(pindexPrev, stakeInput, nBits, nTimeTx);
     return stakeKernel.CheckKernelHash(true);

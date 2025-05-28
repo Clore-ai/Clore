@@ -17,6 +17,7 @@
 #include "util.h"
 #include "utilstrencodings.h"
 #include "warnings.h"
+#include "chainparams.h"
 
 
 static CCriticalSection cs_nTimeOffset;
@@ -120,4 +121,15 @@ void AddTimeData(const CNetAddr& ip, int64_t nOffsetSample)
             LogPrint(BCLog::NET, "nTimeOffset = %+d  (%+d minutes)\n", nTimeOffset, nTimeOffset/60);
         }
     }
+}
+
+int64_t GetTimeSlot(const int64_t nTime)
+{
+    const int slotLen = GetParams().GetConsensus().nTimeSlotLength;
+    return (nTime / slotLen) * slotLen;
+}
+
+int64_t GetCurrentTimeSlot()
+{
+    return GetTimeSlot(GetAdjustedTime());
 }
