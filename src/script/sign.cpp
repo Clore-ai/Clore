@@ -147,18 +147,14 @@ static bool SignStep(const BaseSignatureCreator& creator, const CScript& scriptP
         return (SignN(vSolutions, creator, scriptPubKey, ret, sigversion));
 
     case TX_COLDSTAKE:
-        if (fColdStake) {
-            // sign with the cold staker key
-            keyID = CKeyID(uint160(vSolutions[0]));
-        } else {
-            // sign with the owner key
-            keyID = CKeyID(uint160(vSolutions[1]));
-        }
+       
+        keyID = CKeyID(uint160(vSolutions[0]));
+      
         if (!Sign1(keyID, creator, scriptPubKey, ret, sigversion))
-            return false
+            return false;
         CPubKey vch;
         if (!creator.KeyStore().GetPubKey(keyID, vch))
-            return false
+            return false;
 
         valtype oper;
         oper.reserve(4);
@@ -166,7 +162,6 @@ static bool SignStep(const BaseSignatureCreator& creator, const CScript& scriptP
         ret.emplace_back(oper);
         ret.emplace_back(ToByteVector(vch));
         return true;
-    }
 
     case TX_WITNESS_V0_KEYHASH:
         ret.push_back(vSolutions[0]);
