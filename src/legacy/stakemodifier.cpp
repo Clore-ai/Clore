@@ -166,10 +166,10 @@ bool ComputeNextStakeModifier(const CBlockIndex* pindexPrev, uint64_t& nStakeMod
         fGeneratedStakeModifier = true;
         return true; // genesis block's modifier is 0
     }
-    if (pindexPrev->nHeight == 0) {
+    if (pindexPrev->nHeight == GetParams().GetConsensus().posHeight) {
         //Give a stake modifier to the first block
         fGeneratedStakeModifier = true;
-        nStakeModifier = 0xabcdef1234567890;
+        nStakeModifier = uint64_t("stakemodifier");
         return true;
     }
 

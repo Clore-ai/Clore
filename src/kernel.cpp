@@ -35,7 +35,8 @@ CStakeKernel::CStakeKernel(const CBlockIndex* const pindexPrev, CStakeInput* sta
     // Set kernel stake modifier
     
    
-    uint64_t nStakeModifier = 0xabcdef1234567890;
+    uint64_t nStakeModifier = 0;
+    ComputeNextStakeModifier(pindexPrev, nStakeModifier, false);
     // Modifier v1
     stakeModifier << nStakeModifier;
     
