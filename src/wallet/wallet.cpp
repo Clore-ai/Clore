@@ -128,9 +128,9 @@ public:
             Process(script);
     }
 
-    void operator()(const CExchangeKeyID&) {
+    void operator()(const CExchangeKeyID& keyId) {
         if (keystore.HaveKey(keyId))
-        vKeys.push_back(keyId);
+            vKeys.push_back(keyId);
     }
 
     void operator()(const CNoDestination &none) {}
