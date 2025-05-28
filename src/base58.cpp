@@ -333,6 +333,12 @@ bool CCloreAddress::Set(const CScriptID& id)
     return true;
 }
 
+bool CCloreAddress::Set(const CExchangeKeyID& id)
+{
+    SetData(GetParams().Base58Prefix(CChainParams::EXCHANGE_ADDRESS), &id, 20);
+    return true;
+}
+
 bool CCloreAddress::Set(const CTxDestination& dest)
 {
     return boost::apply_visitor(CCloreAddressVisitor(this), dest);
