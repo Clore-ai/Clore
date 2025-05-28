@@ -112,6 +112,7 @@ static bool LoadStakeInput(const CBlock& block, std::unique_ptr<CStakeInput>& st
 bool Stake(const CBlockIndex* pindexPrev, CStakeInput* stakeInput, unsigned int nBits, int64_t& nTimeTx)
 {
     if (!stakeInput) return false;
+    const bool fRegTest = GetParams().IsRegTestNet();
     nTimeTx = GetAdjustedTime();
 
     if (nTimeTx <= pindexPrev->nTime && !fRegTest) return false;
