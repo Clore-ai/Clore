@@ -4177,14 +4177,10 @@ bool CWallet::CreateCoinStake(
     } else {
         LogPrintf("AvailableCoins: [empty]\n");
     }
-    
+
     for (auto it = availableCoins->begin(); it != availableCoins->end();) {
         COutPoint outPoint = COutPoint(it->tx->GetHash(), it->i);
         
-        if (!it->pindex) {
-            ++it;
-            continue;
-        }
         CPivStake stakeInput(it->tx->tx->vout[it->i],
                              outPoint,
                              it->pindex);
