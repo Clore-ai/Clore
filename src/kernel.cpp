@@ -38,6 +38,14 @@ CStakeKernel::CStakeKernel(const CBlockIndex* const pindexPrev, CStakeInput* sta
     uint64_t nStakeModifier = 0;
     bool fGeneratedStakeModifier = false;
     ComputeNextStakeModifier(pindexPrev, nStakeModifier, fGeneratedStakeModifier);
+
+    vStakeModifier.clear();
+    const size_t modSize = sizeof(nStakeModifier);
+    vStakeModifier.resize(modSize);
+    std::memcpy(vStakeModifier.data(), &nStakeModifier, modSize);
+    if (fGeneratedStakeModifier)
+        nFlags |= BLOCK_STAKE_MODIFIER;
+        
     // Modifier v1
     stakeModifier << nStakeModifier;
     
