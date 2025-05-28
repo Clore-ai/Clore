@@ -1389,11 +1389,12 @@ bool ReadBlockFromDisk(CBlock& block, const CDiskBlockPos& pos, const Consensus:
     target.SetCompact(block.nBits, &fNegative, &fOverflow);
     LogPrintf("DEBUG: Calculated target from nBits = %s\n", target.ToString());
 
-
-    uint256 powHash = GetPOWHash(block, block.nHeight, consensusParams);
-    // Check the header
-    if (!CheckProofOfWork(powHash, block.nBits, consensusParams))
-        return error("ReadBlockFromDisk: Errors in block header at %s", pos.ToString());
+    if (!block.IsProofOfStake()) {
+        uint256 powHash = GetPOWHash(block, block.nHeight, consensusParams);
+        // Check the header
+        if (!CheckProofOfWork(powHash, block.nBits, consensusParams))
+            return error("ReadBlockFromDisk: Errors in block header at %s", pos.ToString());
+    }
 
     return true;
 }
