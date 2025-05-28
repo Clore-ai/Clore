@@ -267,8 +267,12 @@ void ScriptPubKeyToUniv(const CScript& scriptPubKey,
      /** CLORE END */
 
     UniValue a(UniValue::VARR);
-    for (const CTxDestination& addr : addresses) {
-        a.push_back(EncodeDestination(addr));
+     if (type == TX_COLDSTAKE && addresses.size() == 2) {
+        a.push_back(EncodeDestination(addresses[0], CChainParams::STAKING_ADDRESS));
+        a.push_back(EncodeDestination(addresses[1], CChainParams::PUBKEY_ADDRESS));
+    } else {
+        for (const CTxDestination& addr : addresses)
+            a.push_back(EncodeDestination(addr));
     }
     out.pushKV("addresses", a);
 }

@@ -32,6 +32,7 @@ const char* GetTxnOutputType(txnouttype t)
     case TX_PUBKEYHASH: return "pubkeyhash";
     case TX_SCRIPTHASH: return "scripthash";
     case TX_MULTISIG: return "multisig";
+    case TX_COLDSTAKE: return "coldstake";
     case TX_NULL_DATA: return "nulldata";
     case TX_RESTRICTED_ASSET_DATA: return "nullassetdata";
     case TX_WITNESS_V0_KEYHASH: return "witness_v0_keyhash";
@@ -203,6 +204,28 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, std::vector<std::v
             }
         }
     }
+     // Check for Cold Staking (P2CS) script
+    if (scriptPubKey.size() == 51 &&
+        scriptPubKey[0] == OP_DUP &&
+        scriptPubKey[1] == OP_HASH160 &&
+        scriptPubKey[2] == OP_ROT &&
+        scriptPubKey[3] == OP_IF &&
+        (scriptPubKey[4] == OP_CHECKCOLDSTAKEVERIFY || scriptPubKey[4] == OP_CHECKCOLDSTAKEVERIFY_LOF) &&
+        scriptPubKey[5] == 0x14 &&  // PUSHDATA(20)
+        scriptPubKey[26] == OP_ELSE &&
+        scriptPubKey[27] == 0x14 &&  // PUSHDATA(20)
+        scriptPubKey[48] == OP_ENDIF &&
+        scriptPubKey[49] == OP_EQUALVERIFY &&
+        scriptPubKey[50] == OP_CHECKSIG)
+    {
+        std::vector<unsigned char> stakeKey(scriptPubKey.begin() + 6, scriptPubKey.begin() + 26);
+        std::vector<unsigned char> spendKey(scriptPubKey.begin() + 28, scriptPubKey.begin() + 48);
+        vSolutionsRet.clear();
+        vSolutionsRet.push_back(stakeKey);
+        vSolutionsRet.push_back(spendKey);
+        typeRet = TX_COLDSTAKE;
+        return true;
+    }
 
     vSolutionsRet.clear();
     typeRet = TX_NONSTANDARD;
@@ -229,6 +252,10 @@ bool ExtractDestination(const CScript& scriptPubKey, CTxDestination& addressRet)
     else if (whichType == TX_PUBKEYHASH)
     {
         addressRet = CKeyID(uint160(vSolutions[0]));
+        return true;
+    }
+    else if (whichType == TX_COLDSTAKE) {
+        addressRet = CKeyID(uint160(vSolutions[!fColdStake]));
         return true;
     }
     else if (whichType == TX_SCRIPTHASH)
@@ -278,6 +305,16 @@ bool ExtractDestinations(const CScript& scriptPubKey, txnouttype& typeRet, std::
         if (addressRet.empty())
             return false;
     }
+    else if (typeRet == TX_COLDSTAKE)
+    {
+        if (vSolutions.size() < 2)
+            return false;
+        nRequiredRet = 2;
+        addressRet.push_back(CKeyID(uint160(vSolutions[0])));
+        addressRet.push_back(CKeyID(uint160(vSolutions[1])));
+        return true;
+
+    } 
     else
     {
         nRequiredRet = 1;

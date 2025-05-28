@@ -146,6 +146,28 @@ static bool SignStep(const BaseSignatureCreator& creator, const CScript& scriptP
         ret.push_back(valtype()); // workaround CHECKMULTISIG bug
         return (SignN(vSolutions, creator, scriptPubKey, ret, sigversion));
 
+    case TX_COLDSTAKE:
+        if (fColdStake) {
+            // sign with the cold staker key
+            keyID = CKeyID(uint160(vSolutions[0]));
+        } else {
+            // sign with the owner key
+            keyID = CKeyID(uint160(vSolutions[1]));
+        }
+        if (!Sign1(keyID, creator, scriptPubKey, ret, sigversion))
+            return false
+        CPubKey vch;
+        if (!creator.KeyStore().GetPubKey(keyID, vch))
+            return false
+
+        valtype oper;
+        oper.reserve(4);
+        oper.emplace_back((fColdStake ? (int) OP_TRUE : OP_FALSE));
+        ret.emplace_back(oper);
+        ret.emplace_back(ToByteVector(vch));
+        return true;
+    }
+
     case TX_WITNESS_V0_KEYHASH:
         ret.push_back(vSolutions[0]);
         return true;
@@ -361,6 +383,11 @@ static Stacks CombineSignatures(const CScript& scriptPubKey, const BaseSignature
         return sigs2;
     case TX_PUBKEY:
     case TX_PUBKEYHASH:
+        // Signatures are bigger than placeholders or empty scripts:
+        if (sigs1.script.empty() || sigs1.script[0].empty())
+            return sigs2;
+        return sigs1;
+    case TX_COLDSTAKE:
         // Signatures are bigger than placeholders or empty scripts:
         if (sigs1.script.empty() || sigs1.script[0].empty())
             return sigs2;

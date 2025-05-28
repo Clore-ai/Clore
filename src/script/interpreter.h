@@ -145,6 +145,11 @@ public:
         return false;
     }
 
+    virtual bool CheckColdStake(bool fAllowLastOutputFree, const CScript& prevoutScript, std::vector<valtype>& stack, unsigned int flags, ScriptError* error) const
+    {
+         return false;
+    }
+
     virtual bool CheckSequence(const CScriptNum &nSequence) const
     {
         return false;
@@ -172,6 +177,8 @@ public:
     bool CheckSig(const std::vector<unsigned char> &scriptSig, const std::vector<unsigned char> &vchPubKey, const CScript &scriptCode, SigVersion sigversion) const override;
 
     bool CheckLockTime(const CScriptNum &nLockTime) const override;
+
+    bool CheckColdStake(bool fAllowLastOutputFree, const CScript& prevoutScript, std::vector<valtype>& stack, unsigned int flags, ScriptError* serror) const override;
 
     bool CheckSequence(const CScriptNum &nSequence) const override;
 };
