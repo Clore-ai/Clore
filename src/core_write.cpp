@@ -21,7 +21,6 @@
 #include "utilmoneystr.h"
 #include "utilstrencodings.h"
 #include "assets/assets.h"
-#include "key_io.h"
 
 std::string ValueFromAmountString(const CAmount& amount, const int8_t units)
 {

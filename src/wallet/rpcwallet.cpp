@@ -11,7 +11,6 @@
 #include "httpserver.h"
 #include "validation.h"
 #include "net.h"
-#include "key_io.h"
 #include "policy/feerate.h"
 #include "policy/fees.h"
 #include "policy/policy.h"
