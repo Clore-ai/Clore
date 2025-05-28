@@ -99,6 +99,7 @@ struct Params {
     int64_t nPowTargetTimespan;
     int64_t kawpowHeight;
     int64_t equihashHeight;
+    int64_t posHeight;
     int64_t DifficultyAdjustmentInterval() const { return nPowTargetTimespan / nPowTargetSpacing; }
     uint256 nMinimumChainWork;
     uint256 defaultAssumeValid;
