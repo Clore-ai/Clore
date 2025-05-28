@@ -36,7 +36,8 @@ CStakeKernel::CStakeKernel(const CBlockIndex* const pindexPrev, CStakeInput* sta
     
    
     uint64_t nStakeModifier = 0;
-    ComputeNextStakeModifier(pindexPrev, nStakeModifier, false);
+    bool fGeneratedStakeModifier = false;
+    ComputeNextStakeModifier(pindexPrev, nStakeModifier, fGeneratedStakeModifier);
     // Modifier v1
     stakeModifier << nStakeModifier;
     
