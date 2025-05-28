@@ -227,6 +227,13 @@ bool DecodeBase58Check(const std::string& str, std::vector<unsigned char>& vchRe
 {
     return DecodeBase58Check(str.c_str(), vchRet);
 }
+bool DecodeBase58Check(const std::string& str, std::vector<unsigned char>& vchRet, int max_ret)
+{
+    if (!ValidAsCString(str)) {
+        return false;
+    }
+    return DecodeBase58Check(str.c_str(), vchRet, max_ret);
+}
 
 CBase58Data::CBase58Data()
 {
@@ -422,5 +429,5 @@ std::string EncodeDestination(const CTxDestination& dest, bool isStaking, bool i
 
 std::string EncodeDestination(const CTxDestination& dest, const CChainParams::Base58Type addrType)
 {
-    return boost::apply_visitor(DestinationEncoder(Params(), addrType), dest);
+    return boost::apply_visitor(DestinationEncoder(GetParams(), addrType), dest);
 }
