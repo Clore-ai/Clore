@@ -1325,6 +1325,10 @@ public:
     explicit Witnessifier(CWallet *_pwallet) : pwallet(_pwallet) {}
 
     bool operator()(const CNoDestination &dest) const { return false; }
+    bool operator()(const CExchangeKeyID&) {
+        // You can implement proper logic here if needed, or just return false if you want to skip it
+        return false;
+   }
 
     bool operator()(const CKeyID &keyID) {
         if (pwallet) {
