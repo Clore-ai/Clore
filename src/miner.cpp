@@ -287,7 +287,6 @@ bool SolveProofOfStake(CBlock* pblock, CBlockIndex* pindexPrev, CWallet* pwallet
                                   availableCoins,
                                   stopPoSOnNewBlock
                                   )) {
-        LogPrint(BCLog::STAKING, "%s : stake not found\n", __func__);
         return false;
     }
     // Stake found
@@ -301,7 +300,7 @@ bool SolveProofOfStake(CBlock* pblock, CBlockIndex* pindexPrev, CWallet* pwallet
     txCoinbase.vin[0].scriptSig = CScript() << nHeight << OP_0;
     txCoinbase.vout.clear(); // No value in PoS coinbase
     txCoinbase.vout.emplace_back(0, CScript());
-    
+
     // Sign coinstake
     if (!pwallet->SignCoinStake(txCoinStake)) {
         const COutPoint& stakeIn = txCoinStake.vin[0].prevout;
@@ -406,8 +405,6 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
 
     nLastBlockTx = nBlockTx;
     nLastBlockSize = nBlockSize;
-    LogPrintf("CreateNewBlock(): total size %u txs: %u fees: %ld sigops %d\n", nBlockSize, nBlockTx, nFees, nBlockSigOps);
-
 
     // Fill in header
     pblock->hashPrevBlock = pindexPrev->GetBlockHash();
@@ -822,7 +819,6 @@ void static CloreMiner(const CChainParams& chainparams)
             if (fProofOfStake) {
                 CheckForCoins(pWallet, &availableCoins);
 
-                LogPrintf("ThreadStakeMiner: Starting staking attempt at height=%d\n", pindexPrev->nHeight);
                 while (/*(g_connman && g_connman->GetNodeCount(CConnman::CONNECTIONS_ALL) == 0 && chainparams.MiningRequiresPeers()) ||*/
                        pWallet->IsLocked() || !fStakeableCoins) {
                     MilliSleep(5000);
@@ -836,15 +832,12 @@ void static CloreMiner(const CChainParams& chainparams)
                 //     continue;
                 // }
 
-                LogPrintf("ThreadStakeMiner: Starting staking attempt at aaaaaaaaaaaaaa height=%d\n", pindexPrev->nHeight);
                 // Create PoS block
                 std::unique_ptr<CBlockTemplate> pblocktemplate(BlockAssembler(chainparams).CreateNewBlock(CScript(), pWallet, true, &availableCoins));
-                LogPrintf("Block is created");
                 if (!pblocktemplate) continue;
                 std::shared_ptr<CBlock> pblock = std::make_shared<CBlock>(pblocktemplate->block);
 
                 // Sign and submit PoS block
-                LogPrintf("CloreMiner: PoS block was signed: %s\n", pblock->GetHash().ToString());
                 SetThreadPriority(THREAD_PRIORITY_NORMAL);
                 if (!ProcessBlockFound(pblock.get(), chainparams)) {
                     LogPrintf("CloreMiner: New PoS block orphaned\n");
@@ -857,10 +850,6 @@ void static CloreMiner(const CChainParams& chainparams)
                 continue;
             }
 
-             LogPrintf("CloreMiner: PoS active = %d, Stakeable coins = %d, Wallet locked = %d\n",
-                fPoSActive,
-                fStakeableCoins,
-                pWallet->IsLocked());
             // PoW path
             if (pindexPrev->nHeight > 200 && fPoSActive) {
                 LogPrintf("CloreMiner: Exiting PoW thread at height %d (PoS active)\n", pindexPrev->nHeight);

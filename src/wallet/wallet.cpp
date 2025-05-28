@@ -4161,7 +4161,7 @@ bool CWallet::CreateCoinStake(
     CScript scriptPubKeyKernel;
     bool fKernelFound = false;
     int nAttempts = 0;
-    
+
     for (auto it = availableCoins->begin(); it != availableCoins->end();) {
         COutPoint outPoint = COutPoint(it->tx->GetHash(), it->i);
         
@@ -4200,10 +4200,6 @@ bool CWallet::CreateCoinStake(
         CAmount nCredit = nStakeValue + nReward;
         CAmount nStakerOut = nCredit - nMasternodePayment;
 
-        LogPrintf("CreateCoinStake : stake=%d, reward=%d, masternode=%d, stakerOut=%d\n",
-                  nStakeValue, nReward, nMasternodePayment, nStakerOut);
-
-        LogPrintf("CreateCoinStake : nCredit = %d, nMasternodePayment = %d\n", nCredit, nMasternodePayment);
 
         CAmount nTotalOut = nCredit - nMasternodePayment;
         if (nTotalOut <= 0) {
