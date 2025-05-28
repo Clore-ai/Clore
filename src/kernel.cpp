@@ -36,8 +36,8 @@ CStakeKernel::CStakeKernel(const CBlockIndex* const pindexPrev, CStakeInput* sta
     
    
     uint64_t nStakeModifier = 0;
-    nStakeModifier = uint64_t("stakemodifier");
-    
+    if (!GetOldStakeModifier(stakeInput, nStakeModifier))
+        LogPrintf("%s : ERROR: Failed to get kernel stake modifier\n", __func__);
     // Modifier v1
     stakeModifier << nStakeModifier;
     
@@ -113,6 +113,8 @@ bool Stake(const CBlockIndex* pindexPrev, CStakeInput* stakeInput, unsigned int 
 {
     if (!stakeInput) return false;
     nTimeTx = GetAdjustedTime();
+
+    if (nTimeTx <= pindexPrev->nTime && !fRegTest) return false;
     // Verify Proof Of Stake
     CStakeKernel stakeKernel(pindexPrev, stakeInput, nBits, nTimeTx);
     return stakeKernel.CheckKernelHash(true);

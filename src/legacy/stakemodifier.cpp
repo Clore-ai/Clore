@@ -95,15 +95,16 @@ bool GetOldModifier(const CBlockIndex* pindexFrom, uint64_t& nStakeModifier)
     const CBlockIndex* pindex = pindexFrom;
     const CBlockIndex* pindexNext = chainActive[pindex->nHeight + 1];
 
-    while (pindexNext) {
-        pindex = pindexNext;
-
-        if (pindex->GeneratedStakeModifier() && pindex->GetBlockTime() >= cutoff) {
-            nStakeModifier = pindex->GetStakeModifierV1();
-            return true;
+     // loop to find the stake modifier later by a selection interval
+    do {
+        if (!pindexNext) {
+            // Should never happen
+            return error("%s : Null pindexNext, current block %s ", __func__, pindex->phashBlock->GetHex());
         }
+        pindex = pindexNext;
+        if (pindex->GeneratedStakeModifier()) nStakeModifierTime = pindex->GetBlockTime();
         pindexNext = chainActive[pindex->nHeight + 1];
-    }
+    } while (nStakeModifierTime < pindexFrom->GetBlockTime() + OLD_MODIFIER_INTERVAL);
 
     // Fallback: use the same block’s modifier (may reduce randomness, but avoids total failure)
     LogPrintf("WARNING: %s: Fallback to pindexFrom modifier\n", __func__);
@@ -166,7 +167,7 @@ bool ComputeNextStakeModifier(const CBlockIndex* pindexPrev, uint64_t& nStakeMod
         fGeneratedStakeModifier = true;
         return true; // genesis block's modifier is 0
     }
-    if (pindexPrev->nHeight == GetParams().GetConsensus().posHeight) {
+    if (pindexPrev->nHeight == 0) {
         //Give a stake modifier to the first block
         fGeneratedStakeModifier = true;
         nStakeModifier = uint64_t("stakemodifier");
