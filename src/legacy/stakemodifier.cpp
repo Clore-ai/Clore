@@ -89,9 +89,6 @@ static bool SelectBlockFromCandidates(
 // modifier about a selection interval later than the coin generating the kernel
 bool GetOldModifier(const CBlockIndex* pindexFrom, uint64_t& nStakeModifier)
 {
-    int64_t nStakeModifierTime = pindexFrom->GetBlockTime();
-    const CBlockIndex* pindex = pindexFrom;
-    CBlockIndex* pindexNext = chainActive[pindex->nHeight + 1];
 
     nStakeModifier = pindexFrom->GetStakeModifierV1();
     return true;
