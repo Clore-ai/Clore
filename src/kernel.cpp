@@ -115,8 +115,11 @@ bool Stake(const CBlockIndex* pindexPrev, CStakeInput* stakeInput, unsigned int 
 
     const bool fRegTest = GetParams().IsRegTestNet();
     nTimeTx = (fRegTest ? GetAdjustedTime() : GetCurrentTimeSlot());
-    LogPrintf("%s : nTimeTx = %d %d\n", __func__, nTimeTx, pindexPrev->nTime);
-    if (nTimeTx <= pindexPrev->nTime && !fRegTest) return false;
+    if (nTimeTx <= pindexPrev->nTime && !fRegTest) {
+        nTimeTx = GetTimeSlot(pindexPrev->nTime + GetParams().GetConsensus().nTimeSlotLength);
+        LogPrintf("%s : nTimeTx = %d %d\n", __func__, nTimeTx, pindexPrev->nTime);
+        if (nTimeTx <= pindexPrev->nTime) return false;
+    }
 
     // Verify Proof Of Stake
     CStakeKernel stakeKernel(pindexPrev, stakeInput, nBits, nTimeTx);
