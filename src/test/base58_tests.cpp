@@ -101,6 +101,11 @@ BOOST_FIXTURE_TEST_SUITE(base58_tests, BasicTestingSetup)
             return (exp_addrType == "script");
         }
 
+        bool operator()(const CExchangeKeyID&) const {
+            // Handle appropriately for the test — possibly return false or true depending on context
+            return false;
+        }
+
         bool operator()(const CNoDestination &no) const
         {
             return (exp_addrType == "none");
