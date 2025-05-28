@@ -146,22 +146,6 @@ static bool SignStep(const BaseSignatureCreator& creator, const CScript& scriptP
         ret.push_back(valtype()); // workaround CHECKMULTISIG bug
         return (SignN(vSolutions, creator, scriptPubKey, ret, sigversion));
 
-    case TX_COLDSTAKE:
-       
-        keyID = CKeyID(uint160(vSolutions[0]));
-      
-        if (!Sign1(keyID, creator, scriptPubKey, ret, sigversion))
-            return false;
-        CPubKey vch;
-        if (!creator.KeyStore().GetPubKey(keyID, vch))
-            return false;
-
-        valtype oper;
-        oper.reserve(4);
-        oper.emplace_back((fColdStake ? (int) OP_TRUE : OP_FALSE));
-        ret.emplace_back(oper);
-        ret.emplace_back(ToByteVector(vch));
-        return true;
 
     case TX_WITNESS_V0_KEYHASH:
         ret.push_back(vSolutions[0]);
@@ -174,7 +158,23 @@ static bool SignStep(const BaseSignatureCreator& creator, const CScript& scriptP
             return true;
         }
         return false;
+    case TX_COLDSTAKE: {
+    
+        keyID = CKeyID(uint160(vSolutions[0]));
+    
+        if (!Sign1(keyID, creator, scriptPubKey, ret, sigversion))
+            return false;
+        CPubKey vch;
+        if (!creator.KeyStore().GetPubKey(keyID, vch))
+            return false;
 
+        valtype oper;
+        oper.reserve(4);
+        oper.emplace_back((int) OP_TRUE);
+        ret.emplace_back(oper);
+        ret.emplace_back(ToByteVector(vch));
+        return true;
+    }
     default:
         return false;
     }
