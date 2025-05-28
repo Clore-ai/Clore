@@ -12,7 +12,6 @@
 #include "script/standard.h"
 #include "sync.h"
 #include "util.h"
-#include "key_io.h"
 #include "utiltime.h"
 #include "wallet.h"
 #include "merkleblock.h"
