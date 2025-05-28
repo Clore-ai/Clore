@@ -170,7 +170,7 @@ static bool SignStep(const BaseSignatureCreator& creator, const CScript& scriptP
 
         valtype oper;
         oper.reserve(4);
-        oper.emplace_back((int) OP_TRUE);
+        oper.emplace_back(OP_FALSE);
         ret.emplace_back(oper);
         ret.emplace_back(ToByteVector(vch));
         return true;
