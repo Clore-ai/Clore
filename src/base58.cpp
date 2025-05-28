@@ -401,13 +401,6 @@ bool CCloreSecret::SetString(const std::string& strSecret)
     return SetString(strSecret.c_str());
 }
 
-std::string EncodeDestination(const CTxDestination& dest)
-{
-    CCloreAddress addr(dest);
-    if (!addr.IsValid()) return "";
-    return addr.ToString();
-}
-
 CTxDestination DecodeDestination(const std::string& str)
 {
     return CCloreAddress(str).Get();

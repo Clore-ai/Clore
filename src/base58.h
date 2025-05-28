@@ -167,7 +167,6 @@ public:
 typedef CCloreExtKeyBase<CExtKey, BIP32_EXTKEY_SIZE, CChainParams::EXT_SECRET_KEY> CCloreExtKey;
 typedef CCloreExtKeyBase<CExtPubKey, BIP32_EXTKEY_SIZE, CChainParams::EXT_PUBLIC_KEY> CCloreExtPubKey;
 
-std::string EncodeDestination(const CTxDestination& dest);
 std::string EncodeDestination(const CTxDestination& dest, bool isStaking, bool isExchange);
 std::string EncodeDestination(const CTxDestination& dest, const CChainParams::Base58Type addrType = CChainParams::PUBKEY_ADDRESS);
 CTxDestination DecodeDestination(const std::string& str);
