@@ -2953,7 +2953,7 @@ bool CWallet::StakeableCoins(std::vector<CStakeableOutput>* pCoins)
 
             // found valid coin
             if (!pCoins) return true;
-            if (!pindex) pindex = mapBlockIndex.at(pcoin->m_confirm.hashBlock);
+            if (!pindex) pindex = mapBlockIndex.at(pcoin->hashBlock);
             pCoins->emplace_back(pcoin, (int) index, nDepth, pindex);
         }
     }
