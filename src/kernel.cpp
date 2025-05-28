@@ -17,7 +17,6 @@
 #include "validation.h"
 #include "chainparams.h"
 #include "timedata.h"
-#include "chain.h"
 
 /**
  * CStakeKernel Constructor
@@ -40,10 +39,6 @@ CStakeKernel::CStakeKernel(const CBlockIndex* const pindexPrev, CStakeInput* sta
     bool fGeneratedStakeModifier = false;
     ComputeNextStakeModifier(pindexPrev, nStakeModifier, fGeneratedStakeModifier);
 
-    vStakeModifier.clear();
-    const size_t modSize = sizeof(nStakeModifier);
-    vStakeModifier.resize(modSize);
-    std::memcpy(vStakeModifier.data(), &nStakeModifier, modSize);
     if (fGeneratedStakeModifier)
         nFlags |= BLOCK_STAKE_MODIFIER;
 
