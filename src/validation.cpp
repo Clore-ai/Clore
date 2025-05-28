@@ -3742,21 +3742,8 @@ bool ActivateBestChain(CValidationState &state, const CChainParams& chainparams,
                 pindexMostWork = FindMostWorkChain();
             }
 
-            LogPrintf("ABC: Tip is %s height=%d\n",
-                chainActive.Tip() ? chainActive.Tip()->GetBlockHash().ToString() : "nullptr",
-                chainActive.Tip() ? chainActive.Tip()->nHeight : -1);
-
-            LogPrintf("ABC: pindexMostWork is %s height=%d\n",
-                pindexMostWork ? pindexMostWork->GetBlockHash().ToString() : "nullptr",
-                pindexMostWork ? pindexMostWork->nHeight : -1);
-
-            LogPrintf("pindexMostWork = %s, chainActive.Tip() = %s\n",
-                pindexMostWork ? pindexMostWork->GetBlockHash().ToString() : "nullptr",
-                chainActive.Tip() ? chainActive.Tip()->GetBlockHash().ToString() : "nullptr");
-
             // Whether we have anything to do at all.
             if (pindexMostWork == nullptr || pindexMostWork == chainActive.Tip()) {
-                LogPrintf("ActivateBestChain: No new work to do. Tip: %s\n", chainActive.Tip() ? chainActive.Tip()->GetBlockHash().ToString() : "nullptr");
                 break;
             }
 
@@ -4011,11 +3998,6 @@ static bool ReceivedBlockTransactions(const CBlock &block, CValidationState& sta
             mapBlocksUnlinked.insert(std::make_pair(pindexNew->pprev, pindexNew));
         }
     }
-
-    LogPrintf("ReceivedBlockTransactions: block %s height=%d chainWork=%s\n",
-    pindexNew->GetBlockHash().ToString(),
-    pindexNew->nHeight,
-    pindexNew->nChainWork.GetHex());
 
     return true;
 }
@@ -4855,7 +4837,6 @@ static bool CheckInBlockDoubleSpends(const CBlock& block, int nHeight, CValidati
 /** Store block on disk. If dbp is non-nullptr, the file is known to already reside on disk */
 static bool AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CValidationState& state, const CChainParams& chainparams, CBlockIndex** ppindex, bool fRequested, const CDiskBlockPos* dbp, bool* fNewBlock, bool fFromLoad = false)
 {
-    LogPrintf("AcceptBlock: ENTERED for block %s\n", pblock->GetHash().ToString());
     const CBlock& block = *pblock;
 
     if (fNewBlock) *fNewBlock = false;
@@ -5019,7 +5000,6 @@ bool ProcessNewBlock(const CChainParams& chainparams, const std::shared_ptr<cons
         CValidationState state;
 
         bool isPoS = pblock->IsProofOfStake();
-        LogPrintf("ProcessNewBlock: isPoS = %d\n", isPoS);
         // Ensure that CheckBlock() passes before calling AcceptBlock, as
         // belt-and-suspenders.
         bool ret = CheckBlock(*pblock, state, chainparams.GetConsensus(), !isPoS, true);
@@ -5027,7 +5007,6 @@ bool ProcessNewBlock(const CChainParams& chainparams, const std::shared_ptr<cons
         LOCK(cs_main);
 
         if (ret) {
-            LogPrintf("ProcessNewBlock: calling AcceptBlock for block %s\n", pblock->GetHash().ToString());
 
             // Store to disk
             ret = AcceptBlock(pblock, state, chainparams, &pindex, fForceProcessing, nullptr, fNewBlock);
