@@ -11,10 +11,12 @@
 
 #include "script/interpreter.h"
 #include "uint256.h"
+#include "pubkey.h"
 
 #include <boost/variant.hpp>
 
 #include <stdint.h>
+
 
 static const bool DEFAULT_ACCEPT_DATACARRIER = true;
 
