@@ -4162,23 +4162,6 @@ bool CWallet::CreateCoinStake(
     bool fKernelFound = false;
     int nAttempts = 0;
     
-    if (availableCoins && !availableCoins->empty()) {
-        std::ostringstream oss;
-        oss << "AvailableCoins: [";
-        for (size_t i = 0; i < availableCoins->size(); ++i) {
-            const auto& out = (*availableCoins)[i];
-            oss << "{txid=" << out.tx->GetHash().ToString()
-                << ", vout=" << out.i
-                << ", value=" << out.tx->tx->vout[out.i].nValue
-                << ", pindex=" << (out.pindex ? "set" : "null") << "}";
-            if (i != availableCoins->size() - 1) oss << ", ";
-        }
-        oss << "]";
-        LogPrintf("%s\n", oss.str());
-    } else {
-        LogPrintf("AvailableCoins: [empty]\n");
-    }
-
     for (auto it = availableCoins->begin(); it != availableCoins->end();) {
         COutPoint outPoint = COutPoint(it->tx->GetHash(), it->i);
         
