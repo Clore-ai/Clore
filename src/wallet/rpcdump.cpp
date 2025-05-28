@@ -3,7 +3,6 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "base58.h"
 #include "chain.h"
 #include "rpc/safemode.h"
 #include "rpc/server.h"
@@ -13,6 +12,7 @@
 #include "script/standard.h"
 #include "sync.h"
 #include "util.h"
+#include "key_io.h"
 #include "utiltime.h"
 #include "wallet.h"
 #include "merkleblock.h"
