@@ -2809,6 +2809,7 @@ UniValue listcoldutxos(const JSONRPCRequest& request)
             int nRequired;
             if (!ExtractDestinations(out.scriptPubKey, type, addresses, nRequired))
                 continue;
+            if (addresses.size() < 2) continue;
             const bool fWhitelisted = pwallet->HasAddressBook(addresses[1]) > 0;
             if (fExcludeWhitelisted && fWhitelisted)
                 continue;
