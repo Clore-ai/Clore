@@ -137,6 +137,12 @@ BOOST_FIXTURE_TEST_SUITE(base58_tests, BasicTestingSetup)
         {
             return exp_payload.size() == 0;
         }
+
+        bool operator()(const CExchangeKeyID& id) const
+        {
+            uint160 exp_key(exp_payload);
+            return exp_key == id;
+        }
     };
 
     // Goal: check that parsed keys match test payload

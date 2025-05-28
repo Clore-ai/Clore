@@ -194,6 +194,7 @@ enum opcodetype
     OP_CHECKCOLDSTAKEVERIFY_LOF = 0xd1,
     OP_CHECKCOLDSTAKEVERIFY = 0xd2,
     // template matching params
+    OP_EXCHANGEADDR = 0xe0,
     OP_SMALLINTEGER = 0xfa,
     OP_PUBKEYS = 0xfb,
     OP_PUBKEYHASH = 0xfd,
