@@ -4169,9 +4169,6 @@ bool CWallet::CreateCoinStake(
         // New block came in, move on
         if (stopOnNewBlock && GetLastBlockHeightLockWallet() != pindexPrev->nHeight) return false;
 
-        // Make sure the wallet is unlocked and shutdown hasn't been requested
-        if (IsLocked() || ShutdownRequested()) return false;
-
         // Make sure the stake input hasn't been spent since last check
         if (WITH_LOCK(cs_wallet, return IsSpent(outPoint))) {
             // remove it from the available coins
@@ -4180,7 +4177,7 @@ bool CWallet::CreateCoinStake(
         }
 
         nAttempts++;
-        fKernelFound = Stake(pindexPrev, stakeInput.get(), nBits, nTxNewTime);
+        fKernelFound = Stake(pindexPrev, &stakeInput, nBits, nTxNewTime);
 
         // update staker status (time, attempts)
         pStakerStatus->SetLastTime(nTxNewTime);
@@ -4193,7 +4190,7 @@ bool CWallet::CreateCoinStake(
 
         // Found a kernel
         LogPrintf("CreateCoinStake : kernel found\n");
-        CAmount nStakeValue = stakeInput->GetValue();
+        CAmount nStakeValue = stakeInput.GetValue();
         CAmount nReward = GetBlockValue(pindexPrev->nHeight + 1);
         CAmount nMasternodePayment = GetMasternodePayment(pindexPrev->nHeight + 1);
 
@@ -4213,7 +4210,7 @@ bool CWallet::CreateCoinStake(
         }
         // Create the output transaction(s)
         std::vector<CTxOut> vout;
-        if (!CreateCoinstakeOuts(*stakeInput, vout, nTotalOut)) {
+        if (!CreateCoinstakeOuts(stakeInput, vout, nTotalOut)) {
             LogPrintf("%s : failed to create output\n", __func__);
             it++;
             continue;
@@ -4238,7 +4235,7 @@ bool CWallet::CreateCoinStake(
         txNew.vout[outputs].nValue += nRemaining;
 
         // Set coinstake input
-        txNew.vin.emplace_back(stakeInput->GetTxIn());
+        txNew.vin.emplace_back(stakeInput.GetTxIn());
 
         // Limit size
         unsigned int nBytes = ::GetSerializeSize(txNew, PROTOCOL_VERSION);
