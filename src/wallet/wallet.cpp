@@ -15,6 +15,7 @@
 #include "keystore.h"
 #include "validation.h"
 #include "net.h"
+#include "base58.h"
 #include "policy/fees.h"
 #include "policy/policy.h"
 #include "policy/rbf.h"
