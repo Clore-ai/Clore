@@ -128,6 +128,11 @@ public:
             Process(script);
     }
 
+    void operator()(const CExchangeKeyID&) {
+        if (keystore.HaveKey(keyId))
+        vKeys.push_back(keyId);
+    }
+
     void operator()(const CNoDestination &none) {}
 };
 
