@@ -5,13 +5,13 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "amount.h"
-#include "base58.h"
 #include "chain.h"
 #include "consensus/validation.h"
 #include "core_io.h"
 #include "httpserver.h"
 #include "validation.h"
 #include "net.h"
+#include "key_io.h"
 #include "policy/feerate.h"
 #include "policy/fees.h"
 #include "policy/policy.h"
@@ -2820,7 +2820,7 @@ UniValue listcoldutxos(const JSONRPCRequest& request)
             entry.pushKV("txidn", (int)i);
             entry.pushKV("amount", ValueFromAmount(out.nValue));
             entry.pushKV("confirmations", pcoin->GetDepthInMainChain());
-            entry.pushKV("cold-staker", EncodeDestination(addresses[0]));
+            entry.pushKV("cold-staker", EncodeDestination(addresses[0], CChainParams::STAKING_ADDRESS));
             entry.pushKV("coin-owner", EncodeDestination(addresses[1]));
             entry.pushKV("whitelisted", fWhitelisted ? "true" : "false");
             results.push_back(entry);
@@ -3764,7 +3764,7 @@ static UniValue CreateColdStakeDelegation(CWallet* const pwallet, const UniValue
 
     UniValue result(UniValue::VOBJ);
     result.pushKV("owner_address", ownerAddressStr);
-    result.pushKV("staker_address", EncodeDestination(stakeAddr));
+    result.pushKV("staker_address", EncodeDestination(stakeAddr, true, false));
 
     return result;
 }

@@ -23,6 +23,7 @@
 #include "assets/assettypes.h"
 #include "chain.h"
 #include "util.h"
+#include "key_io.h"
 
 #include <algorithm>
 #include <atomic>
