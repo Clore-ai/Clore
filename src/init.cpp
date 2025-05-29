@@ -627,7 +627,7 @@ std::string HelpMessage(HelpMessageMode mode)
 
 std::string LicenseInfo()
 {
-    const std::string URL_SOURCE_CODE = "<https://gitlab.com/cloreai-public/blockchain>";
+    const std::string URL_SOURCE_CODE = "<https://github.com/clore-ai/clore>";
     const std::string URL_WEBSITE = "<https://blockchain.clore.ai>";
 
     return CopyrightHolders(strprintf(_("Copyright (C) %i-%i"), 2020, COPYRIGHT_YEAR) + " ") + "\n" +

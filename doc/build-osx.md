@@ -1,13 +1,14 @@
-macOS Build Instructions and Notes
-====================================
+# macOS Build Instructions and Notes
+
 The commands in this guide should be executed in a Terminal application.
-The built-in one is located in 
+The built-in one is located in
+
 ```
 /Applications/Utilities/Terminal.app
 ```
 
-Preparation
------------
+## Preparation
+
 Install the macOS command line tools:
 
 `xcode-select --install`
@@ -16,8 +17,7 @@ When the popup appears, click `Install`.
 
 Then install [Homebrew](https://brew.sh).
 
-Dependencies
-----------------------
+## Dependencies
 
     brew install automake berkeley-db4@4 libtool boost miniupnpc openssl@1.1 pkg-config openssl protobuf python qt@5 libevent qrencode
 
@@ -25,11 +25,13 @@ If you run into issues, check [Homebrew's troubleshooting page](https://docs.bre
 See [dependencies.md](dependencies.md) for a complete overview.
 
 If you want to build the disk image with `make deploy` (.dmg / optional), you need RSVG:
+
 ```shell
 brew install librsvg
 ```
 
 ## Berkeley DB
+
 It is recommended to use Berkeley DB 4.8. If you have to build it yourself,
 you can use [this](/contrib/install_db4.sh) script to install it
 like so:
@@ -41,40 +43,45 @@ brew link berkeley-db4 --force
 
 from the root of the repository.
 
-**Note**: You only need Berkeley DB if the wallet is enabled (see [*Disable-wallet mode*](/doc/build-osx.md#disable-wallet-mode)).
+**Note**: You only need Berkeley DB if the wallet is enabled (see [_Disable-wallet mode_](/doc/build-osx.md#disable-wallet-mode)).
 
 ## Build Clore Core
 
 1. Clone the Clore Core source code:
-    ```shell
-    git clone https://gitlab.com/cloreai-public/blockchain
-    cd Clore
-    ```
 
-2.  Build clore-core:
+   ```shell
+   git clone https://github.com/clore-ai/clore
+   cd Clore
+   ```
 
-    Configure and build the headless clore binaries as well as the GUI (if Qt is found).
+2. Build clore-core:
 
-    You can disable the GUI build by passing `--without-gui` to configure.
-    ```shell
-    ./autogen.sh
-    ./configure
-    make
-    ```
+   Configure and build the headless clore binaries as well as the GUI (if Qt is found).
 
-3.  It is recommended to build and run the unit tests:
-    ```shell
-    make check
-    ```
+   You can disable the GUI build by passing `--without-gui` to configure.
 
-4.  You can also create a  `.dmg` that contains the `.app` bundle (optional):
-    ```shell
-    make deploy
-    ```
+   ```shell
+   ./autogen.sh
+   ./configure
+   make
+   ```
+
+3. It is recommended to build and run the unit tests:
+
+   ```shell
+   make check
+   ```
+
+4. You can also create a `.dmg` that contains the `.app` bundle (optional):
+   ```shell
+   make deploy
+   ```
 
 ## `disable-wallet` mode
+
 When the intention is to run only a P2P node without a wallet, Clore Core may be
 compiled in `disable-wallet` mode with:
+
 ```shell
 ./configure --disable-wallet
 ```
@@ -84,9 +91,11 @@ In this case there is no dependency on Berkeley DB 4.8 and SQLite.
 Mining is also possible in disable-wallet mode using the `getblocktemplate` RPC call.
 
 ## Running
+
 Clore Core is now available at `./src/clore_blockchaind`
 
 Before running, you may create an empty configuration file:
+
 ```shell
 mkdir -p "/Users/${USER}/Library/Application Support/Clore"
 
@@ -99,19 +108,19 @@ The first time you run clore_blockchaind, it will start downloading the blockcha
 take many hours, or even days on slower than average systems.
 
 You can monitor the download process by looking at the debug.log file:
+
 ```shell
 tail -f $HOME/Library/Application\ Support/Clore/debug.log
 ```
 
-Other commands:
--------
+## Other commands:
 
     ./src/clore_blockchaind -daemon # Starts the clore daemon.
     ./src/clore-cli --help # Outputs a list of command-line options.
     ./src/clore-cli help # Outputs a list of RPC commands when the daemon is running.
 
-Using Qt Creator as IDE
-------------------------
+## Using Qt Creator as IDE
+
 You can use Qt Creator as an IDE, for clore development.
 Download and install the community edition of [Qt Creator](https://www.qt.io/download/).
 Uncheck everything except Qt Creator during the installation process.
@@ -127,11 +136,10 @@ Uncheck everything except Qt Creator during the installation process.
 9. Select LLDB as debugger (you might need to set the path to your installation)
 10. Start debugging with Qt Creator
 
-Notes
------
+## Notes
 
-* Tested on OS X 10.8 through 10.15 on 64-bit Intel processors only.
+- Tested on OS X 10.8 through 10.15 on 64-bit Intel processors only.
 
-* Building with downloaded Qt binaries is not officially supported. 
+- Building with downloaded Qt binaries is not officially supported.
 
-* autoreconf (boost issue)
+- autoreconf (boost issue)

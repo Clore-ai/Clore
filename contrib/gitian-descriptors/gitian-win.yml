@@ -1,29 +1,29 @@
 ---
-name: "clore-win-0.16"
+name: 'clore-win-0.16'
 enable_cache: true
 suites:
-- "trusty"
+  - 'trusty'
 architectures:
-- "amd64"
+  - 'amd64'
 packages:
-- "curl"
-- "g++"
-- "git-core"
-- "pkg-config"
-- "autoconf"
-- "libtool"
-- "automake"
-- "faketime"
-- "bsdmainutils"
-- "mingw-w64"
-- "g++-mingw-w64"
-- "nsis"
-- "zip"
-- "ca-certificates"
-- "python"
+  - 'curl'
+  - 'g++'
+  - 'git-core'
+  - 'pkg-config'
+  - 'autoconf'
+  - 'libtool'
+  - 'automake'
+  - 'faketime'
+  - 'bsdmainutils'
+  - 'mingw-w64'
+  - 'g++-mingw-w64'
+  - 'nsis'
+  - 'zip'
+  - 'ca-certificates'
+  - 'python'
 remotes:
-- "url": "https://gitlab.com/cloreai-public/blockchain.git"
-  "dir": "clore"
+  - 'url': 'https://github.com/clore-ai/clore.git'
+    'dir': 'clore'
 files: []
 script: |
   WRAP_DIR=$HOME/wrapped

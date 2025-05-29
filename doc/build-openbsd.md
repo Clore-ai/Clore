@@ -1,13 +1,12 @@
-OpenBSD build guide
-======================
+# OpenBSD build guide
+
 (updated for OpenBSD 6.1)
 
 This guide describes how to build clore_blockchaind and command-line utilities on OpenBSD.
 
 As OpenBSD is most common as a server OS, we will not bother with the GUI.
 
-Preparation
--------------
+## Preparation
 
 Run the following as root to install the base dependencies for building:
 
@@ -20,8 +19,7 @@ pkg_add python # (select highest version, e.g. 3.5)
 
 See [dependencies.md](dependencies.md) for a complete overview.
 
-GCC
--------
+## GCC
 
 The default C++ compiler that comes with OpenBSD 5.9 is g++ 4.2. This version is old (from 2007), and is not able to compile the current version of Clore Core, primarily as it has no C++11 support, but even before there were issues. So here we will be installing a newer compiler:
 
@@ -99,7 +97,7 @@ The standard ulimit restrictions in OpenBSD are very strict:
     data(kbytes)         1572864
 
 This is, unfortunately, no longer enough to compile some `.cpp` files in the project,
-at least with gcc 4.9.3 (see issue https://gitlab.com/cloreai-public/blockchain/issues/6658).
+at least with gcc 4.9.3 (see issue https://github.com/clore-ai/clore/issues/6658).
 If your user is in the `staff` group the limit can be raised with:
 
     ulimit -d 3000000
@@ -113,14 +111,17 @@ make the change system-wide, change `datasize-cur` and `datasize-max` in
 **Important**: use `gmake`, not `make`. The non-GNU `make` will exit with a horrible error.
 
 Preparation:
+
 ```bash
 export AUTOCONF_VERSION=2.69 # replace this with the autoconf version that you installed
 export AUTOMAKE_VERSION=1.15 # replace this with the automake version that you installed
 ./autogen.sh
 ```
+
 Make sure `BDB_PREFIX` and `BOOST_PREFIX` are set to the appropriate paths from the above steps.
 
 To configure with wallet:
+
 ```bash
 ./configure --with-gui=no --with-boost=$BOOST_PREFIX \
     CC=egcc CXX=eg++ CPP=ecpp \
@@ -128,19 +129,20 @@ To configure with wallet:
 ```
 
 To configure without wallet:
+
 ```bash
 ./configure --disable-wallet --with-gui=no --with-boost=$BOOST_PREFIX \
     CC=egcc CXX=eg++ CPP=ecpp
 ```
 
 Build and run the tests:
+
 ```bash
 gmake # can use -jX here for parallelism
 gmake check
 ```
 
-Clang (not currently working)
-------------------------------
+## Clang (not currently working)
 
 WARNING: This is outdated, needs to be updated for OpenBSD 6.0 and re-tried.
 

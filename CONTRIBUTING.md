@@ -1,5 +1,4 @@
-Contributing to Clore Core
-============================
+# Contributing to Clore Core
 
 The Clore Core project operates an open contributor model where anyone is
 welcome to contribute towards development in the form of peer review, testing
@@ -14,9 +13,7 @@ purposes. As such there are repository "maintainers" who are responsible for
 merging pull requests as well as a "lead maintainer" who is responsible for the
 release cycle, overall merging, moderation and appointment of maintainers.
 
-
-Contributor Workflow
---------------------
+## Contributor Workflow
 
 The codebase is maintained using the "contributor workflow" where everyone
 without exception contributes patch proposals using "pull requests". This
@@ -24,9 +21,9 @@ facilitates social contribution, easy testing and peer review.
 
 To contribute a patch, the workflow is as follows:
 
-  - Fork repository
-  - Create topic branch
-  - Commit patches
+- Fork repository
+- Create topic branch
+- Commit patches
 
 The project coding conventions in the [developer notes](doc/developer-notes.md)
 must be adhered to.
@@ -49,30 +46,30 @@ will cause the corresponding issue to be closed when the pull request is merged.
 Please refer to the [Git manual](https://git-scm.com/doc) for more information
 about Git.
 
-  - Push changes to your fork
-  - Create pull request
+- Push changes to your fork
+- Create pull request
 
 The title of the pull request should be prefixed by the component or area that
 the pull request affects. Valid areas as:
 
-  - *Consensus* for changes to consensus critical code
-  - *Docs* for changes to the documentation
-  - *Qt* for changes to clore-qt
-  - *Mining* for changes to the mining code
-  - *Net* or *P2P* for changes to the peer-to-peer network code
-  - *RPC/REST/ZMQ* for changes to the RPC, REST or ZMQ APIs
-  - *Scripts and tools* for changes to the scripts and tools
-  - *Tests* for changes to the clore unit tests or QA tests
-  - *Trivial* should **only** be used for PRs that do not change generated
-    executable code. Notably, refactors (change of function arguments and code
-    reorganization) and changes in behavior should **not** be marked as trivial.
-    Examples of trivial PRs are changes to:
-    - comments
-    - whitespace
-    - variable names
-    - logging and messages
-  - *Utils and libraries* for changes to the utils and libraries
-  - *Wallet* for changes to the wallet code
+- _Consensus_ for changes to consensus critical code
+- _Docs_ for changes to the documentation
+- _Qt_ for changes to clore-qt
+- _Mining_ for changes to the mining code
+- _Net_ or _P2P_ for changes to the peer-to-peer network code
+- _RPC/REST/ZMQ_ for changes to the RPC, REST or ZMQ APIs
+- _Scripts and tools_ for changes to the scripts and tools
+- _Tests_ for changes to the clore unit tests or QA tests
+- _Trivial_ should **only** be used for PRs that do not change generated
+  executable code. Notably, refactors (change of function arguments and code
+  reorganization) and changes in behavior should **not** be marked as trivial.
+  Examples of trivial PRs are changes to:
+  - comments
+  - whitespace
+  - variable names
+  - logging and messages
+- _Utils and libraries_ for changes to the utils and libraries
+- _Wallet_ for changes to the wallet code
 
 Examples:
 
@@ -82,7 +79,7 @@ Examples:
     Trivial: Fix typo in init.cpp
 
 Note that translations should not be submitted as pull requests, please see
-[Translation Process](https://gitlab.com/cloreai-public/blockchain/blob/master/doc/translation_process.md) 
+[Translation Process](https://github.com/clore-ai/clore/blob/master/doc/translation_process.md)
 for more information on helping with translations.
 
 If a pull request is specifically not to be considered for merging (yet) please
@@ -98,8 +95,8 @@ At this stage one should expect comments and review from other contributors. You
 can add more commits to your pull request by committing them locally and pushing
 to your fork until you have satisfied all feedback.
 
-Squashing Commits
----------------------------
+## Squashing Commits
+
 If your pull request is accepted for merging, you may be asked by a maintainer
 to squash and or [rebase](https://git-scm.com/docs/git-rebase) your commits
 before it will be merged. The basic squashing workflow is shown below.
@@ -124,15 +121,12 @@ the respective change set.
 The length of time required for peer review is unpredictable and will vary from
 pull request to pull request.
 
-
-Pull Request Philosophy
------------------------
+## Pull Request Philosophy
 
 Patchsets should always be focused. For example, a pull request could add a
 feature, fix a bug, or refactor code; but not a mixture. Please also avoid super
 pull requests which attempt to do too much, are overly large, or overly complex
 as this makes review difficult.
-
 
 ### Features
 
@@ -141,7 +135,6 @@ and maintenance that feature may require after inclusion. Before proposing a new
 feature that will require maintenance, please consider if you are willing to
 maintain it (including bug fixing). If features get orphaned with no maintainer
 in the future, they may be removed by the Repository Maintainer.
-
 
 ### Refactoring
 
@@ -165,9 +158,7 @@ Trivial pull requests or pull requests that refactor the code with no clear
 benefits may be immediately closed by the maintainers to reduce unnecessary
 workload on reviewing.
 
-
-"Decision Making" Process
--------------------------
+## "Decision Making" Process
 
 The following applies to code changes to the Clore Core project (and related
 projects such as libsecp256k1), and is not to be confused with overall Clore
@@ -182,14 +173,14 @@ judge the general consensus of contributors.
 
 In general, all pull requests must:
 
-  - Have a clear use case, fix a demonstrable bug or serve the greater good of
-    the project (for example refactoring for modularisation);
-  - Be well peer reviewed;
-  - Have unit tests and functional tests where appropriate;
-  - Follow code style guidelines;
-  - Not break the existing test suite;
-  - Where bugs are fixed, where possible, there should be unit tests
-    demonstrating the bug and also proving the fix. This helps prevent regression.
+- Have a clear use case, fix a demonstrable bug or serve the greater good of
+  the project (for example refactoring for modularisation);
+- Be well peer reviewed;
+- Have unit tests and functional tests where appropriate;
+- Follow code style guidelines;
+- Not break the existing test suite;
+- Where bugs are fixed, where possible, there should be unit tests
+  demonstrating the bug and also proving the fix. This helps prevent regression.
 
 Patches that change Clore consensus rules are considerably more involved than
 normal because they affect the entire ecosystem and so must be preceded by
@@ -197,7 +188,6 @@ extensive mailing list discussions and have a numbered RIP. While each case will
 be different, one should be prepared to expend more time and effort than for
 other kinds of patches because of increased peer review and consensus building
 requirements.
-
 
 ### Peer Review
 
@@ -209,15 +199,15 @@ consensus to merge a pull request (remember that discussions may have been
 spread out over GitHub, mailing list and IRC discussions). The following
 language is used within pull-request comments:
 
-  - ACK means "I have tested the code and I agree it should be merged";
-  - NACK means "I disagree this should be merged", and must be accompanied by
-    sound technical justification (or in certain cases of copyright/patent/licensing
-    issues, legal justification). NACKs without accompanying reasoning may be
-    disregarded;
-  - utACK means "I have not tested the code, but I have reviewed it and it looks
-    OK, I agree it can be merged";
-  - Concept ACK means "I agree in the general principle of this pull request";
-  - Nit refers to trivial, often non-blocking issues.
+- ACK means "I have tested the code and I agree it should be merged";
+- NACK means "I disagree this should be merged", and must be accompanied by
+  sound technical justification (or in certain cases of copyright/patent/licensing
+  issues, legal justification). NACKs without accompanying reasoning may be
+  disregarded;
+- utACK means "I have not tested the code, but I have reviewed it and it looks
+  OK, I agree it can be merged";
+- Concept ACK means "I agree in the general principle of this pull request";
+- Nit refers to trivial, often non-blocking issues.
 
 Reviewers should include the commit hash which they reviewed in their comments.
 
@@ -245,39 +235,36 @@ that you've been waiting for a pull request to be given attention for several
 months, there may be a number of reasons for this, some of which you can do something
 about:
 
-  - It may be because of a feature freeze due to an upcoming release. During this time,
-    only bug fixes are taken into consideration. If your pull request is a new feature,
-    it will not be prioritized until the release is over. Wait for release.
-  - It may be because the changes you are suggesting do not appeal to people. Rather than
-    nits and critique, which require effort and means they care enough to spend time on your
-    contribution, thundering silence is a good sign of widespread (mild) dislike of a given change
-    (because people don't assume *others* won't actually like the proposal). Don't take
-    that personally, though! Instead, take another critical look at what you are suggesting
-    and see if it: changes too much, is too broad, doesn't adhere to the
-    [developer notes](doc/developer-notes.md), is dangerous or insecure, is messily written, etc.
-    Identify and address any of the issues you find. Then ask e.g. on IRC if someone could give
-    their opinion on the concept itself.
-  - It may be because your code is too complex for all but a few people. And those people
-    may not have realized your pull request even exists. A great way to find people who
-    are qualified and care about the code you are touching is the
-    [Git Blame feature](https://help.github.com/articles/tracing-changes-in-a-file/). Simply
-    find the person touching the code you are touching before you and see if you can find
-    them and give them a nudge. Don't be incessant about the nudging though.
-  - Finally, if all else fails, ask on IRC or elsewhere for someone to give your pull request
-    a look. If you think you've been waiting an unreasonably long amount of time (month+) for
-    no particular reason (few lines changed, etc), this is totally fine. Try to return the favor
-    when someone else is asking for feedback on their code, and universe balances out.
+- It may be because of a feature freeze due to an upcoming release. During this time,
+  only bug fixes are taken into consideration. If your pull request is a new feature,
+  it will not be prioritized until the release is over. Wait for release.
+- It may be because the changes you are suggesting do not appeal to people. Rather than
+  nits and critique, which require effort and means they care enough to spend time on your
+  contribution, thundering silence is a good sign of widespread (mild) dislike of a given change
+  (because people don't assume _others_ won't actually like the proposal). Don't take
+  that personally, though! Instead, take another critical look at what you are suggesting
+  and see if it: changes too much, is too broad, doesn't adhere to the
+  [developer notes](doc/developer-notes.md), is dangerous or insecure, is messily written, etc.
+  Identify and address any of the issues you find. Then ask e.g. on IRC if someone could give
+  their opinion on the concept itself.
+- It may be because your code is too complex for all but a few people. And those people
+  may not have realized your pull request even exists. A great way to find people who
+  are qualified and care about the code you are touching is the
+  [Git Blame feature](https://help.github.com/articles/tracing-changes-in-a-file/). Simply
+  find the person touching the code you are touching before you and see if you can find
+  them and give them a nudge. Don't be incessant about the nudging though.
+- Finally, if all else fails, ask on IRC or elsewhere for someone to give your pull request
+  a look. If you think you've been waiting an unreasonably long amount of time (month+) for
+  no particular reason (few lines changed, etc), this is totally fine. Try to return the favor
+  when someone else is asking for feedback on their code, and universe balances out.
 
-
-Release Policy
---------------
+## Release Policy
 
 The project leader is the release manager for each Clore Core release.
 
-Copyright
----------
+## Copyright
 
-By contributing to this repository, you agree to license your work under the 
-MIT license unless specified otherwise in `contrib/debian/copyright` or at 
-the top of the file itself. Any work contributed where you are not the original 
+By contributing to this repository, you agree to license your work under the
+MIT license unless specified otherwise in `contrib/debian/copyright` or at
+the top of the file itself. Any work contributed where you are not the original
 author must contain its license header with the original author(s) and source.

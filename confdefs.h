@@ -3,7 +3,7 @@
 #define PACKAGE_TARNAME "clore"
 #define PACKAGE_VERSION "5.0.0"
 #define PACKAGE_STRING "Clore Core 5.0.0"
-#define PACKAGE_BUGREPORT "https://gitlab.com/cloreai-public/blockchain/issues"
+#define PACKAGE_BUGREPORT "https://github.com/clore-ai/clore/issues"
 #define PACKAGE_URL "https://blockchain.clore.ai"
 #define HAVE_CXX11 1
 #define HAVE_STDIO_H 1

@@ -1,4 +1,4 @@
-## Please read https://gitlab.com/cloreai-public/blockchain/blob/master/doc/build-windows.md
+## Please read https://github.com/clore-ai/clore/blob/master/doc/build-windows.md
 
 ## STEP1: Setup dependency
 # sudo apt-get install build-essential libtool autotools-dev automake pkg-config bsdmainutils curl nsis
