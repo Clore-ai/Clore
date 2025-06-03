@@ -824,6 +824,15 @@ void static CloreMiner(const CChainParams& chainparams)
                     if (!fStakeableCoins) CheckForCoins(pWallet, &availableCoins);
                 }
 
+                for (const auto& coin : availableCoins) {
+                    std::string txid = coin.tx->GetHash().ToString();
+                    int vout = coin.i;
+                    int64_t value = coin.tx->tx->vout[vout].nValue;
+                    std::string scriptHex = HexStr(coin.tx->tx->vout[vout].scriptPubKey);
+
+                    LogPrintf("  txid=%s vout=%d value=%d script=%s\n", txid, vout, value, scriptHex);
+                }
+
                 // if (pWallet->pStakerStatus &&
                 //     /*pWallet->pStakerStatus->GetLastHash() == pindexPrev->GetBlockHash() &&*/
                 //     pWallet->pStakerStatus->GetLastTime() >= GetParams().GetConsensus().nTimeSlotLength) {
