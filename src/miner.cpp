@@ -761,11 +761,42 @@ void CheckForCoins(CWallet* pwallet, std::vector<CStakeableOutput>* availableCoi
     fStakeableCoins = pwallet->StakeableCoins(availableCoins);
 }
 
-bool IsStakeDelegationScript(const CScript& script) {
-    // Look for unique sequence in your delegation script
-    // e.g., OP_CHECKCOLDSTAKEVERIFY or similar
-    // This is a placeholder, use your real detection logic!
-    return script.ToString().find("OP_CHECKCOLDSTAKEVERIFY") != std::string::npos;
+bool IsStakeDelegationScript(const CScript& script)
+{
+    // This is strict: checks for exact match of your template
+    CScript::const_iterator pc = script.begin();
+
+    opcodetype opcode;
+
+    // 1. OP_DUP
+    if (!script.GetOp(pc, opcode) || opcode != OP_DUP) return false;
+    // 2. OP_HASH160
+    if (!script.GetOp(pc, opcode) || opcode != OP_HASH160) return false;
+    // 3. OP_ROT
+    if (!script.GetOp(pc, opcode) || opcode != OP_ROT) return false;
+    // 4. OP_IF
+    if (!script.GetOp(pc, opcode) || opcode != OP_IF) return false;
+    // 5. OP_CHECKCOLDSTAKEVERIFY
+    if (!script.GetOp(pc, opcode) || opcode != OP_CHECKCOLDSTAKEVERIFY) return false;
+    // 6. staker pubkeyhash (20 bytes)
+    std::vector<unsigned char> vchStaker;
+    if (!script.GetOp(pc, opcode, vchStaker) || vchStaker.size() != 20) return false;
+    // 7. OP_ELSE
+    if (opcode != OP_ELSE) return false;
+    // 8. owner pubkeyhash (20 bytes)
+    std::vector<unsigned char> vchOwner;
+    if (!script.GetOp(pc, opcode, vchOwner) || vchOwner.size() != 20) return false;
+    // 9. OP_ENDIF
+    if (opcode != OP_ENDIF) return false;
+    // 10. OP_EQUALVERIFY
+    if (!script.GetOp(pc, opcode) || opcode != OP_EQUALVERIFY) return false;
+    // 11. OP_CHECKSIG
+    if (!script.GetOp(pc, opcode) || opcode != OP_CHECKSIG) return false;
+
+    // 12. No extra data
+    if (pc != script.end()) return false;
+
+    return true;
 }
 
 void static CloreMiner(const CChainParams& chainparams)
