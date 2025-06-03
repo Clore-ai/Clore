@@ -3726,7 +3726,7 @@ static UniValue CreateColdStakeDelegation(CWallet* const pwallet, const UniValue
 
     if (params.size() > 2 && !params[2].isNull() && !params[2].get_str().empty()) {
         // Address provided
-        CTxDestination dest = DecodeDestination(params[2].get_str());
+        CTxDestination dest = DecodeDestination(params[2].get_str(), isStakingAddress, isExchange);
         resultAddr = dest;
         LogPrintf("DEBUG: Provided owner address = %s\n", params[2].get_str());
 

@@ -4113,24 +4113,26 @@ bool CWallet::CreateCoinstakeOuts(const CPivStake& stakeInput, std::vector<CTxOu
             return error("%s: Unable to get staking private key", __func__);
     }
 
-    vout.emplace_back(0, scriptPubKeyKernel);
+    // vout.emplace_back(0, scriptPubKeyKernel);
 
-    // Calculate if we need to split the output
-    if (nStakeSplitThreshold > 0) {
-        int nSplit = static_cast<int>(nTotal / nStakeSplitThreshold);
-        if (nSplit > 1) {
-            // if nTotal is twice or more of the threshold; create more outputs
-            int txSizeMax = MAX_STANDARD_TX_SIZE >> 11; // limit splits to <10% of the max TX size (/2048)
-            if (nSplit > txSizeMax)
-                nSplit = txSizeMax;
+    // // Calculate if we need to split the output
+    // if (nStakeSplitThreshold > 0) {
+    //     int nSplit = static_cast<int>(nTotal / nStakeSplitThreshold);
+    //     if (nSplit > 1) {
+    //         // if nTotal is twice or more of the threshold; create more outputs
+    //         int txSizeMax = MAX_STANDARD_TX_SIZE >> 11; // limit splits to <10% of the max TX size (/2048)
+    //         if (nSplit > txSizeMax)
+    //             nSplit = txSizeMax;
 
-            CAmount splitAmount = nTotal / nSplit;
-            for (int i = nSplit; i > 1; i--) {
-                LogPrintf("%s: StakeSplit: nTotal = %d; adding output %d of %d\n", __func__, nTotal, (nSplit-i)+2, nSplit);
-                vout.emplace_back(0, scriptPubKeyKernel);
-            }
-        }
-    }
+    //         for (int i = nSplit; i > 1; i--) {
+    //             LogPrintf("%s: StakeSplit: nTotal = %d; adding output %d of %d\n", __func__, nTotal, (nSplit-i)+2, nSplit);
+    //             vout.emplace_back(0, scriptPubKeyKernel);
+    //         }
+    //     }
+    // }
+
+     // For simplicity, don't split for now; just assign nTotal to the single output.
+    vout.emplace_back(nTotal, scriptPubKeyKernel);
     
     return true;
 }
@@ -4157,12 +4159,14 @@ bool CWallet::CreateCoinStake(
     // Mark coin stake transaction
     txNew.vin.clear();
     txNew.vout.clear();
-    txNew.vout.push_back(CTxOut(0, CScript())); // required empty output
+    txNew.vout.emplace_back(0, CScript()); // required empty output
     // update staker status (hash)
     pStakerStatus->SetLastTip(pindexPrev);
     pStakerStatus->SetLastCoins((int) availableCoins->size());
 
     // Kernel Search
+    CAmount nCredit;
+    CAmount nMasternodePayment;
     CScript scriptPubKeyKernel;
     bool fKernelFound = false;
     int nAttempts = 0;
@@ -4184,6 +4188,8 @@ bool CWallet::CreateCoinStake(
             continue;
         }
 
+        nCredit = 0;
+
         nAttempts++;
         fKernelFound = Stake(pindexPrev, &stakeInput, nBits, nTxNewTime);
 
@@ -4198,23 +4204,15 @@ bool CWallet::CreateCoinStake(
 
         // Found a kernel
         LogPrintf("CreateCoinStake : kernel found\n");
-        CAmount nStakeValue = stakeInput.GetValue();
-        CAmount nReward = GetBlockValue(pindexPrev->nHeight + 1);
-        CAmount nMasternodePayment = GetMasternodePayment(pindexPrev->nHeight + 1);
+        nCredit += stakeInput.GetValue();
 
-        CAmount nCredit = nStakeValue + nReward;
-        CAmount nStakerOut = nCredit - nMasternodePayment;
+        // Add block reward to the credit
+        nCredit += GetBlockValue(pindexPrev->nHeight + 1);
+        nMasternodePayment = GetMasternodePayment(pindexPrev->nHeight + 1);
 
-
-        CAmount nTotalOut = nCredit - nMasternodePayment;
-        if (nTotalOut <= 0) {
-            LogPrintf("%s : invalid coinstake output amount (%d), skipping\n", __func__, nTotalOut);
-            it++;
-            continue;
-        }
         // Create the output transaction(s)
         std::vector<CTxOut> vout;
-        if (!CreateCoinstakeOuts(stakeInput, vout, nTotalOut)) {
+        if (!CreateCoinstakeOuts(stakeInput, vout, nCredit - nMasternodePayment)) {
             LogPrintf("%s : failed to create output\n", __func__);
             it++;
             continue;
@@ -4222,20 +4220,20 @@ bool CWallet::CreateCoinStake(
         // Add dummy output required for coinstake (must be first)
         txNew.vout.insert(txNew.vout.end(), vout.begin(), vout.end());
 
-         // Set output amount
-        int outputs = (int) txNew.vout.size() - 1;
-        CAmount nRemaining = nCredit;
-        if (outputs > 1) {
-            // Split the stake across the outputs
-            CAmount nShare = nRemaining / outputs;
-            for (int i = 1; i < outputs; i++) {
-                // loop through all but the last one.
-                txNew.vout[i].nValue = nShare;
-                nRemaining -= nShare;
-            }
-        }
+        //  // Set output amount
+        // int outputs = (int) txNew.vout.size() - 1;
+        // CAmount nRemaining = nCredit;
+        // if (outputs > 1) {
+        //     // Split the stake across the outputs
+        //     CAmount nShare = nRemaining / outputs;
+        //     for (int i = 1; i < outputs; i++) {
+        //         // loop through all but the last one.
+        //         txNew.vout[i].nValue = nShare;
+        //         nRemaining -= nShare;
+        //     }
+        // }
         // put the remaining on the last output (which all into the first if only one output)
-        txNew.vout[outputs].nValue += nRemaining;
+        // txNew.vout[outputs].nValue += nRemaining;
 
         // Set coinstake input
         txNew.vin.emplace_back(stakeInput.GetTxIn());
