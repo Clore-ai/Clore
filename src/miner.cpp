@@ -837,7 +837,7 @@ void static CloreMiner(const CChainParams& chainparams)
                     LogPrintf("  txid=%s vout=%d value=%lld\n",
                         coin.tx->GetHash().ToString(),    // or coin.txid.ToString() if that's your struct
                         coin.i,                          // or coin.n
-                        coin.tx->vout[coin.i].nValue     // or coin.nValue
+                        coin.tx->tx.vout[coin.i].nValue
                     );
                 }
                 // Create PoS block
