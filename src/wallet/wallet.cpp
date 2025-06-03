@@ -2939,8 +2939,6 @@ static void ApproximateBestAssetSubset(const std::vector<std::pair<CInputCoin, C
 
 bool CWallet::StakeableCoins(std::vector<CStakeableOutput>* pCoins)
 {
-    const bool fIncludeColdStaking = gArgs.GetBoolArg("-coldstaking", DEFAULT_COLDSTAKING);
-
     if (pCoins) pCoins->clear();
 
     LOCK2(cs_main, cs_wallet);
@@ -2966,9 +2964,9 @@ bool CWallet::StakeableCoins(std::vector<CStakeableOutput>* pCoins)
                     wtxid,
                     nullptr, // coin control
                     false,   // fIncludeDelegated
-                    fIncludeColdStaking,
-                    false,
-                    false);   // fIncludeLocked
+                    true,
+                    true,
+                    true);   // fIncludeLocked
 
             if (!res.available || !res.spendable) continue;
 
