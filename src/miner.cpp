@@ -834,7 +834,7 @@ void static CloreMiner(const CChainParams& chainparams)
                 LogPrintf("CloreMiner: availableCoins for staking (%d):\n", availableCoins.size());
                 for (const auto& coin : availableCoins) {
                     // Adjust field access as per your CStakeableOutput definition!
-                    LogPrintf("  txid=%s vout=%d value=%lld\n",
+                    LogPrintf("  txid=%s vout=%d value=%d\n",
                         coin.tx->GetHash().ToString(),    // or coin.txid.ToString() if that's your struct
                         coin.i,                          // or coin.n
                         coin.tx->tx->vout[coin.i].nValue,
