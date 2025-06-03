@@ -761,6 +761,44 @@ void CheckForCoins(CWallet* pwallet, std::vector<CStakeableOutput>* availableCoi
     fStakeableCoins = pwallet->StakeableCoins(availableCoins);
 }
 
+bool IsStakeDelegationScript(const CScript& script)
+{
+    // This is a simplified version. In reality, you'll want to do a robust check.
+    std::vector<opcodetype> ops;
+    std::vector<std::vector<unsigned char>> datas;
+
+    CScript::const_iterator it = script.begin();
+    while (it != script.end()) {
+        opcodetype opcode;
+        std::vector<unsigned char> data;
+        if (!script.GetOp(it, opcode, data))
+            return false;
+        ops.push_back(opcode);
+        datas.push_back(data);
+    }
+
+    // Check for your pattern:
+    // OP_DUP OP_HASH160 OP_ROT OP_IF OP_CHECKCOLDSTAKEVERIFY <20b> OP_ELSE <20b> OP_ENDIF OP_EQUALVERIFY OP_CHECKSIG
+    if (ops.size() != 11) return false;
+    if (ops[0] != OP_DUP) return false;
+    if (ops[1] != OP_HASH160) return false;
+    if (ops[2] != OP_ROT) return false;
+    if (ops[3] != OP_IF) return false;
+    if (ops[4] != OP_CHECKCOLDSTAKEVERIFY) return false;
+    // ops[5]: data, the stakingKey
+    if (ops[6] != OP_ELSE) return false;
+    // ops[7]: data, the spendingKey
+    if (ops[8] != OP_ENDIF) return false;
+    if (ops[9] != OP_EQUALVERIFY) return false;
+    if (ops[10] != OP_CHECKSIG) return false;
+
+    // Optionally: check length of datas[5] and datas[7] == 20 bytes (CKeyID)
+    if (datas[5].size() != 20) return false;
+    if (datas[7].size() != 20) return false;
+
+    return true;
+}
+
 void static CloreMiner(const CChainParams& chainparams)
 {
     LogPrintf("CloreMiner -- started\n");
@@ -830,7 +868,15 @@ void static CloreMiner(const CChainParams& chainparams)
                 //     MilliSleep(2000);
                 //     continue;
                 // }
-
+               for (const auto& coin : availableCoins) {
+                    bool isDelegate = IsStakeDelegationScript(coin.txout.scriptPubKey);
+                    LogPrintf("UTXO: txid=%s vout=%d value=%lld %s\n",
+                        coin.outpoint.hash.ToString(),
+                        coin.outpoint.n,
+                        coin.txout.nValue,
+                        isDelegate ? "[DELEGATE]" : "");
+                }
+                
                 // Create PoS block
                 std::unique_ptr<CBlockTemplate> pblocktemplate(BlockAssembler(chainparams).CreateNewBlock(CScript(), pWallet, true, &availableCoins));
                 if (!pblocktemplate) continue;
