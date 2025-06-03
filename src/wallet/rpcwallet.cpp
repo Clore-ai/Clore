@@ -3768,7 +3768,7 @@ static UniValue CreateColdStakeDelegation(CWallet* const pwallet, const UniValue
 
     UniValue result(UniValue::VOBJ);
     result.pushKV("owner_address", ownerAddressStr);
-    result.pushKV("staker_address", EncodeDestination(stakeAddr, true, false));
+    result.pushKV("staker_address", EncodeDestination(stakeAddr, false, false));
 
     return result;
 }
