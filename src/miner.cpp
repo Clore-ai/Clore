@@ -761,6 +761,13 @@ void CheckForCoins(CWallet* pwallet, std::vector<CStakeableOutput>* availableCoi
     fStakeableCoins = pwallet->StakeableCoins(availableCoins);
 }
 
+bool IsStakeDelegationScript(const CScript& script) {
+    // Look for unique sequence in your delegation script
+    // e.g., OP_CHECKCOLDSTAKEVERIFY or similar
+    // This is a placeholder, use your real detection logic!
+    return script.ToString().find("OP_CHECKCOLDSTAKEVERIFY") != std::string::npos;
+}
+
 void static CloreMiner(const CChainParams& chainparams)
 {
     LogPrintf("CloreMiner -- started\n");
@@ -824,13 +831,18 @@ void static CloreMiner(const CChainParams& chainparams)
                     if (!fStakeableCoins) CheckForCoins(pWallet, &availableCoins);
                 }
 
-                for (const auto& coin : availableCoins) {
-                    std::string txid = coin.tx->GetHash().ToString();
-                    int vout = coin.i;
-                    int64_t value = coin.tx->tx->vout[vout].nValue;
-                    std::string scriptHex = HexStr(coin.tx->tx->vout[vout].scriptPubKey);
+                LogPrintf("CloreMiner: availableCoins for staking (%d):\n", availableCoins.size());
 
-                    LogPrintf("  txid=%s vout=%d value=%d script=%s\n", txid, vout, value, scriptHex);
+
+                for (const auto& coin : availableCoins) {
+                     const CScript& script = coin.tx->tx->vout[coin.i].scriptPubKey;
+                    if (IsStakeDelegationScript(script)) {
+                        std::string txid = coin.tx->GetHash().ToString();
+                        int vout = coin.i;
+                        int64_t value = coin.tx->tx->vout[vout].nValue;
+                        std::string scriptHex = HexStr(script);
+                        LogPrintf("DELEGATE: txid=%s vout=%d value=%d script=%s\n", txid, vout, value, scriptHex);
+                    }
                 }
 
                 // if (pWallet->pStakerStatus &&
@@ -840,7 +852,6 @@ void static CloreMiner(const CChainParams& chainparams)
                 //     continue;
                 // }
               
-                LogPrintf("CloreMiner: availableCoins for staking (%d):\n", availableCoins.size());
                
                 // Create PoS block
                 std::unique_ptr<CBlockTemplate> pblocktemplate(BlockAssembler(chainparams).CreateNewBlock(CScript(), pWallet, true, &availableCoins));
