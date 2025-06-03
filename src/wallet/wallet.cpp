@@ -2503,7 +2503,7 @@ CWallet::OutputAvailabilityResult CWallet::CheckOutputAvailability(
 void CWallet::AvailableCoins(std::vector<COutput> &vCoins, bool fOnlySafe, const CCoinControl *coinControl, const CAmount &nMinimumAmount, const CAmount &nMaximumAmount, const CAmount &nMinimumSumAmount, const uint64_t &nMaximumCount, const int &nMinDepth, const int &nMaxDepth) const
 {
     std::map<std::string, std::vector<COutput> > mapAssetCoins;
-    AvailableCoinsAll(vCoins, mapAssetCoins, true, false, fOnlySafe, coinControl, nMinimumAmount, nMaximumAmount, nMinimumSumAmount, nMaximumCount, nMinDepth, nMaxDepth);
+    AvailableCoinsAll(vCoins, mapAssetCoins, true, false, fOnlySafe, coinControl, nMinimumAmount, nMaximumAmount, nMinimumSumAmount, nMaximumCount, nMinDepth, nMaxDepth, true, true);
 }
 
 void CWallet::AvailableAssets(std::map<std::string, std::vector<COutput> > &mapAssetCoins, bool fOnlySafe,
@@ -2527,7 +2527,7 @@ void CWallet::AvailableCoinsWithAssets(std::vector<COutput> &vCoins, std::map<st
     AvailableCoinsAll(vCoins, mapAssetCoins, true, AreAssetsDeployed(), fOnlySafe, coinControl, nMinimumAmount, nMaximumAmount, nMinimumSumAmount, nMaximumCount, nMinDepth, nMaxDepth);
 }
 
-void CWallet::AvailableCoinsAll(std::vector<COutput>& vCoins, std::map<std::string, std::vector<COutput> >& mapAssetCoins, bool fGetCLORE, bool fGetAssets, bool fOnlySafe, const CCoinControl *coinControl, const CAmount& nMinimumAmount, const CAmount& nMaximumAmount, const CAmount& nMinimumSumAmount, const uint64_t& nMaximumCount, const int& nMinDepth, const int& nMaxDepth) const {
+void CWallet::AvailableCoinsAll(std::vector<COutput>& vCoins, std::map<std::string, std::vector<COutput> >& mapAssetCoins, bool fGetCLORE, bool fGetAssets, bool fOnlySafe, const CCoinControl *coinControl, const CAmount& nMinimumAmount, const CAmount& nMaximumAmount, const CAmount& nMinimumSumAmount, const uint64_t& nMaximumCount, const int& nMinDepth, const int& nMaxDepth, bool fIncludeColdStaking = false, bool fIncludeDelegated = false) const {
     vCoins.clear();
 
     {
@@ -2623,6 +2623,21 @@ void CWallet::AvailableCoinsAll(std::vector<COutput>& vCoins, std::map<std::stri
                 isminetype mine = IsMine(pcoin->tx->vout[i]);
 
                 if (mine == ISMINE_NO) {
+                    continue;
+                }
+
+                if (out.scriptPubKey.IsPayToColdStaking()) {
+                    // Cold staker
+                    if ((mine & ISMINE_COLD) && fIncludeColdStaking) {
+                        vCoins.push_back(COutput(pcoin, i, nDepth, false, false, safeTx));
+                        continue;
+                    }
+                    // Delegated staker
+                    if ((mine & ISMINE_SPENDABLE_DELEGATED) && fIncludeDelegated) {
+                        vCoins.push_back(COutput(pcoin, i, nDepth, true, true, safeTx));
+                        continue;
+                    }
+                    // not ours, or not requested, skip
                     continue;
                 }
 
