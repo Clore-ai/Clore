@@ -2493,12 +2493,12 @@ CWallet::OutputAvailabilityResult CWallet::CheckOutputAvailability(
     // if (mine == ISMINE_SPENDABLE_DELEGATED && !fIncludeDelegated) return res;
 
     if ((mine & ISMINE_SPENDABLE_DELEGATED) != ISMINE_NO || (mine & ISMINE_COLD) != ISMINE_NO) {
-    LogPrintf(
-        "CheckOutputAvailability: txid=%s vout=%u value=%s ismine=%d [delegated=%d, cold=%d]\n",
-        wtxid.ToString(), outIndex, FormatMoney(output.nValue), (int)mine,
-        bool(mine & ISMINE_SPENDABLE_DELEGATED), bool(mine & ISMINE_COLD)
-    );
-}
+        LogPrintf(
+            "CheckOutputAvailability: txid=%s vout=%u value=%s ismine=%d [delegated=%d, cold=%d]\n",
+            wtxid.ToString(), outIndex, FormatMoney(output.nValue), (int)mine,
+            bool(mine & ISMINE_SPENDABLE_DELEGATED), bool(mine & ISMINE_COLD)
+        );
+    }
 
     res.spendable = ((mine & ISMINE_SPENDABLE) != ISMINE_NO) ||
                     (((mine & ISMINE_WATCH_ONLY) != ISMINE_NO) && (coinControl && coinControl->fAllowWatchOnly && res.solvable)) ||
@@ -2976,7 +2976,7 @@ bool CWallet::StakeableCoins(std::vector<CStakeableOutput>* pCoins)
                     true,
                     true);   // fIncludeLocked
 
-            if (!res.available || !res.spendable) continue;
+            // if (!res.available || !res.spendable) continue;
 
             // found valid coin
             if (!pCoins) return true;
@@ -4175,11 +4175,16 @@ bool CWallet::CreateCoinStake(
 {
     // shuffle coins
     if (availableCoins && GetParams().IsTestnet()) {
-        // Shuffle(availableCoins->begin(), availableCoins->end(), FastRandomContext());
+        auto GetMinePriority = [](isminetype mine) {
+            if (mine & ISMINE_SPENDABLE_DELEGATED) return 0; // delegated first
+            if (mine == ISMINE_COLD) return 1;
+            if (mine == ISMINE_SPENDABLE) return 2;
+            return 10;
+        };
         std::sort(availableCoins->begin(), availableCoins->end(), [&](const CStakeableOutput& a, const CStakeableOutput& b) {
-            bool aIsDelegated = (IsMine(a.tx->tx->vout[a.i]) & ISMINE_SPENDABLE_DELEGATED);
-            bool bIsDelegated = (IsMine(b.tx->tx->vout[b.i]) & ISMINE_SPENDABLE_DELEGATED);
-            return aIsDelegated > bIsDelegated; // delegated ones first
+            int aPri = GetMinePriority(IsMine(a.tx->tx->vout[a.i]));
+            int bPri = GetMinePriority(IsMine(b.tx->tx->vout[b.i]));
+            return aPri < bPri;
         });
     }
 

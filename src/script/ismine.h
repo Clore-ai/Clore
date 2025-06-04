@@ -26,7 +26,7 @@ enum isminetype
     ISMINE_WATCH_SOLVABLE = 2,
     ISMINE_WATCH_ONLY = ISMINE_WATCH_SOLVABLE | ISMINE_WATCH_UNSOLVABLE,
     ISMINE_SPENDABLE = 4,
-    ISMINE_COLD = 5,
+    ISMINE_COLD = 1 << 5,
 
     //! Indicates that we have the spending key of a P2CS
     ISMINE_SPENDABLE_DELEGATED = 1 << 6,
