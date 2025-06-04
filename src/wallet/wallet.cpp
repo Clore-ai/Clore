@@ -4166,8 +4166,13 @@ bool CWallet::CreateCoinStake(
         bool stopOnNewBlock) const
 {
     // shuffle coins
-    if (availableCoins && GetParams().IsRegTestNet()) {
-        Shuffle(availableCoins->begin(), availableCoins->end(), FastRandomContext());
+    if (availableCoins && GetParams().IsTestnet()) {
+        // Shuffle(availableCoins->begin(), availableCoins->end(), FastRandomContext());
+        std::sort(availableCoins->begin(), availableCoins->end(), [&](const CStakeableOutput& a, const CStakeableOutput& b) {
+            bool aIsDelegated = (IsMine(a.tx->tx->vout[a.i]) & ISMINE_SPENDABLE_DELEGATED);
+            bool bIsDelegated = (IsMine(b.tx->tx->vout[b.i]) & ISMINE_SPENDABLE_DELEGATED);
+            return aIsDelegated > bIsDelegated; // delegated ones first
+        });
     }
 
     // Mark coin stake transaction
