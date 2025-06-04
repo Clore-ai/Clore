@@ -2778,7 +2778,7 @@ UniValue delegatoradd(const JSONRPCRequest& request)
 
     bool isStaking = false;
     bool isExchange = false;
-    CTxDestination dest = DecodeDestination(request.params[0].get_str(), isStaking, isExchange);
+    CTxDestination dest = DecodeDestination(request.params[0].get_str());
     if (!IsValidDestination(dest) || isStaking)
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid PIVX address");
 
