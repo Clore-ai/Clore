@@ -2475,9 +2475,6 @@ CWallet::OutputAvailabilityResult CWallet::CheckOutputAvailability(
 
     isminetype mine = IsMine(output);
 
-    LogPrintf("CheckOutputAvailability: txid=%s n=%d ismine=%d (COLD=%d, DELEGATED=%d)\n", 
-    wtxid.ToString(), index, (int)mine, (int)(mine&ISMINE_COLD), (int)(mine&ISMINE_SPENDABLE_DELEGATED));
-
     // Check If not mine
     if (mine == ISMINE_NO) return res;
 
@@ -2494,6 +2491,14 @@ CWallet::OutputAvailabilityResult CWallet::CheckOutputAvailability(
     // if (mine == ISMINE_COLD && (!fIncludeColdStaking)) return res;
     // // skip delegated coins
     // if (mine == ISMINE_SPENDABLE_DELEGATED && !fIncludeDelegated) return res;
+
+    if ((mine & ISMINE_SPENDABLE_DELEGATED) != ISMINE_NO || (mine & ISMINE_COLD) != ISMINE_NO) {
+    LogPrintf(
+        "CheckOutputAvailability: txid=%s vout=%u value=%s ismine=%d [delegated=%d, cold=%d]\n",
+        wtxid.ToString(), outIndex, FormatMoney(output.nValue), (int)mine,
+        bool(mine & ISMINE_SPENDABLE_DELEGATED), bool(mine & ISMINE_COLD)
+    );
+}
 
     res.spendable = ((mine & ISMINE_SPENDABLE) != ISMINE_NO) ||
                     (((mine & ISMINE_WATCH_ONLY) != ISMINE_NO) && (coinControl && coinControl->fAllowWatchOnly && res.solvable)) ||
