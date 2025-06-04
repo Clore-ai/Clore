@@ -2475,6 +2475,9 @@ CWallet::OutputAvailabilityResult CWallet::CheckOutputAvailability(
 
     isminetype mine = IsMine(output);
 
+    LogPrintf("CheckOutputAvailability: txid=%s n=%d ismine=%d (COLD=%d, DELEGATED=%d)\n", 
+    wtxid.ToString(), index, (int)mine, (int)(mine&ISMINE_COLD), (int)(mine&ISMINE_SPENDABLE_DELEGATED));
+
     // Check If not mine
     if (mine == ISMINE_NO) return res;
 
@@ -2963,7 +2966,7 @@ bool CWallet::StakeableCoins(std::vector<CStakeableOutput>* pCoins)
                     index,
                     wtxid,
                     nullptr, // coin control
-                    false,   // fIncludeDelegated
+                    false,   
                     true,
                     true,
                     true);   // fIncludeLocked
@@ -4197,16 +4200,6 @@ bool CWallet::CreateCoinStake(
                              outPoint,
                              it->pindex);
         
-        // Log stake input details
-        LogPrintf(
-            "Staking with input: txid=%s, vout=%d, value=%lld, height=%d, scriptType=%s\n",
-            outPoint.hash.ToString(),
-            outPoint.n,
-            it->tx->tx->vout[it->i].nValue,
-            it->pindex ? it->pindex->nHeight : -1,
-            HexStr(it->tx->tx->vout[it->i].scriptPubKey.begin(), it->tx->tx->vout[it->i].scriptPubKey.end())
-        );
-
         // New block came in, move on
         if (stopOnNewBlock && GetLastBlockHeightLockWallet() != pindexPrev->nHeight) return false;
 
