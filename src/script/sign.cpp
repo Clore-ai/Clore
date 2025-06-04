@@ -179,9 +179,9 @@ static bool SignStep(const BaseSignatureCreator& creator, const CScript& scriptP
         ret.emplace_back(oper);
         ret.emplace_back(ToByteVector(vch));
         return true;
-    default:
-        return false;
     }
+    return false;
+
 }
 
 static CScript PushAll(const std::vector<valtype>& values)
