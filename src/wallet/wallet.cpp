@@ -4196,6 +4196,16 @@ bool CWallet::CreateCoinStake(
         CPivStake stakeInput(it->tx->tx->vout[it->i],
                              outPoint,
                              it->pindex);
+        
+        // Log stake input details
+        LogPrintf(
+            "Staking with input: txid=%s, vout=%d, value=%lld, height=%d, scriptType=%s\n",
+            outPoint.hash.ToString(),
+            outPoint.n,
+            it->tx->tx->vout[it->i].nValue,
+            it->pindex ? it->pindex->nHeight : -1,
+            HexStr(it->tx->tx->vout[it->i].scriptPubKey.begin(), it->tx->tx->vout[it->i].scriptPubKey.end())
+        );
 
         // New block came in, move on
         if (stopOnNewBlock && GetLastBlockHeightLockWallet() != pindexPrev->nHeight) return false;
