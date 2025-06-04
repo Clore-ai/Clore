@@ -2488,9 +2488,9 @@ CWallet::OutputAvailabilityResult CWallet::CheckOutputAvailability(
 
     // --Skip P2CS outputs
     // skip cold coins
-    if (mine == ISMINE_COLD && (!fIncludeColdStaking)) return res;
-    // skip delegated coins
-    if (mine == ISMINE_SPENDABLE_DELEGATED && !fIncludeDelegated) return res;
+    // if (mine == ISMINE_COLD && (!fIncludeColdStaking)) return res;
+    // // skip delegated coins
+    // if (mine == ISMINE_SPENDABLE_DELEGATED && !fIncludeDelegated) return res;
 
     res.spendable = ((mine & ISMINE_SPENDABLE) != ISMINE_NO) ||
                     (((mine & ISMINE_WATCH_ONLY) != ISMINE_NO) && (coinControl && coinControl->fAllowWatchOnly && res.solvable)) ||
