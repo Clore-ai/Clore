@@ -4287,7 +4287,7 @@ bool CWallet::SignCoinStake(CMutableTransaction& txNew) const
     int nIn = 0;
     for (const CTxIn& txIn : txNew.vin) {
         const CWalletTx* wtx = GetWalletTx(txIn.prevout.hash);
-        if (!wtx || !SignSignature(*this, *(wtx->tx), txNew, nIn++, SIGHASH_ALL))
+        if (!wtx || !SignSignature(*this, *(wtx->tx), txNew, nIn++, SIGHASH_ALL, true))
             return error("%s : failed to sign coinstake", __func__);
     }
 
