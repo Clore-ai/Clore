@@ -330,7 +330,7 @@ public:
         consensus.nStakeMinAge = 60 * 60;
         consensus.nStakeMinDepth = 1;
         consensus.nPowTargetTimespan = 1 * 60 * 60 * 24; // Typically 1 day (can vary depending on the cryptocurrency, Zcash uses 1 day)
-        consensus.nTargetSpacing = 1 * 60;
+        consensus.nTargetSpacing = 1;
         consensus.nTargetTimespanV2 = 30 * 60;
         consensus.nPowTargetSpacing = 2.5 * 60; // 2.5 minutes, typical for Zcash, adjust as necessary
         consensus.posHeight = 200;
