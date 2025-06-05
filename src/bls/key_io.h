@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or https://www.opensource.org/licenses/mit-license.php.
 
-#ifndef PIVX_BLS_KEY_IO_H
-#define PIVX_BLS_KEY_IO_H
+#ifndef CLORE_BLS_KEY_IO_H
+#define CLORE_BLS_KEY_IO_H
 
 #include "optional.h"
 
@@ -21,4 +21,4 @@ namespace bls {
 
 } // end bls namespace
 
-#endif //PIVX_BLS_KEY_IO_H
+#endif //CLORE_BLS_KEY_IO_H

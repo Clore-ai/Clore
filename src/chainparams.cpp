@@ -113,10 +113,10 @@ public:
         consensus.nBIP66Enabled = true;
         consensus.nSegwitEnabled = true;
         consensus.nCSVEnabled 	= true;
-//        consensus.powLimit 		= uint256S("00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-//        consensus.kawpowLimit 	= uint256S("00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); // Estimated starting diff for first 180 kawpow blocks
-//        consensus.nPowTargetTimespan = 2016 * 60; // 1.4 days
-//        consensus.nPowTargetSpacing = 1 * 60;
+        // consensus.powLimit 		= uint256S("00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        // consensus.kawpowLimit 	= uint256S("00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); // Estimated starting diff for first 180 kawpow blocks
+        // consensus.nPowTargetTimespan = 2016 * 60; // 1.4 days
+        // consensus.nPowTargetSpacing = 1 * 60; 
         consensus.powLimit = uint256S("0007ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.equihashLimit = uint256S("0007ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.posLimitV1 = uint256S("0007ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
@@ -168,7 +168,7 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_COINBASE_ASSETS].nOverrideMinerConfirmationWindow = 2016;
         consensus.nActivationHeight = 100;
 	
-	consensus.BIP34LockedIn = 6048; // Locked_in at height 6048
+	    consensus.BIP34LockedIn = 6048; // Locked_in at height 6048
 
 
         // The best chain should have at least this much work
@@ -189,17 +189,17 @@ public:
         nDefaultPort = 8788;
         nPruneAfterHeight = 100000;
 		
-	uint32_t nGenesisTime = 1651442858;	
+	    uint32_t nGenesisTime = 1651442858;	
 
-	genesis = CreateGenesisBlock(nGenesisTime, 3244753, 0x1e00ffff, 4, 5000 * COIN);
+	    genesis = CreateGenesisBlock(nGenesisTime, 3244753, 0x1e00ffff, 4, 5000 * COIN);
         consensus.hashGenesisBlock = genesis.GetX16RHash();	
-	assert(consensus.hashGenesisBlock == uint256S("0000000a50fdaaf22f1c98b8c61559e15ab2269249aa1fb20683180703cdbf07"));
-    assert(genesis.hashMerkleRoot == uint256S("7c1d71731b98c560a80cee3b88993c8c863342b9661894304fd843bf7e75a41f"));
+	    assert(consensus.hashGenesisBlock == uint256S("0000000a50fdaaf22f1c98b8c61559e15ab2269249aa1fb20683180703cdbf07"));
+        assert(genesis.hashMerkleRoot == uint256S("7c1d71731b98c560a80cee3b88993c8c863342b9661894304fd843bf7e75a41f"));
 
 
         vSeeds.emplace_back("seed.clore.ai", false);
-	vSeeds.emplace_back("seed1.clore.ai", false);
-	vSeeds.emplace_back("seed2.clore.ai", false); 
+	    vSeeds.emplace_back("seed1.clore.ai", false);
+	    vSeeds.emplace_back("seed2.clore.ai", false); 
 
         // Address start with A
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,23);
@@ -267,10 +267,10 @@ public:
         nAddNullQualifierTagBurnAmount = .1 * COIN;
 		
 	
-	nCommunityAutonomousAmount = 50; // 50% of mined coins towards rewarding CLORE.AI users
+	    nCommunityAutonomousAmount = 50; // 50% of mined coins towards rewarding CLORE.AI users
 
         // Burn Addresses
-	strIssueAssetBurnAddress = "AP6RNAdjGgkX2QERU3Gr5VV5hvidu6xgau";
+	    strIssueAssetBurnAddress = "AP6RNAdjGgkX2QERU3Gr5VV5hvidu6xgau";
         strReissueAssetBurnAddress = "AKsyQ9K9Kxftcb77Veiv91kA2VugPY45PL";
         strIssueSubAssetBurnAddress = "AbXjGsYEt89DUARDsQoXLAB3t4EpKUd1D8";
         strIssueUniqueAssetBurnAddress = "APZ5XSUwfKXDtscpoPbWfNkeiNu3FFu6ee";
@@ -320,7 +320,7 @@ public:
         consensus.nPowTargetTimespan = 2016 * 60; // 1.4 days
         consensus.nPowTargetSpacing = 1 * 60;
         consensus.nTimeSlotLength = 15;
-//        consensus.powLimit = uint256S("0007ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        // consensus.powLimit = uint256S("0007ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.equihashLimit = uint256S("0007ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.posLimitV1 = uint256S("0007ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.posLimitV2 = uint256S("0x00000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
@@ -336,7 +336,7 @@ public:
         consensus.posHeight = 200;
         consensus.kawpowHeight = 300; // switch to kawpow at block 1000
         consensus.equihashHeight = 350; //switch to equihash 50 blocks later
-	consensus.fPowAllowMinDifficultyBlocks = false;
+	    consensus.fPowAllowMinDifficultyBlocks = false;
         consensus.fPowNoRetargeting = false;
         consensus.nRuleChangeActivationThreshold = 1613; // Approx 80% of 2016
         consensus.nMinerConfirmationWindow = 2016; // nPowTargetTimespan / nPowTargetSpacing
@@ -372,7 +372,7 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_COINBASE_ASSETS].nOverrideMinerConfirmationWindow = 2016;
 
         consensus.nActivationHeight = 100;
-	consensus.BIP34LockedIn = 8064; // Locked_in at height 8064
+	    consensus.BIP34LockedIn = 8064; // Locked_in at height 8064
 
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("000000000000000000000000000000000000000000000000000000000258f180"); // Block 380
@@ -402,13 +402,13 @@ public:
         vSeeds.clear();
 	      vSeeds.emplace_back("testnet.clore.ai", false);
 
-	base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,42);
+	    base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,42);
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,124);
         base58Prefixes[STAKING_ADDRESS] = std::vector<unsigned char>(1, 73);     // starting with 'W'
         base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,114);
         base58Prefixes[EXT_PUBLIC_KEY] = {0x04, 0x35, 0x87, 0xCF};
         base58Prefixes[EXT_SECRET_KEY] = {0x04, 0x35, 0x83, 0x94};
-        // Testnet pivx BIP44 coin type is '1' (All coin's testnet default)
+        // Testnet clore BIP44 coin type is '1' (All coin's testnet default)
         base58Prefixes[EXT_COIN_TYPE] = {0x80, 0x00, 0x00, 0x01};
 
         // Clore BIP44 cointype in testnet
@@ -421,20 +421,20 @@ public:
         fMineBlocksOnDemand = false;
         fMiningRequiresPeers = true;
 
-//        // Sapling
-//        bech32HRPs[SAPLING_PAYMENT_ADDRESS]      = "ctestsapling";
-//        bech32HRPs[SAPLING_FULL_VIEWING_KEY]     = "cviewtestsapling";
-//        bech32HRPs[SAPLING_INCOMING_VIEWING_KEY] = "cloretestsapling";
-//        bech32HRPs[SAPLING_EXTENDED_SPEND_KEY]   = "c-secret-spending-key-test";
-//        bech32HRPs[SAPLING_EXTENDED_FVK]         = "crviewtestsapling";
-//
-//        bech32HRPs[BLS_SECRET_KEY]               = "bls-sk-test";
-//        bech32HRPs[BLS_PUBLIC_KEY]               = "bls-pk-test";
-//
-//        nLLMQConnectionRetryTimeout = 60;
-//
-//        // Tier two
-//        nFulfilledRequestExpireTime = 60 * 60; // fulfilled requests expire in 1 hour
+        //        // Sapling
+        //        bech32HRPs[SAPLING_PAYMENT_ADDRESS]      = "ctestsapling";
+        //        bech32HRPs[SAPLING_FULL_VIEWING_KEY]     = "cviewtestsapling";
+        //        bech32HRPs[SAPLING_INCOMING_VIEWING_KEY] = "cloretestsapling";
+        //        bech32HRPs[SAPLING_EXTENDED_SPEND_KEY]   = "c-secret-spending-key-test";
+        //        bech32HRPs[SAPLING_EXTENDED_FVK]         = "crviewtestsapling";
+        //
+        //        bech32HRPs[BLS_SECRET_KEY]               = "bls-sk-test";
+        //        bech32HRPs[BLS_PUBLIC_KEY]               = "bls-pk-test";
+        //
+        //        nLLMQConnectionRetryTimeout = 60;
+        //
+        //        // Tier two
+        //        nFulfilledRequestExpireTime = 60 * 60; // fulfilled requests expire in 1 hour
 
 
         checkpointData = (CCheckpointData) {
@@ -462,11 +462,11 @@ public:
         nIssueRestrictedAssetBurnAmount = 1500 * COIN;
         nAddNullQualifierTagBurnAmount = .1 * COIN;
 		
-	//10% of 5000 COIN to ASSIGN
-	nCommunityAutonomousAmount = 15;
+        //10% of 5000 COIN to ASSIGN
+        nCommunityAutonomousAmount = 15;
 
         // Burn Addresses
-	strIssueAssetBurnAddress = "J1VQJKLSLVZ4syiCAx5hEPq8BrkFaxAXAi";
+	    strIssueAssetBurnAddress = "J1VQJKLSLVZ4syiCAx5hEPq8BrkFaxAXAi";
         strReissueAssetBurnAddress = "J2yh4DiLETuVVDvpvBNSq3QCmHcdMmNEdp";
         strIssueSubAssetBurnAddress = "J3PE3FsHqfszvz7nhwK2Gc32wykrc7pNMA";
         strIssueUniqueAssetBurnAddress = "J4yKRTYF2nRryYEnupsNnQQmRKsQhdspYB";
@@ -475,10 +475,10 @@ public:
         strIssueSubQualifierAssetBurnAddress = "J7MSidYgNJrPE15ouEsXPYXFYH2AAPXmhr";
         strIssueRestrictedAssetBurnAddress = "J8uX8jfZn14P1VNzh6YjSzLaRTQAdoFSHn";
         strAddNullQualifierTagBurnAddress = "J9CrKy8m548AvSbcv1mcn7tyJQkgcwVfj6";		
-	//Global Burn Address
+	    //Global Burn Address
         strGlobalBurnAddress = "JGYQBki6wWWnJLp2dcgdtNZWs9a2e1nXM3";
 		
-	//CommunityAutonomousAddress
+	    //CommunityAutonomousAddress
         strCommunityAutonomousAddress = "J8db9nuaVL3Jo8hDcfKh77pZnG2J8jvxWH";
 
         // DGW Activation
@@ -513,10 +513,10 @@ public:
         consensus.nSegwitEnabled = true;
         consensus.nCSVEnabled = true;
         consensus.nSubsidyHalvingInterval = 150;
-//        consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-//        consensus.kawpowLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-//        consensus.nPowTargetTimespan = 2016 * 60; // 1.4 days
-//        consensus.nPowTargetSpacing = 1 * 60;
+        // consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        // consensus.kawpowLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        // consensus.nPowTargetTimespan = 2016 * 60; // 1.4 days
+        // consensus.nPowTargetSpacing = 1 * 60;
         consensus.powLimit = uint256S("0007ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.equihashLimit = uint256S("0007ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.posLimitV1 = uint256S("0007ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
@@ -628,7 +628,7 @@ public:
         base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,114);
         base58Prefixes[EXT_PUBLIC_KEY] = {0x04, 0x35, 0x87, 0xCF};
         base58Prefixes[EXT_SECRET_KEY] = {0x04, 0x35, 0x83, 0x94};
-        // Testnet pivx BIP44 coin type is '1' (All coin's testnet default)
+        // Testnet clore BIP44 coin type is '1' (All coin's testnet default)
         base58Prefixes[EXT_COIN_TYPE] = {0x80, 0x00, 0x00, 0x01};
 
         // Clore BIP44 cointype in regtest
@@ -646,11 +646,11 @@ public:
         nIssueRestrictedAssetBurnAmount = 1500 * COIN;
         nAddNullQualifierTagBurnAmount = .1 * COIN;
 		
-	//10% of 5000 COIN to ASSIGN
-	nCommunityAutonomousAmount = 10;
+	    //10% of 5000 COIN to ASSIGN
+	    nCommunityAutonomousAmount = 10;
 
         // Burn Addresses
-	strIssueAssetBurnAddress = "J1VQJKLSLVZ4syiCAx5hEPq8BrkFaxAXAi";
+	    strIssueAssetBurnAddress = "J1VQJKLSLVZ4syiCAx5hEPq8BrkFaxAXAi";
         strReissueAssetBurnAddress = "J2yh4DiLETuVVDvpvBNSq3QCmHcdMmNEdp";
         strIssueSubAssetBurnAddress = "J3PE3FsHqfszvz7nhwK2Gc32wykrc7pNMA";
         strIssueUniqueAssetBurnAddress = "J4yKRTYF2nRryYEnupsNnQQmRKsQhdspYB";
@@ -659,10 +659,10 @@ public:
         strIssueSubQualifierAssetBurnAddress = "J7MSidYgNJrPE15ouEsXPYXFYH2AAPXmhr";
         strIssueRestrictedAssetBurnAddress = "J8uX8jfZn14P1VNzh6YjSzLaRTQAdoFSHn";
         strAddNullQualifierTagBurnAddress = "J9CrKy8m548AvSbcv1mcn7tyJQkgcwVfj6";		
-	//Global Burn Address
+	    //Global Burn Address
         strGlobalBurnAddress = "JGYQBki6wWWnJLp2dcgdtNZWs9a2e1nXM3";
 		
-	//CommunityAutonomousAddress
+	    //CommunityAutonomousAddress
         strCommunityAutonomousAddress = "JCPncGFawSDgP3CmG19MB6cbKP5XuhXY4u";
 
         // DGW Activation

@@ -3,8 +3,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or https://www.opensource.org/licenses/mit-license.php.
 
-#ifndef PIVX_EVO_MNAUTH_H
-#define PIVX_EVO_MNAUTH_H
+#ifndef CLORE_EVO_MNAUTH_H
+#define CLORE_EVO_MNAUTH_H
 
 #include "bls/bls_wrapper.h"
 #include "serialize.h"
@@ -48,4 +48,4 @@ public:
 };
 
 
-#endif // PIVX_EVO_MNAUTH_H
+#endif // CLORE_EVO_MNAUTH_H

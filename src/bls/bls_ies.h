@@ -3,8 +3,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef PIVX_CRYPTO_BLS_IES_H
-#define PIVX_CRYPTO_BLS_IES_H
+#ifndef CLORE_CRYPTO_BLS_IES_H
+#define CLORE_CRYPTO_BLS_IES_H
 
 #include "bls/bls_wrapper.h"
 #include "streams.h"
@@ -156,4 +156,4 @@ public:
     }
 };
 
-#endif // PIVX_CRYPTO_BLS_IES_H
+#endif // CLORE_CRYPTO_BLS_IES_H

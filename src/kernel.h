@@ -74,4 +74,4 @@ bool CheckProofOfStake(const CBlock& block, std::string& strError, const CBlockI
  */
 bool GetStakeKernelHash(uint256& hashRet, const CBlock& block, const CBlockIndex* pindexPrev = nullptr);
 
-#endif // PIVX_KERNEL_H
+#endif // CLORE_KERNEL_H

@@ -61,7 +61,7 @@ namespace
         std::vector<unsigned char> data;
         uint160 hash;
         if (DecodeBase58Check(str, data, 23)) {
-            // base58-encoded PIVX addresses.
+            // base58-encoded CLORE addresses.
             // Public-key-hash-addresses have version 30 (or 139 testnet).
             // The data vector contains RIPEMD160(SHA256(pubkey)), where pubkey is the serialized public key.
             const std::vector<unsigned char>& pubkey_prefix = params.Base58Prefix(CChainParams::PUBKEY_ADDRESS);

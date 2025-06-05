@@ -2780,13 +2780,13 @@ UniValue delegatoradd(const JSONRPCRequest& request)
     bool isExchange = false;
     CTxDestination dest = DecodeDestination(request.params[0].get_str());
     if (!IsValidDestination(dest) || isStaking)
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid PIVX address");
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid CLORE address");
 
     const std::string strLabel = (request.params.size() > 1 ? request.params[1].get_str() : "");
 
     const CKeyID* keyID = boost::get<CKeyID>(&dest);
     if (!keyID)
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Unable to get KeyID from PIVX address");
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Unable to get KeyID from CLORE address");
 
     return pwallet->SetAddressBook(*keyID, strLabel, "");
 }
@@ -3576,8 +3576,8 @@ UniValue getstakingstatus(const JSONRPCRequest& request)
             "\nResult:\n"
             "{\n"
             "  \"staking_status\": true|false,      (boolean) whether the wallet is staking or not\n"
-            "  \"staking_enabled\": true|false,     (boolean) whether staking is enabled/disabled in pivx.conf\n"
-            "  \"coldstaking_enabled\": true|false, (boolean) whether cold-staking is enabled/disabled in pivx.conf\n"
+            "  \"staking_enabled\": true|false,     (boolean) whether staking is enabled/disabled in clore.conf\n"
+            "  \"coldstaking_enabled\": true|false, (boolean) whether cold-staking is enabled/disabled in clore.conf\n"
             "  \"haveconnections\": true|false,     (boolean) whether network connections are present\n"
             "  \"walletunlocked\": true|false,      (boolean) whether the wallet is unlocked\n"
             "  \"stakeablecoins\": n                (numeric) number of stakeable UTXOs\n"
@@ -3771,7 +3771,7 @@ static UniValue CreateColdStakeDelegation(CWallet* const pwallet, const UniValue
         LogPrintf("DEBUG: Provided owner address = %s\n", params[2].get_str());
 
         if (!IsValidDestination(dest) || isStakingAddress)
-            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid PIVX spending address");
+            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid CLORE spending address");
         ownerKey = *boost::get<CKeyID>(&dest);
         // Check that the owner address belongs to this wallet, or fForceExternalAddr is true
         bool fForceExternalAddr = params.size() > 3 && !params[3].isNull() ? params[3].get_bool() : false;
@@ -3827,9 +3827,9 @@ UniValue delegatestake(const JSONRPCRequest& request)
                 HelpRequiringPassphrase(pwallet) + "\n"
 
                "\nArguments:\n"
-               "1. \"staking_addr\"      (string, required) The pivx staking address to delegate.\n"
+               "1. \"staking_addr\"      (string, required) The clore staking address to delegate.\n"
                "2. \"amount\"            (numeric, required) The amount in PIV to delegate for staking. eg 100\n"
-               "3. \"owner_addr\"        (string, optional) The pivx address corresponding to the key that will be able to spend the stake.\n"
+               "3. \"owner_addr\"        (string, optional) The clore address corresponding to the key that will be able to spend the stake.\n"
                "                               If not provided, or empty string, a new wallet address is generated.\n"
                "4. \"ext_owner\"         (boolean, optional, default = false) use the provided 'owneraddress' anyway, even if not present in this wallet.\n"
                "                               WARNING: The owner of the keys to 'owneraddress' will be the only one allowed to spend these coins.\n"

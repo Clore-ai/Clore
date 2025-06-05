@@ -15,4 +15,4 @@
 bool GetOldStakeModifier(const CStakeInput* stake, uint64_t& nStakeModifier);
 bool ComputeNextStakeModifier(const CBlockIndex* pindexPrev, uint64_t& nStakeModifier, bool& fGeneratedStakeModifier);
 
-#endif // PIVX_LEGACY_MODIFIER_H
+#endif // CLORE_LEGACY_MODIFIER_H

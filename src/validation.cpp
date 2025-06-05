@@ -4110,11 +4110,11 @@ bool CheckWork(const CBlock& block, const CBlockIndex* const pindexPrev)
     }
 
     if (block.nBits != nBitsRequired) {
-        // Pivx Specific reference to the block with the wrong threshold was used.
+        // Clore Specific reference to the block with the wrong threshold was used.
         const Consensus::Params& consensus = GetParams().GetConsensus();
-        if ((block.nTime == (uint32_t) consensus.nPivxBadBlockTime) &&
-        (block.nBits == (uint32_t) consensus.nPivxBadBlockBits)) {
-            // accept PIVX block minted with incorrect proof of work threshold
+        if ((block.nTime == (uint32_t) consensus.nCloreBadBlockTime) &&
+        (block.nBits == (uint32_t) consensus.nCloreBadBlockBits)) {
+            // accept CLORE block minted with incorrect proof of work threshold
             return true;
         }
 

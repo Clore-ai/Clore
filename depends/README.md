@@ -62,10 +62,11 @@ For linux RISC-V 64-bit cross compilation (there are no packages for 32-bit):
 
     sudo apt-get install g++-riscv64-linux-gnu binutils-riscv64-linux-gnu
 
-RISC-V known issue: gcc-7.3.0 and gcc-7.3.1 result in a broken `test_pivx` executable (see https://github.com/bitcoin/bitcoin/pull/13543),
+RISC-V known issue: gcc-7.3.0 and gcc-7.3.1 result in a broken `test_clore` executable (see https://github.com/bitcoin/bitcoin/pull/13543),
 this is apparently fixed in gcc-8.1.0.
 
 ### Dependency Options
+
 The following can be set when running make: `make FOO=bar`
 
 <dl>
@@ -119,4 +120,3 @@ options will be passed to bitcoin's configure. In this case, `--disable-wallet`.
 
 - [description.md](description.md): General description of the depends system
 - [packages.md](packages.md): Steps for adding packages
-

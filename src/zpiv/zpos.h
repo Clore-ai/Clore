@@ -33,4 +33,4 @@ public:
     bool GetTxOutFrom(CTxOut& out) const override { return false; /* not available */ }
 };
 
-#endif //PIVX_LEGACY_ZPOS_H
+#endif //CLORE_LEGACY_ZPOS_H
