@@ -1,8 +1,8 @@
 /* confdefs.h */
 #define PACKAGE_NAME "Clore Core"
 #define PACKAGE_TARNAME "clore"
-#define PACKAGE_VERSION "5.0.1"
-#define PACKAGE_STRING "Clore Core 5.0.1"
+#define PACKAGE_VERSION "5.0.2"
+#define PACKAGE_STRING "Clore Core 5.0.2"
 #define PACKAGE_BUGREPORT "https://github.com/clore-ai/clore/issues"
 #define PACKAGE_URL "https://blockchain.clore.ai"
 #define HAVE_CXX11 1
