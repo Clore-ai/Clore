@@ -105,49 +105,49 @@ unsigned int GetNextWorkRequiredPOS(const CBlockIndex* pindexLast, const CBlockH
 {
     const Consensus::Params& consensus = GetParams().GetConsensus();
 
-    // if (consensus.fPowNoRetargeting)
-    //     return pindexLast->nBits;
+    if (consensus.fPowNoRetargeting)
+        return pindexLast->nBits;
 
-    // const CBlockIndex* BlockLastSolved = pindexLast;
-    // const CBlockIndex* BlockReading = pindexLast;
-    // int64_t nActualTimespan = 0;
-    // int64_t LastBlockTime = 0;
-    // int64_t PastBlocksMin = 24;
-    // int64_t PastBlocksMax = 24;
-    // int64_t CountBlocks = 0;
-    // arith_uint256 PastDifficultyAverage;
-    // arith_uint256 PastDifficultyAveragePrev;
-    // const arith_uint256& powLimit = UintToArith256(consensus.powLimit);
+    const CBlockIndex* BlockLastSolved = pindexLast;
+    const CBlockIndex* BlockReading = pindexLast;
+    int64_t nActualTimespan = 0;
+    int64_t LastBlockTime = 0;
+    int64_t PastBlocksMin = 24;
+    int64_t PastBlocksMax = 24;
+    int64_t CountBlocks = 0;
+    arith_uint256 PastDifficultyAverage;
+    arith_uint256 PastDifficultyAveragePrev;
+    const arith_uint256& powLimit = UintToArith256(consensus.powLimit);
 
-    // if (BlockLastSolved == nullptr || BlockLastSolved->nHeight == 0 || BlockLastSolved->nHeight < PastBlocksMin) {
-    //     return powLimit.GetCompact();
-    // }
+    if (BlockLastSolved == nullptr || BlockLastSolved->nHeight == 0 || BlockLastSolved->nHeight < PastBlocksMin) {
+        return powLimit.GetCompact();
+    }
 
-    // const arith_uint256& bnTargetLimit = UintToArith256(consensus.ProofOfStakeLimit(true));
-    // const int64_t& nTargetTimespan = consensus.TargetTimespan(true);
+    const arith_uint256& bnTargetLimit = UintToArith256(consensus.ProofOfStakeLimit(true));
+    const int64_t& nTargetTimespan = consensus.TargetTimespan(true);
 
-    // int64_t nActualSpacing = 0;
-    // if (pindexLast->nHeight != 0)
-    //     nActualSpacing = pindexLast->GetBlockTime() - pindexLast->pprev->GetBlockTime();
-    // if (nActualSpacing < 0)
-    //     nActualSpacing = 1;
-    // if (nActualSpacing > consensus.nTargetSpacing*10)
-    //     nActualSpacing = consensus.nTargetSpacing*10;
+    int64_t nActualSpacing = 0;
+    if (pindexLast->nHeight != 0)
+        nActualSpacing = pindexLast->GetBlockTime() - pindexLast->pprev->GetBlockTime();
+    if (nActualSpacing < 0)
+        nActualSpacing = 1;
+    if (nActualSpacing > consensus.nTargetSpacing*10)
+        nActualSpacing = consensus.nTargetSpacing*10;
 
-    // // ppcoin: target change every block
-    // // ppcoin: retarget with exponential moving toward target spacing
-    // arith_uint256 bnNew;
-    // bnNew.SetCompact(pindexLast->nBits);
+    // ppcoin: target change every block
+    // ppcoin: retarget with exponential moving toward target spacing
+    arith_uint256 bnNew;
+    bnNew.SetCompact(pindexLast->nBits);
 
-    // int64_t nInterval = nTargetTimespan / consensus.nTargetSpacing;
-    // bnNew *= ((nInterval - 1) * consensus.nTargetSpacing + nActualSpacing + nActualSpacing);
-    // bnNew /= ((nInterval + 1) * consensus.nTargetSpacing);
+    int64_t nInterval = nTargetTimespan / consensus.nTargetSpacing;
+    bnNew *= ((nInterval - 1) * consensus.nTargetSpacing + nActualSpacing + nActualSpacing);
+    bnNew /= ((nInterval + 1) * consensus.nTargetSpacing);
 
-    // if (bnNew <= 0 || bnNew > bnTargetLimit)
-    //     bnNew = bnTargetLimit;
+    if (bnNew <= 0 || bnNew > bnTargetLimit)
+        bnNew = bnTargetLimit;
 
-    // return bnNew.GetCompact();
-     return UintToArith256(consensus.ProofOfStakeLimit(true)).GetCompact();
+    return bnNew.GetCompact();
+    //  return UintToArith256(consensus.ProofOfStakeLimit(true)).GetCompact();
 }
 
 unsigned int GetNextWorkRequiredBTC(const CBlockIndex* pindexLast, const CBlockHeader *pblock, const Consensus::Params& params)

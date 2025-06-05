@@ -328,7 +328,7 @@ public:
         consensus.nMNBlockReward = 1 * COIN;
         consensus.nNewMNBlockReward = 1 * COIN;
         consensus.nStakeMinAge = 60 * 60;
-        consensus.nStakeMinDepth = 1;
+        consensus.nStakeMinDepth = 100;
         consensus.nPowTargetTimespan = 1 * 60 * 60 * 24; // Typically 1 day (can vary depending on the cryptocurrency, Zcash uses 1 day)
         consensus.nTargetSpacing = 1 * 60;
         consensus.nTargetTimespanV2 = 30 * 60;
