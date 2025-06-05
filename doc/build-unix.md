@@ -63,8 +63,10 @@ CONFIG_SITE=$PWD/depends/x86_64-pc-linux-gnu/share/config.site \
   --enable-cxx \
   --disable-shared \
   --disable-tests \
-  --disable-gui-tests \
+  --without-gui \
   --with-pic \
+  --without-bench \
+  --with-tx \
   LDFLAGS="-L${BDB_PREFIX}/lib/" \
   CPPFLAGS="-I${BDB_PREFIX}/include/"
 
