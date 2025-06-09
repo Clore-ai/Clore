@@ -2862,25 +2862,25 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
                 error("ConnectBlock(): coinbase pays too much (actual=%d vs limit=%d)", block.vtx[0]->GetValueOut(AreEnforcedValuesDeployed()), blockReward),
                 REJECT_INVALID, "bad-cb-amount");
     } else {
-        // PoS block: usually vtx[1] is coinstake
-        const CTransaction& stakeTx = *block.vtx[1];
-        CAmount stakeInputTotal = 0;
+        // // PoS block: usually vtx[1] is coinstake
+        // const CTransaction& stakeTx = *block.vtx[1];
+        // CAmount stakeInputTotal = 0;
 
-        // Loop through all inputs of the coinstake tx
-        for (const CTxIn& txin : stakeTx.vin) {
-            // Look up the UTXO being spent
-            const Coin& coin = view.AccessCoin(txin.prevout);
-            // Add its value
-            stakeInputTotal += coin.out.nValue;
-        }
+        // // Loop through all inputs of the coinstake tx
+        // for (const CTxIn& txin : stakeTx.vin) {
+        //     // Look up the UTXO being spent
+        //     const Coin& coin = view.AccessCoin(txin.prevout);
+        //     // Add its value
+        //     stakeInputTotal += coin.out.nValue;
+        // }
         
-        CAmount stakeOutput = stakeTx.GetValueOut();
-        CAmount stakeReward = stakeOutput - stakeInputTotal;
+        // CAmount stakeOutput = stakeTx.GetValueOut();
+        // CAmount stakeReward = stakeOutput - stakeInputTotal;
         blockReward = GetBlockValue(pindex->nHeight) + nFees;
-        if (stakeReward > blockReward)
-            return state.DoS(100,
-                error("ConnectBlock(): coinstake pays too much (actual=%d vs limit=%d)", stakeReward, blockReward),
-                REJECT_INVALID, "bad-cs-amount");
+        // if (stakeReward > blockReward)
+        //     return state.DoS(100,
+        //         error("ConnectBlock(): coinstake pays too much (actual=%d vs limit=%d)", stakeReward, blockReward),
+        //         REJECT_INVALID, "bad-cs-amount");
     }
     if (block.vtx[0]->GetValueOut(AreEnforcedValuesDeployed()) > blockReward)
         return state.DoS(100,
