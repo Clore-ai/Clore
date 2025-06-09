@@ -2504,7 +2504,7 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
 
     if (isPoS) {
         std::string strError;
-        if (!CheckProofOfStake(block, strError, pindexPrev))
+        if (!CheckProofOfStake(block, strError, pindex))
             return state.DoS(100, error("%s: proof of stake check failed (%s)", __func__, strError));
     }
     // verify that the view's current state corresponds to the previous block
