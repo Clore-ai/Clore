@@ -2497,10 +2497,17 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
     int64_t nTimeStart = GetTimeMicros();
 
     bool isPoS = block.IsProofOfStake();
+
     // Check it again in case a previous version let a bad block in
     if (!CheckBlock(block, state, chainparams.GetConsensus(), !fJustCheck && !isPoS, !fJustCheck)) // Force the check of asset duplicates when connecting the block
         return error("%s: Consensus::CheckBlock: %s", __func__, FormatStateMessage(state));
 
+    if (isPoS) {
+        // Full PoS block validation here!
+        if (!CheckProofOfStake(block, state, view, pindex->nHeight)) {
+            return error("ConnectBlock(): CheckProofOfStake failed for block %s", block.GetHash().ToString());
+        }
+    }
     // verify that the view's current state corresponds to the previous block
     uint256 hashPrevBlock = pindex->pprev == nullptr ? uint256() : pindex->pprev->GetBlockHash();
     assert(hashPrevBlock == view.GetBestBlock());
