@@ -2908,18 +2908,54 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
 	LogPrintf("==>scriptPubKeyCommunityAutonomous    Actual: %s \n", HexStr(block.vtx[0]->vout[1].scriptPubKey));
 	LogPrintf("==>scriptPubKeyCommunityAutonomous Should Be: %s \n", HexStr(scriptPubKeyCommunityAutonomous));
 	*/
-	if (!isPoS) {
+	//Check 10% Amount
+	// if(!isPoS &&block.vtx[0]->vout[1].nValue != nCommunityAutonomousAmountValue )		{
+	// 	return state.DoS(100,
+    //                      error("ConnectBlock(): coinbase Community Autonomous Amount Is Invalid. Actual: %ld Should be:%ld ",block.vtx[0]->vout[1].nValue, nCommunityAutonomousAmountValue),
+    //                      REJECT_INVALID, "bad-cb-community-autonomous-amount");
+	// }
+	// //Check 10% Address
+	// if( !isPoS && HexStr(block.vtx[0]->vout[1].scriptPubKey) != HexStr(scriptPubKeyCommunityAutonomous) )		{
+	// 	return state.DoS(100,
+    //                      error("ConnectBlock(): coinbase Community Autonomous Address Is Invalid. Actual: %s Should Be: %s \n",HexStr(block.vtx[0]->vout[1].scriptPubKey), HexStr(scriptPubKeyCommunityAutonomous)),
+    //                      REJECT_INVALID, "bad-cb-community-autonomous-address");
+	// }
+    // Community Autonomous Output checks for PoW blocks only
+    if (!isPoS) {
+        // Make sure we don't access vout[1] if it doesn't exist!
         if (block.vtx[0]->vout.size() <= 1) {
-            LogPrintf("ERROR: PoW block missing community output at height %d!\n", pindex->nHeight);
-            return state.DoS(100, ...);
+            LogPrintf("%s: Community output missing at block height %d: vout.size() = %u\n",
+                    __func__, pindex->nHeight, block.vtx[0]->vout.size());
+            // Return a detailed DoS state
+            return state.DoS(100,
+                error("%s: coinbase Community Autonomous Output Missing at height %d (vout.size()=%u)",
+                    __func__, pindex->nHeight, block.vtx[0]->vout.size()),
+                REJECT_INVALID, "bad-cb-community-autonomous-missing"
+            );
         }
-        if (block.vtx[0]->vout[1].nValue != nCommunityAutonomousAmountValue ) {
-            LogPrintf("ERROR: Wrong community amount at height %d\n", pindex->nHeight);
-            return state.DoS(100, ...);
+
+        // Check 10% Amount
+        if (block.vtx[0]->vout[1].nValue != nCommunityAutonomousAmountValue) {
+            LogPrintf("%s: Invalid Community Autonomous Amount at height %d: Actual=%ld, Expected=%ld\n",
+                    __func__, pindex->nHeight, block.vtx[0]->vout[1].nValue, nCommunityAutonomousAmountValue);
+            return state.DoS(100,
+                error("%s: coinbase Community Autonomous Amount Is Invalid. Actual=%ld Should be=%ld at height %d",
+                    __func__, block.vtx[0]->vout[1].nValue, nCommunityAutonomousAmountValue, pindex->nHeight),
+                REJECT_INVALID, "bad-cb-community-autonomous-amount"
+            );
         }
-        if (HexStr(block.vtx[0]->vout[1].scriptPubKey) != HexStr(scriptPubKeyCommunityAutonomous)) {
-            LogPrintf("ERROR: Wrong community script at height %d\n", pindex->nHeight);
-            return state.DoS(100, ...);
+
+        // Check 10% Address
+        std::string actual = HexStr(block.vtx[0]->vout[1].scriptPubKey);
+        std::string expected = HexStr(scriptPubKeyCommunityAutonomous);
+        if (actual != expected) {
+            LogPrintf("%s: Invalid Community Autonomous Address at height %d: Actual=%s, Expected=%s\n",
+                    __func__, pindex->nHeight, actual, expected);
+            return state.DoS(100,
+                error("%s: coinbase Community Autonomous Address Is Invalid. Actual=%s Should Be=%s at height %d",
+                    __func__, actual, expected, pindex->nHeight),
+                REJECT_INVALID, "bad-cb-community-autonomous-address"
+            );
         }
     }
 
