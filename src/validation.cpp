@@ -2853,7 +2853,7 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
         blockReward = nFees + GetBlockSubsidy(pindex->nHeight, chainparams.GetConsensus());
         if (block.vtx[0]->GetValueOut(AreEnforcedValuesDeployed()) > blockReward)
             return state.DoS(100,
-                error("ConnectBlock(): coinbase pays too much (actual=%d vs limit=%d)", block.vtx[0]->GetValueOut(AreEnforcedValuesDeployed()), expectedReward),
+                error("ConnectBlock(): coinbase pays too much (actual=%d vs limit=%d)", block.vtx[0]->GetValueOut(AreEnforcedValuesDeployed()), blockReward),
                 REJECT_INVALID, "bad-cb-amount");
     } else {
         // PoS block: usually vtx[1] is coinstake
@@ -2869,11 +2869,11 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
         }
         
         CAmount stakeOutput = stakeTx.GetValueOut();
-        CAmount stakeReward = stakeOutput - stakeInput;
+        CAmount stakeReward = stakeOutput - stakeInputTotal;
         blockReward = GetBlockValue(pindex->nHeight) + nFees;
         if (stakeReward > blockReward)
             return state.DoS(100,
-                error("ConnectBlock(): coinstake pays too much (actual=%d vs limit=%d)", stakeReward, expectedReward),
+                error("ConnectBlock(): coinstake pays too much (actual=%d vs limit=%d)", stakeReward, blockReward),
                 REJECT_INVALID, "bad-cs-amount");
     }
     if (block.vtx[0]->GetValueOut(AreEnforcedValuesDeployed()) > blockReward)
