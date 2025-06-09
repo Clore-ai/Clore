@@ -2847,7 +2847,35 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
     int64_t nTime3 = GetTimeMicros(); nTimeConnect += nTime3 - nTime2;
     LogPrint(BCLog::BENCH, "      - Connect %u transactions: %.2fms (%.3fms/tx, %.3fms/txin) [%.2fs (%.2fms/blk)]\n", (unsigned)block.vtx.size(), MILLI * (nTime3 - nTime2), MILLI * (nTime3 - nTime2) / block.vtx.size(), nInputs <= 1 ? 0 : MILLI * (nTime3 - nTime2) / (nInputs-1), nTimeConnect * MICRO, nTimeConnect * MILLI / nBlocksTotal);
 
-    CAmount blockReward = nFees + GetBlockSubsidy(pindex->nHeight, chainparams.GetConsensus());
+    // CAmount blockReward = nFees + GetBlockSubsidy(pindex->nHeight, chainparams.GetConsensus());
+    CAmount blockReward;
+    if (!isPoS) {
+        blockReward = nFees + GetBlockSubsidy(pindex->nHeight, chainparams.GetConsensus());
+        if (block.vtx[0]->GetValueOut(AreEnforcedValuesDeployed()) > blockReward)
+            return state.DoS(100,
+                error("ConnectBlock(): coinbase pays too much (actual=%d vs limit=%d)", block.vtx[0]->GetValueOut(AreEnforcedValuesDeployed()), expectedReward),
+                REJECT_INVALID, "bad-cb-amount");
+    } else {
+        // PoS block: usually vtx[1] is coinstake
+        const CTransaction& stakeTx = *block.vtx[1];
+        CAmount stakeInputTotal = 0;
+
+        // Loop through all inputs of the coinstake tx
+        for (const CTxIn& txin : stakeTx.vin) {
+            // Look up the UTXO being spent
+            const Coin& coin = view.AccessCoin(txin.prevout);
+            // Add its value
+            stakeInputTotal += coin.out.nValue;
+        }
+        
+        CAmount stakeOutput = stakeTx.GetValueOut();
+        CAmount stakeReward = stakeOutput - stakeInput;
+        blockReward = GetBlockValue(pindex->nHeight) + nFees;
+        if (stakeReward > blockReward)
+            return state.DoS(100,
+                error("ConnectBlock(): coinstake pays too much (actual=%d vs limit=%d)", stakeReward, expectedReward),
+                REJECT_INVALID, "bad-cs-amount");
+    }
     if (block.vtx[0]->GetValueOut(AreEnforcedValuesDeployed()) > blockReward)
         return state.DoS(100,
                          error("ConnectBlock(): coinbase pays too much (actual=%d vs limit=%d)",block.vtx[0]->GetValueOut(AreEnforcedValuesDeployed()), blockReward),

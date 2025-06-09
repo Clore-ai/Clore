@@ -2017,6 +2017,10 @@ CAmount CWalletTx::GetAvailableCredit(bool fUseCache, const isminefilter& filter
     if (IsCoinBase() && GetBlocksToMaturity() > 0)
         return 0;
 
+    // NEW: Add PoS (coinstake) maturity check:
+    if (IsCoinStake() && GetBlocksToMaturity() > 0)
+        return 0;
+
     if (allow_cache && fUseCache && fAvailableCreditCached)
         return nAvailableCreditCached;
 
@@ -5463,7 +5467,7 @@ int CMerkleTx::GetDepthInMainChain(const CBlockIndex* &pindexRet) const
 
 int CMerkleTx::GetBlocksToMaturity() const
 {
-    if (!IsCoinBase())
+    if (!(IsCoinBase() || IsCoinStake()))
         return 0;
     return std::max(0, (COINBASE_MATURITY+1) - GetDepthInMainChain());
 }
