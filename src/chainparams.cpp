@@ -401,6 +401,7 @@ public:
         vFixedSeeds.clear();
         vSeeds.clear();
 	      vSeeds.emplace_back("testnet.clore.ai", false);
+        vSeeds.emplace_back("155.138.230.177:4569", false);
 
 	    base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,42);
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,124);
@@ -444,10 +445,10 @@ public:
 
         chainTxData = ChainTxData{
             // Update as we know more about the contents of the Clore chain
-            1658331968, // * UNIX timestamp of last known number of transactions
-            4108,     // * total number of transactions between genesis and that timestamp
+            0, // * UNIX timestamp of last known number of transactions
+            0,     // * total number of transactions between genesis and that timestamp
                         //   (the tx=... number in the SetBestChain debug.log lines)
-            0.01518114964117619        // * estimated number of transactions per second after that timestamp
+            0        // * estimated number of transactions per second after that timestamp
         };
 
         /** CLORE_BLOCKCHAIN Start **/
