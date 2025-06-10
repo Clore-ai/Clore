@@ -4200,27 +4200,29 @@ bool CheckWork(const CBlock& block, const CBlockIndex* const pindexPrev)
 static bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state, const Consensus::Params& consensusParams, bool fCheckPOW = true)
 {
     // If we are checking a KAWPOW block below a know checkpoint height. We can validate the proof of work using the mix_hash
-    if (fCheckPOW && block.nTime >= nEQUIHASHActivationTime) {
-        CBlockIndex* pcheckpoint = Checkpoints::GetLastCheckpoint(GetParams().Checkpoints());
-        if (fCheckPOW && pcheckpoint && block.nHeight <= (uint32_t)pcheckpoint->nHeight) {
-            uint256 powHash = GetPOWHash(block, block.nHeight, consensusParams);
-           if (!CheckProofOfWork(powHash, block.nBits, consensusParams)) {
-               return state.DoS(50, false, REJECT_INVALID, "high-hash", false, "proof of work failed with mix_hash only check");
-           }
+    if (block.nHeight < GetParams().GetConsensus().nposHeight) {
+        if (fCheckPOW && block.nTime >= nEQUIHASHActivationTime) {
+            CBlockIndex* pcheckpoint = Checkpoints::GetLastCheckpoint(GetParams().Checkpoints());
+            if (fCheckPOW && pcheckpoint && block.nHeight <= (uint32_t)pcheckpoint->nHeight) {
+                uint256 powHash = GetPOWHash(block, block.nHeight, consensusParams);
+            if (!CheckProofOfWork(powHash, block.nBits, consensusParams)) {
+                return state.DoS(50, false, REJECT_INVALID, "high-hash", false, "proof of work failed with mix_hash only check");
+            }
 
-           return true;
+            return true;
+            }
         }
-    }
 
-    uint256 mix_hash;
-    // Check proof of work matches claimed amount
-    if (fCheckPOW && !CheckProofOfWork(block.GetHashFull(mix_hash), block.nBits, consensusParams)) {
-        return state.DoS(50, false, REJECT_INVALID, "high-hash", false, "proof of work failed");
-    }
+        uint256 mix_hash;
+        // Check proof of work matches claimed amount
+        if (fCheckPOW && !CheckProofOfWork(block.GetHashFull(mix_hash), block.nBits, consensusParams)) {
+            return state.DoS(50, false, REJECT_INVALID, "high-hash", false, "proof of work failed");
+        }
 
-    if (fCheckPOW && block.nTime >= nEQUIHASHActivationTime) {
-        if (mix_hash != block.mix_hash) {
-            return state.DoS(50, false, REJECT_INVALID, "invalid-mix-hash", false, "mix_hash validity failed");
+        if (fCheckPOW && block.nTime >= nEQUIHASHActivationTime) {
+            if (mix_hash != block.mix_hash) {
+                return state.DoS(50, false, REJECT_INVALID, "invalid-mix-hash", false, "mix_hash validity failed");
+            }
         }
     }
 
