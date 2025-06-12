@@ -159,11 +159,11 @@ bool CheckProofOfStake(const CBlock& block, std::string& strError, const CBlockI
     const auto& tx = block.vtx[1];
     const CTxIn& txin = tx->vin[0];
     ScriptError serror;
-    // if (!VerifyScript(txin.scriptSig, stakePrevout.scriptPubKey, &txin.scriptWitness ,STANDARD_SCRIPT_VERIFY_FLAGS,
-    //          TransactionSignatureChecker(tx.get(), 0, stakePrevout.nValue), &serror)) {
-    //     strError = strprintf("signature fails: %s", serror ? ScriptErrorString(serror) : "");
-    //     return false;
-    // }
+    if (!VerifyScript(txin.scriptSig, stakePrevout.scriptPubKey, &txin.scriptWitness ,STANDARD_SCRIPT_VERIFY_FLAGS,
+             TransactionSignatureChecker(tx.get(), 0, stakePrevout.nValue), &serror)) {
+        strError = strprintf("signature fails: %s", serror ? ScriptErrorString(serror) : "");
+        return false;
+    }
 
     // All good
     return true;

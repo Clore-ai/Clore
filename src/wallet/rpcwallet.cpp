@@ -2839,7 +2839,7 @@ UniValue listcoldutxos(const JSONRPCRequest& request)
         if (!CheckFinalTx(*pcoin) || !pcoin->IsTrusted())
             continue;
 
-        LogPrintf("TX %s cold=%lld stake=%lld\n", pcoin->GetHash().ToString(), pcoin->GetColdStakingCredit(), pcoin->GetStakeDelegationCredit());
+        // LogPrintf("TX %s cold=%lld stake=%lld\n", pcoin->GetHash().ToString(), pcoin->GetColdStakingCredit(), pcoin->GetStakeDelegationCredit());
 
         // if this tx has no unspent P2CS outputs for us, skip it
         if(pcoin->GetColdStakingCredit() == 0 && pcoin->GetStakeDelegationCredit() == 0)
