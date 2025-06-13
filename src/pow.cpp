@@ -58,9 +58,9 @@ unsigned int static DarkGravityWave(const CBlockIndex* pindexLast, const CBlockH
         }
 
         // Count how blocks are EQUIHASH mined in the last 180 blocks
-        if (pindex->nTime >= params.equihashHeight) {
-            nEQUIHASHBlocksFound++;
-        }
+        // if (pindex->nTime >= params.equihashHeight) {
+        //     nEQUIHASHBlocksFound++;
+        // }
 
         if(nCountBlocks != nPastBlocks) {
             assert(pindex->pprev); // should never fail
@@ -72,12 +72,12 @@ unsigned int static DarkGravityWave(const CBlockIndex* pindexLast, const CBlockH
     // 180 EQUIHASH blocks already. If we haven't we are going to return our
     // temp limit. This will allow us to change algos to EQUIHASH without having to
     // change the DGW math.
-    if (pblock->nTime >= params.equihashHeight) {
-        if (nEQUIHASHBlocksFound != nPastBlocks) {
-            const arith_uint256 bnEQUIHASHLimit = UintToArith256(params.equihashLimit);
-            return bnEQUIHASHLimit.GetCompact();
-        }
-    }
+    // if (pblock->nTime >= params.equihashHeight) {
+    //     if (nEQUIHASHBlocksFound != nPastBlocks) {
+    //         const arith_uint256 bnEQUIHASHLimit = UintToArith256(params.equihashLimit);
+    //         return bnEQUIHASHLimit.GetCompact();
+    //     }
+    // }
 
     arith_uint256 bnNew(bnPastTargetAvg);
 

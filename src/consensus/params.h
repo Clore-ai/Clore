@@ -138,7 +138,7 @@ struct Params {
     int64_t nCloreBadBlockTime;
     unsigned int nCloreBadBlockBits;
 
-    int64_t TargetTimespan(const bool fV2 = true) const { return fV2 ? nTargetTimespanV2 : nTargetTimespan; }
+    int64_t TargetTimespan(const bool fV2 = true) const { return fV2 ? nTargetTimespan : nTargetTimespan; }
     uint256 ProofOfStakeLimit(const bool fV2) const { return fV2 ? posLimitV2 : posLimitV1; }
     bool MoneyRange(const CAmount& nValue) const { return (nValue >= 0 && nValue <= nMaxMoneyOut); }
     bool IsTimeProtocolV2(const int nHeight) const { return false; }

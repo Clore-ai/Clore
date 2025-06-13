@@ -4931,9 +4931,9 @@ static bool AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CValidation
 
     int nHeight = pindexPrev ? pindexPrev->nHeight + 1 : 0;
     // Enforce PoW cutoff at consensus.nLastPOWBlock
-    if (!isPoS && nHeight > consensus.kawpowHeight) {
-        return state.DoS(100, false, REJECT_INVALID, "pow-not-allowed-past-last-pow-block");
-    }
+    // if (!isPoS && nHeight > consensus.kawpowHeight) {
+    //     return state.DoS(100, false, REJECT_INVALID, "pow-not-allowed-past-last-pow-block");
+    // }
     if (!isPoS && block.GetHash() != consensus.hashGenesisBlock && !CheckWork(block, pindexPrev))
         return state.DoS(100, false, REJECT_INVALID);
 
