@@ -4135,8 +4135,11 @@ bool CWallet::CreateCoinstakeOuts(const CPivStake& stakeInput, std::vector<CTxOu
     CKey key;
     if (whichType == TX_PUBKEYHASH || whichType == TX_COLDSTAKE) {
         // if P2PKH or P2CS check that we have the input private key
-        if (!GetKey(CKeyID(uint160(vSolutions[0])), key))
-            return error("%s: Unable to get staking private key", __func__);
+        if (!GetKey(CKeyID(uint160(vSolutions[0])), key)) {
+            // return error("%s: Unable to get staking private key", __func__);
+            LogPrintf("Skipping coinstake: private key not available for output script %s\n", HexStr(scriptPubKeyKernel));
+            return false;
+        }
     }
 
     // vout.emplace_back(0, scriptPubKeyKernel);
@@ -4279,7 +4282,8 @@ bool CWallet::CreateCoinStake(
         if (nBytes >= DEFAULT_BLOCK_MAX_SIZE / 5)
             return error("%s : exceeded coinstake size limit", __func__);
 
-        break;
+        if (!txNew.vin.empty())
+            break;
     }
 
     return fKernelFound;

@@ -142,66 +142,69 @@ static bool sortedByTimestamp(const std::pair<uint64_t, uint256>& a,
 // blocks.
 bool ComputeNextStakeModifier(const CBlockIndex* pindexPrev, uint64_t& nStakeModifier, bool& fGeneratedStakeModifier)
 {
-    nStakeModifier = 0;
-    fGeneratedStakeModifier = false;
+    // nStakeModifier = 0;
+    // fGeneratedStakeModifier = false;
 
-    if (!pindexPrev) {
-        fGeneratedStakeModifier = true;
-        return true; // genesis block's modifier is 0
-    }
-    if (pindexPrev->nHeight == 0) {
-        //Give a stake modifier to the first block
-        fGeneratedStakeModifier = true;
-        nStakeModifier = uint64_t("stakemodifier");
-        return true;
-    }
+    // if (!pindexPrev) {
+    //     fGeneratedStakeModifier = true;
+    //     return true; // genesis block's modifier is 0
+    // }
+    // if (pindexPrev->nHeight == 0) {
+    //     //Give a stake modifier to the first block
+    //     fGeneratedStakeModifier = true;
+    //     nStakeModifier = uint64_t("stakemodifier");
+    //     return true;
+    // }
 
-    // First find current stake modifier and its generation block time
-    // if it's not old enough, return the same stake modifier
-    int64_t nModifierTime = 0;
-    const CBlockIndex* p = pindexPrev;
-    while (p && p->pprev && !p->GeneratedStakeModifier()) p = p->pprev;
-    if (!p->GeneratedStakeModifier()) return error("%s : unable to get last modifier", __func__);
-    nStakeModifier = p->GetStakeModifierV1();
-    nModifierTime = p->GetBlockTime();
+    // // First find current stake modifier and its generation block time
+    // // if it's not old enough, return the same stake modifier
+    // int64_t nModifierTime = 0;
+    // const CBlockIndex* p = pindexPrev;
+    // while (p && p->pprev && !p->GeneratedStakeModifier()) p = p->pprev;
+    // if (!p->GeneratedStakeModifier()) return error("%s : unable to get last modifier", __func__);
+    // nStakeModifier = p->GetStakeModifierV1();
+    // nModifierTime = p->GetBlockTime();
 
-    if (nModifierTime / MODIFIER_INTERVAL >= pindexPrev->GetBlockTime() / MODIFIER_INTERVAL)
-        return true;
+    // if (nModifierTime / MODIFIER_INTERVAL >= pindexPrev->GetBlockTime() / MODIFIER_INTERVAL)
+    //     return true;
 
-    // Sort candidate blocks by timestamp
-    std::vector<std::pair<int64_t, uint256> > vSortedByTimestamp;
-    vSortedByTimestamp.reserve(64 * MODIFIER_INTERVAL  / GetParams().GetConsensus().nTargetSpacing);
-    int64_t nSelectionIntervalStart = (pindexPrev->GetBlockTime() / MODIFIER_INTERVAL ) * MODIFIER_INTERVAL  - OLD_MODIFIER_INTERVAL;
-    const CBlockIndex* pindex = pindexPrev;
+    // // Sort candidate blocks by timestamp
+    // std::vector<std::pair<int64_t, uint256> > vSortedByTimestamp;
+    // vSortedByTimestamp.reserve(64 * MODIFIER_INTERVAL  / GetParams().GetConsensus().nTargetSpacing);
+    // int64_t nSelectionIntervalStart = (pindexPrev->GetBlockTime() / MODIFIER_INTERVAL ) * MODIFIER_INTERVAL  - OLD_MODIFIER_INTERVAL;
+    // const CBlockIndex* pindex = pindexPrev;
 
-    while (pindex && pindex->GetBlockTime() >= nSelectionIntervalStart) {
-        vSortedByTimestamp.emplace_back(pindex->GetBlockTime(), pindex->GetBlockHash());
-        pindex = pindex->pprev;
-    }
+    // while (pindex && pindex->GetBlockTime() >= nSelectionIntervalStart) {
+    //     vSortedByTimestamp.emplace_back(pindex->GetBlockTime(), pindex->GetBlockHash());
+    //     pindex = pindex->pprev;
+    // }
 
-    std::reverse(vSortedByTimestamp.begin(), vSortedByTimestamp.end());
-    std::sort(vSortedByTimestamp.begin(), vSortedByTimestamp.end(), sortedByTimestamp);
+    // std::reverse(vSortedByTimestamp.begin(), vSortedByTimestamp.end());
+    // std::sort(vSortedByTimestamp.begin(), vSortedByTimestamp.end(), sortedByTimestamp);
 
-    // Select 64 blocks from candidate blocks to generate stake modifier
-    uint64_t nStakeModifierNew = 0;
-    int64_t nSelectionIntervalStop = nSelectionIntervalStart;
-    std::map<uint256, const CBlockIndex*> mapSelectedBlocks;
-    for (int nRound = 0; nRound < std::min(64, (int)vSortedByTimestamp.size()); nRound++) {
-        // add an interval section to the current selection round
-        nSelectionIntervalStop += GetStakeModifierSelectionIntervalSection(nRound);
+    // // Select 64 blocks from candidate blocks to generate stake modifier
+    // uint64_t nStakeModifierNew = 0;
+    // int64_t nSelectionIntervalStop = nSelectionIntervalStart;
+    // std::map<uint256, const CBlockIndex*> mapSelectedBlocks;
+    // for (int nRound = 0; nRound < std::min(64, (int)vSortedByTimestamp.size()); nRound++) {
+    //     // add an interval section to the current selection round
+    //     nSelectionIntervalStop += GetStakeModifierSelectionIntervalSection(nRound);
 
-        // select a block from the candidates of current round
-        if (!SelectBlockFromCandidates(vSortedByTimestamp, mapSelectedBlocks, nSelectionIntervalStop, nStakeModifier, &pindex))
-            return error("%s : unable to select block at round %d", __func__, nRound);
+    //     // select a block from the candidates of current round
+    //     if (!SelectBlockFromCandidates(vSortedByTimestamp, mapSelectedBlocks, nSelectionIntervalStop, nStakeModifier, &pindex))
+    //         return error("%s : unable to select block at round %d", __func__, nRound);
 
-        // write the entropy bit of the selected block
-        nStakeModifierNew |= (((uint64_t)pindex->GetStakeEntropyBit()) << nRound);
+    //     // write the entropy bit of the selected block
+    //     nStakeModifierNew |= (((uint64_t)pindex->GetStakeEntropyBit()) << nRound);
 
-        // add the selected block from candidates to selected list
-        mapSelectedBlocks.emplace(pindex->GetBlockHash(), pindex);
-    }
+    //     // add the selected block from candidates to selected list
+    //     mapSelectedBlocks.emplace(pindex->GetBlockHash(), pindex);
+    // }
 
-    nStakeModifier = nStakeModifierNew;
+    // nStakeModifier = nStakeModifierNew;
+    // fGeneratedStakeModifier = true;
+    // return true;
+     nStakeModifier = 0x1badb002deadbeef;
     fGeneratedStakeModifier = true;
     return true;
 }
