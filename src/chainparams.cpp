@@ -319,7 +319,8 @@ public:
         consensus.powLimit 	= uint256S("00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.kawpowLimit 	= uint256S("00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); // Estimated starting diff for first 180 kawpow blocks
         consensus.nPowTargetTimespan = 2016 * 60; // 1.4 days
-        consensus.nPowTargetSpacing = 1 * 60;
+        // consensus.nPowTargetSpacing = 1 * 60;
+        consensus.nPowTargetSpacing = 10;
         consensus.nTimeSlotLength = 15;
         // consensus.powLimit = uint256S("0007ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.equihashLimit = uint256S("0007ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
