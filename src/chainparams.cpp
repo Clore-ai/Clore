@@ -333,8 +333,8 @@ public:
         // consensus.nStakeMinDepth = 100;
         consensus.nStakeMinDepth = 1;
         consensus.nPowTargetTimespan = 1 * 60 * 60 * 24; // Typically 1 day (can vary depending on the cryptocurrency, Zcash uses 1 day)
-        // consensus.nTargetSpacing = 2.5 * 60;
-        consensus.nTargetSpacing = 1;
+        consensus.nTargetSpacing = 2.5 * 60;
+        // consensus.nTargetSpacing = 1;
         // consensus.nTargetTimespanV2 = 1 * 60 * 60 * 24;
         // consensus.nTargetTimespan = 1 * 60 * 60 * 24;
         consensus.nTargetTimespanV2 = 1;
