@@ -24,11 +24,11 @@
 #
 # =============================================================================
 
-BUILD_LINUX_X64=false      # Build for Linux x86_64 (Intel/AMD servers) - disabled temporarily
+BUILD_LINUX_X64=true       # Build for Linux x86_64 (Intel/AMD servers)
 BUILD_LINUX_ARM64=false    # Build for Linux ARM64 (AWS Graviton, Apple Silicon containers)
-BUILD_MACOS_X64=false      # Build for Intel Macs (disabled due to cross-compilation issues)
-BUILD_MACOS_ARM64=true     # Build for Apple Silicon Macs (M1/M2/M3)
-BUILD_WINDOWS_X64=false    # Build for Windows x86_64 - disabled temporarily
+BUILD_MACOS_X64=false      # Build for Intel Macs (disabled - only works on macOS hosts)
+BUILD_MACOS_ARM64=false    # Build for Apple Silicon Macs (M1/M2/M3) - only on macOS hosts
+BUILD_WINDOWS_X64=true     # Build for Windows x86_64
 
 # =============================================================================
 
@@ -59,26 +59,7 @@ NC='\033[0m' # No Color
 OS_TYPE=$(uname -s)
 ARCH_TYPE=$(uname -m)
 
-# Build configuration - using associative array (requires Bash 4.0+)
-declare -A TARGETS=()
-
-# Populate targets based on user configuration and host capabilities
-[[ "$BUILD_LINUX_X64" == "true" ]] && TARGETS["linux-x64"]="x86_64-linux-gnu"
-[[ "$BUILD_LINUX_ARM64" == "true" ]] && TARGETS["linux-arm64"]="aarch64-linux-gnu"
-[[ "$BUILD_WINDOWS_X64" == "true" ]] && TARGETS["windows-x64"]="x86_64-w64-mingw32"
-
-# macOS builds only supported on macOS hosts
-if [[ "$OS_TYPE" == "Darwin" ]]; then
-    [[ "$BUILD_MACOS_X64" == "true" ]] && TARGETS["macos-x64"]="x86_64-apple-darwin"
-    [[ "$BUILD_MACOS_ARM64" == "true" ]] && TARGETS["macos-arm64"]="arm64-apple-darwin"
-else
-    # Show warning if macOS builds are requested on non-macOS hosts
-    if [[ "$BUILD_MACOS_X64" == "true" || "$BUILD_MACOS_ARM64" == "true" ]]; then
-        warning "macOS builds requested but not supported on $OS_TYPE hosts - skipping macOS targets"
-    fi
-fi
-
-# Function definitions
+# Function definitions (must be defined before use)
 build_log() {
     echo -e "${GREEN}[$(date +'%H:%M:%S')] $1${NC}"
 }
@@ -92,10 +73,54 @@ warning() {
     echo -e "${YELLOW}[WARNING] $1${NC}"
 }
 
+# Build configuration - using associative array (requires Bash 4.0+)
+declare -A TARGETS=()
+
+# Populate targets based on user configuration and host capabilities
+[[ "$BUILD_LINUX_X64" == "true" ]] && TARGETS["linux-x64"]="x86_64-linux-gnu"
+[[ "$BUILD_LINUX_ARM64" == "true" ]] && TARGETS["linux-arm64"]="aarch64-linux-gnu"
+[[ "$BUILD_WINDOWS_X64" == "true" ]] && TARGETS["windows-x64"]="x86_64-w64-mingw32"
+
+# Strict platform validation - panic if incompatible builds are enabled
+if [[ "$OS_TYPE" != "Darwin" ]]; then
+    # macOS builds can ONLY be built on macOS hosts
+    if [[ "$BUILD_MACOS_X64" == "true" ]]; then
+        error "BUILD_MACOS_X64=true but running on $OS_TYPE host. macOS builds can ONLY be built on macOS hosts. Set BUILD_MACOS_X64=false or run this script on a macOS machine."
+    fi
+    if [[ "$BUILD_MACOS_ARM64" == "true" ]]; then
+        error "BUILD_MACOS_ARM64=true but running on $OS_TYPE host. macOS builds can ONLY be built on macOS hosts. Set BUILD_MACOS_ARM64=false or run this script on a macOS machine."
+    fi
+fi
+
+# Populate targets based on validated configuration
+if [[ "$OS_TYPE" == "Darwin" ]]; then
+    [[ "$BUILD_MACOS_X64" == "true" ]] && TARGETS["macos-x64"]="x86_64-apple-darwin"
+    [[ "$BUILD_MACOS_ARM64" == "true" ]] && TARGETS["macos-arm64"]="arm64-apple-darwin"
+fi
+
+# Function definitions moved to top of script
+
 # Validate that at least one target is enabled
 if [[ ${#TARGETS[@]} -eq 0 ]]; then
     error "No build targets enabled! Please set at least one BUILD_*=true flag at the top of this script."
 fi
+
+# Strict dependency validation - panic early if critical tools are missing
+case "$OS_TYPE" in
+    "Linux")
+        if [[ "$BUILD_WINDOWS_X64" == "true" ]] && ! command -v x86_64-w64-mingw32-gcc >/dev/null 2>&1; then
+            error "BUILD_WINDOWS_X64=true but MinGW-w64 cross-compiler not found on Linux host. Install with: sudo apt-get install gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64"
+        fi
+        ;;
+    "Darwin")
+        if [[ "$BUILD_WINDOWS_X64" == "true" ]] && ! command -v x86_64-w64-mingw32-gcc >/dev/null 2>&1; then
+            error "BUILD_WINDOWS_X64=true but MinGW-w64 cross-compiler not found on macOS host. Install with: brew install mingw-w64"
+        fi
+        ;;
+    *)
+        error "Unsupported build host OS: $OS_TYPE. This script only supports macOS (Darwin) and Linux hosts."
+        ;;
+esac
 
 echo -e "${BLUE}=== CLORE Multi-Platform Release Builder v${VERSION} ===${NC}"
 echo -e "${BLUE}Build Environment: ${OS_TYPE} ${ARCH_TYPE}${NC}"
@@ -187,16 +212,10 @@ check_macos_dependencies() {
     if command -v brew >/dev/null 2>&1; then
         build_log "Homebrew detected - checking for cross-compilation tools..."
         
-        # Check for mingw-w64 for Windows builds
-        if ! command -v x86_64-w64-mingw32-gcc >/dev/null 2>&1; then
-            warning "mingw-w64 not found. Windows builds will be skipped."
-            warning "Install with: brew install mingw-w64"
-            unset TARGETS["windows-x64"]
-        fi
+        # MinGW-w64 validation is now done in strict validation section above
     else
         warning "Homebrew not found. Install from https://brew.sh for easier dependency management."
-        warning "Windows cross-compilation will be disabled."
-        unset TARGETS["windows-x64"]
+        # Note: MinGW-w64 validation is done in strict validation section above
     fi
 }
 
@@ -224,12 +243,8 @@ check_linux_dependencies() {
         warning "Install with: sudo apt-get install ${missing_deps[*]}"
     fi
     
-    # Check for mingw-w64 for Windows builds
-    if ! command -v x86_64-w64-mingw32-gcc >/dev/null 2>&1; then
-        warning "mingw-w64 not found. Windows builds will be skipped."
-        warning "Install with: sudo apt-get install gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64"
-        unset TARGETS["windows-x64"]
-    else
+    # MinGW-w64 validation is now done in strict validation section above
+    if command -v x86_64-w64-mingw32-gcc >/dev/null 2>&1; then
         build_log "MinGW-w64 detected - Windows cross-compilation available"
     fi
 }
@@ -362,13 +377,24 @@ RUN mkdir -p /build/db4 && \\
     rm -f db-4.8.30.NC.tar.gz && \\
     rm -rf db-4.8.30.NC
 
-# Build the project using Berkeley DB 4.8
-RUN export BDB_PREFIX="/build/db4" && \\
+# Build depends and project using the working configuration
+RUN cd depends && \\
+    make HOST=x86_64-pc-linux-gnu -j\$(nproc) && \\
+    cd .. && \\
+    export BDB_PREFIX="/build/db4" && \\
     ./autogen.sh && \\
-    ./configure --disable-tests --disable-bench --enable-static --disable-shared --without-gui --enable-wallet \\
-        BDB_LIBS="-L\${BDB_PREFIX}/lib -ldb_cxx-4.8" \\
-        BDB_CFLAGS="-I\${BDB_PREFIX}/include" && \\
-    make -j\$(nproc)
+    CONFIG_SITE=\$PWD/depends/x86_64-pc-linux-gnu/share/config.site \\
+    ./configure \\
+      --prefix=\$PWD/depends/x86_64-pc-linux-gnu \\
+      --enable-cxx \\
+      --disable-shared \\
+      --disable-tests \\
+      --without-bench \\
+      --with-tx \\
+      LDFLAGS="-L\${BDB_PREFIX}/lib/" \\
+      CPPFLAGS="-I\${BDB_PREFIX}/include/" && \\
+    make -j\$(nproc) && \\
+    make deploy
 
 # Copy binaries to output directory
 RUN mkdir -p /output && \\
@@ -555,12 +581,52 @@ configure_build() {
         "linux-x64")
             # Handle different host architectures
             if [[ "$ARCH_TYPE" == "x86_64" && "$OS_TYPE" == "Linux" ]]; then
-                # Native x64 Linux build
-                build_log "Building Linux x64 natively..."
-                build_bdb4 "$target_dir"
-                bdb_prefix="$target_dir/db4"
-                configure_args="--disable-tests --disable-bench --enable-static --disable-shared --without-gui --enable-wallet"
-                configure_args="$configure_args BDB_LIBS=\"-L${bdb_prefix}/lib -ldb_cxx-4.8\" BDB_CFLAGS=\"-I${bdb_prefix}/include\""
+                # Native x64 Linux build using original working configuration
+                build_log "Building Linux x64 natively using depends system..."
+                
+                # Build depends first (this creates the config.site)
+                build_log "Building depends for x86_64-pc-linux-gnu..."
+                cd "$SCRIPT_DIR/depends"
+                make HOST=x86_64-pc-linux-gnu -j$(nproc) || error "Failed to build depends"
+                cd "$SCRIPT_DIR"
+                
+                # Build Berkeley DB 4.8 in CLORE_ROOT
+                build_log "Building Berkeley DB 4.8..."
+                bdb_prefix="$SCRIPT_DIR/db4"
+                if [[ ! -f "$bdb_prefix/lib/libdb_cxx-4.8.a" ]]; then
+                    mkdir -p "$bdb_prefix"
+                    
+                    # Download and build Berkeley DB 4.8
+                    wget -c 'http://download.oracle.com/berkeley-db/db-4.8.30.NC.tar.gz' || error "Failed to download Berkeley DB"
+                    echo '12edc0df75bf9abd7f82f821795bcee50f42cb2e5f76a6a281b85732798364ef  db-4.8.30.NC.tar.gz' | sha256sum -c || error "Berkeley DB checksum verification failed"
+                    tar -xzvf db-4.8.30.NC.tar.gz || error "Failed to extract Berkeley DB"
+                    
+                    # Apply patch
+                    chmod a+w ./db-4.8.30.NC/dbinc/atomic.h
+                    cp ./depends/patches/atomic.h db-4.8.30.NC/dbinc/ || error "Failed to apply atomic.h patch"
+                    
+                    # Build Berkeley DB
+                    cd db-4.8.30.NC/build_unix/
+                    ../dist/configure --enable-cxx --disable-shared --with-pic --prefix="$bdb_prefix" || error "Berkeley DB configure failed"
+                    make -j$(nproc) || error "Berkeley DB build failed"
+                    make install || error "Berkeley DB install failed"
+                    cd "$SCRIPT_DIR"
+                    
+                    # Cleanup
+                    rm -f db-4.8.30.NC.tar.gz
+                    rm -rf db-4.8.30.NC
+                fi
+                
+                # Use the original working configuration exactly
+                export CONFIG_SITE="$PWD/depends/x86_64-pc-linux-gnu/share/config.site"
+                configure_args="--prefix=$PWD/depends/x86_64-pc-linux-gnu"
+                configure_args="$configure_args --enable-cxx"
+                configure_args="$configure_args --disable-shared"
+                configure_args="$configure_args --disable-tests"
+                configure_args="$configure_args --without-bench"
+                configure_args="$configure_args --with-tx"
+                configure_args="$configure_args LDFLAGS=\"-L${bdb_prefix}/lib/\""
+                configure_args="$configure_args CPPFLAGS=\"-I${bdb_prefix}/include/\""
             else
                 # Cross-platform build via Docker
                 echo -e "${YELLOW}Using Docker for Linux x64 build (cross-platform)...${NC}"
@@ -735,9 +801,9 @@ configure_build() {
     
     # Configure the build
     if [[ -n "$host_flag" ]]; then
-        eval "./configure $configure_args $host_flag --prefix=\"$target_dir\"" || error "Configure failed for $target"
+        eval "./configure $configure_args $host_flag" || error "Configure failed for $target"
     else
-        eval "./configure $configure_args --prefix=\"$target_dir\"" || error "Configure failed for $target"
+        eval "./configure $configure_args" || error "Configure failed for $target"
     fi
 }
 
@@ -759,6 +825,11 @@ build_target() {
     
     # Build
     make -j$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4) || error "Build failed for $target"
+    
+    # Run make deploy for Linux builds (like original instructions)
+    if [[ $target == linux-* ]]; then
+        make deploy || error "Deploy failed for $target"
+    fi
     
     # Create target directory and copy binaries
     mkdir -p "$target_dir/bin"
