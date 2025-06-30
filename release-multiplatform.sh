@@ -24,11 +24,11 @@
 #
 # =============================================================================
 
-BUILD_LINUX_X64=true       # Build for Linux x86_64 (Intel/AMD servers)
-BUILD_LINUX_ARM64=false    # Build for Linux ARM64 (AWS Graviton, Apple Silicon containers)
-BUILD_MACOS_X64=false      # Build for Intel Macs (disabled - only works on macOS hosts)
-BUILD_MACOS_ARM64=false    # Build for Apple Silicon Macs (M1/M2/M3) - only on macOS hosts
-BUILD_WINDOWS_X64=true     # Build for Windows x86_64
+BUILD_LINUX_X64=false      # Build for Linux x86_64 (Intel/AMD servers) - Cross-arch builds are slow/unreliable
+BUILD_LINUX_ARM64=true     # Build for Linux ARM64 (AWS Graviton, Apple Silicon containers)
+BUILD_MACOS_X64=false      # Build for Intel Macs (cross-compilation issues)
+BUILD_MACOS_ARM64=true     # Build for Apple Silicon Macs (M1/M2/M3) - native build
+BUILD_WINDOWS_X64=false    # Build for Windows x86_64 - Cross-arch MinGW is problematic
 
 # =============================================================================
 
@@ -113,6 +113,29 @@ case "$OS_TYPE" in
         fi
         ;;
     "Darwin")
+        # Architecture-specific validation for macOS hosts
+        if [[ "$ARCH_TYPE" == "arm64" ]]; then
+            # Apple Silicon specific warnings
+            if [[ "$BUILD_LINUX_X64" == "true" ]]; then
+                warning "Apple Silicon → Linux x64: Cross-architecture build via Docker emulation will be very slow and may fail"
+                warning "Consider building on a Linux x64 machine or disabling BUILD_LINUX_X64"
+            fi
+            if [[ "$BUILD_WINDOWS_X64" == "true" ]]; then
+                error "Apple Silicon → Windows x64: Cross-architecture MinGW compilation is not reliable. Set BUILD_WINDOWS_X64=false or use an Intel Mac/Windows machine"
+            fi
+            if [[ "$BUILD_MACOS_X64" == "true" ]]; then
+                warning "Apple Silicon → Intel Mac: Cross-compilation has known Boost issues and may fail"
+            fi
+        elif [[ "$ARCH_TYPE" == "x86_64" ]]; then
+            # Intel Mac specific warnings  
+            if [[ "$BUILD_LINUX_ARM64" == "true" ]]; then
+                warning "Intel Mac → Linux ARM64: Cross-architecture build via Docker emulation will be slow"
+            fi
+            if [[ "$BUILD_MACOS_ARM64" == "true" ]]; then
+                warning "Intel Mac → Apple Silicon: Cross-compilation may have compatibility issues"
+            fi
+        fi
+        
         if [[ "$BUILD_WINDOWS_X64" == "true" ]] && ! command -v x86_64-w64-mingw32-gcc >/dev/null 2>&1; then
             error "BUILD_WINDOWS_X64=true but MinGW-w64 cross-compiler not found on macOS host. Install with: brew install mingw-w64"
         fi
@@ -1230,9 +1253,13 @@ case "${1:-build}" in
         echo "  BUILD_MACOS_ARM64=$BUILD_MACOS_ARM64    # Apple Silicon Macs (M1/M2/M3)"
         echo "  BUILD_WINDOWS_X64=$BUILD_WINDOWS_X64    # Windows x86_64"
         echo ""
-        echo "Build Host Support:"
-        echo "  macOS:  ✅ Linux (Docker) ✅ macOS (native) ✅ Windows (MinGW)"
-        echo "  Linux:  ✅ Linux (native) ❌ macOS (impossible) ✅ Windows (MinGW)"
+        echo "Build Host Architecture Support:"
+        echo "  Apple Silicon (M1/M2/M3):  ✅ macOS ARM64 (native)  ✅ Linux ARM64 (Docker)  ⚠️  Linux x64 (slow)  ❌ Windows x64"
+        echo "  Intel Mac:                 ✅ macOS x64 (native)    ✅ Linux x64 (Docker)   ⚠️  Linux ARM64 (slow) ✅ Windows x64 (MinGW)"  
+        echo "  Linux x64:                 ✅ Linux x64 (native)    ✅ Windows x64 (MinGW)  ⚠️  Linux ARM64 (slow) ❌ macOS (impossible)"
+        echo "  Linux ARM64:               ✅ Linux ARM64 (native)  ⚠️  Linux x64 (slow)    ⚠️  Windows x64 (slow)  ❌ macOS (impossible)"
+        echo ""
+        echo "Legend: ✅ Fast/Reliable  ⚠️ Slow/May Fail  ❌ Not Possible"
         echo ""
         if [[ ${#TARGETS[@]} -gt 0 ]]; then
             echo "Currently enabled targets:"
