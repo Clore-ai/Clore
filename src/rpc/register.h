@@ -13,23 +13,27 @@
 class CRPCTable;
 
 /** Register block chain RPC commands */
-void RegisterBlockchainRPCCommands(CRPCTable &tableRPC);
+void RegisterBlockchainRPCCommands(CRPCTable& tableRPC);
 /** Register P2P networking RPC commands */
-void RegisterNetRPCCommands(CRPCTable &tableRPC);
+void RegisterNetRPCCommands(CRPCTable& tableRPC);
 /** Register miscellaneous RPC commands */
-void RegisterMiscRPCCommands(CRPCTable &tableRPC);
+void RegisterMiscRPCCommands(CRPCTable& tableRPC);
 /** Register mining RPC commands */
-void RegisterMiningRPCCommands(CRPCTable &tableRPC);
+void RegisterMiningRPCCommands(CRPCTable& tableRPC);
 /** Register raw transaction RPC commands */
-void RegisterRawTransactionRPCCommands(CRPCTable &tableRPC);
+void RegisterRawTransactionRPCCommands(CRPCTable& tableRPC);
 /** Register asset RPC commands */
-void RegisterAssetRPCCommands(CRPCTable &tableRPC);
+void RegisterAssetRPCCommands(CRPCTable& tableRPC);
 /** Register message RPC commands */
-void RegisterMessageRPCCommands(CRPCTable &tableRPC);
+void RegisterMessageRPCCommands(CRPCTable& tableRPC);
 /** Register rewards RPC commands */
-void RegisterRewardsRPCCommands(CRPCTable &tableRPC);
+void RegisterRewardsRPCCommands(CRPCTable& tableRPC);
+/** Register masternode RPC commands */
+void RegisterMasternodeRPCCommands(CRPCTable& tableRPC);
+/** Register staking RPC commands */
+void RegisterStakingRPCCommands(CRPCTable& tableRPC);
 
-static inline void RegisterAllCoreRPCCommands(CRPCTable &t)
+static inline void RegisterAllCoreRPCCommands(CRPCTable& t)
 {
     RegisterBlockchainRPCCommands(t);
     RegisterNetRPCCommands(t);
@@ -39,6 +43,8 @@ static inline void RegisterAllCoreRPCCommands(CRPCTable &t)
     RegisterAssetRPCCommands(t);
     RegisterMessageRPCCommands(t);
     RegisterRewardsRPCCommands(t);
+    RegisterMasternodeRPCCommands(t);
+    RegisterStakingRPCCommands(t);
 }
 
 #endif

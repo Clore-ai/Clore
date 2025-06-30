@@ -54,7 +54,6 @@ the pull request affects. Valid areas as:
 
 - _Consensus_ for changes to consensus critical code
 - _Docs_ for changes to the documentation
-- _Qt_ for changes to clore-qt
 - _Mining_ for changes to the mining code
 - _Net_ or _P2P_ for changes to the peer-to-peer network code
 - _RPC/REST/ZMQ_ for changes to the RPC, REST or ZMQ APIs
@@ -75,11 +74,10 @@ Examples:
 
     Consensus: Add new opcode for HIP-XXXX OP_CHECKAWESOMESIG
     Net: Automatically create hidden service, listen on Tor
-    Qt: Add feed bump button
     Trivial: Fix typo in init.cpp
 
 Note that translations should not be submitted as pull requests, please see
-[Translation Process](https://github.com/clore-ai/clore/blob/master/doc/translation_process.md)
+[Translation Process](https://gitlab.com/cloreai-public/blockchain/blob/master/doc/translation_process.md)
 for more information on helping with translations.
 
 If a pull request is specifically not to be considered for merging (yet) please

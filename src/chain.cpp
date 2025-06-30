@@ -7,8 +7,6 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "chain.h"
-#include "legacy/stakemodifier.h"
-#include "util.h"
 
 /**
  * CChain implementation
@@ -51,54 +49,6 @@ CBlockLocator CChain::GetLocator(const CBlockIndex *pindex) const {
     }
 
     return CBlockLocator(vHave);
-}
-
-bool CBlockIndex::SetStakeEntropyBit(unsigned int nEntropyBit)
-{
-    if (nEntropyBit > 1)
-        return false;
-    nFlags |= (nEntropyBit ? BLOCK_STAKE_ENTROPY : 0);
-    return true;
-}
-
-unsigned int CBlockIndex::GetStakeEntropyBit() const
-{
-    unsigned int nEntropyBit = ((GetBlockHash().GetCheapHash()) & 1);
-    return nEntropyBit;
-}
-
-// Generates and sets new V1 stake modifier
-void CBlockIndex::SetNewStakeModifier()
-{
-    // compute stake entropy bit for stake modifier
-    if (!SetStakeEntropyBit(GetStakeEntropyBit()))
-        LogPrintf("%s : SetStakeEntropyBit() failed\n", __func__);
-    uint64_t nStakeModifier = 0;
-    bool fGeneratedStakeModifier = false;
-    if (!ComputeNextStakeModifier(pprev, nStakeModifier, fGeneratedStakeModifier))
-        LogPrintf("%s : ComputeNextStakeModifier() failed \n",  __func__);
-    return SetStakeModifier(nStakeModifier, fGeneratedStakeModifier);
-}
-
-void CBlockIndex::SetStakeModifier(const uint64_t nStakeModifier, bool fGeneratedStakeModifier)
-{
-    vStakeModifier.clear();
-    const size_t modSize = sizeof(nStakeModifier);
-    vStakeModifier.resize(modSize);
-    std::memcpy(vStakeModifier.data(), &nStakeModifier, modSize);
-    if (fGeneratedStakeModifier)
-        nFlags |= BLOCK_STAKE_MODIFIER;
-
-}
-
-// Returns V1 stake modifier (uint64_t)
-uint64_t CBlockIndex::GetStakeModifierV1() const
-{
-    if (vStakeModifier.empty())
-        return 0;
-    uint64_t nStakeModifier;
-    std::memcpy(&nStakeModifier, vStakeModifier.data(), vStakeModifier.size());
-    return nStakeModifier;
 }
 
 const CBlockIndex *CChain::FindFork(const CBlockIndex *pindex) const {

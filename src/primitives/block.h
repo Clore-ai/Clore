@@ -20,7 +20,6 @@
  */
 
 extern uint32_t nKAWPOWActivationTime;
-extern uint32_t nEQUIHASHActivationTime;
 
 class BlockNetwork
 {
@@ -37,7 +36,6 @@ extern BlockNetwork bNetwork;
 class CBlockHeader
 {
 public:
-
     // header
     int32_t nVersion;
     uint256 hashPrevBlock;
@@ -46,17 +44,10 @@ public:
     uint32_t nBits;
     uint32_t nNonce;
 
-    //KAAAWWWPOW data
+    // KAAAWWWPOW data
     uint32_t nHeight;
     uint64_t nNonce64;
     uint256 mix_hash;
-
-    //EQUIHASH data
-    std::vector<unsigned char> nSolution;
-
-    //POS data
-    uint256 nAccumulatorCheckpoint;             // only for version 4, 5 and 6.
-    uint256 hashFinalSaplingRoot;               // only for version 8+
 
     CBlockHeader()
     {
@@ -66,25 +57,20 @@ public:
     ADD_SERIALIZE_METHODS;
 
     template <typename Stream, typename Operation>
-    inline void SerializationOp(Stream& s, Operation ser_action) {
+    inline void SerializationOp(Stream& s, Operation ser_action)
+    {
         READWRITE(this->nVersion);
         READWRITE(hashPrevBlock);
         READWRITE(hashMerkleRoot);
         READWRITE(nTime);
         READWRITE(nBits);
-        if (nTime < nEQUIHASHActivationTime) {
+        if (nTime < nKAWPOWActivationTime) {
             READWRITE(nNonce);
         } else {
             READWRITE(nHeight);
-            READWRITE(nNonce);
+            READWRITE(nNonce64);
             READWRITE(mix_hash);
         }
-        if(nVersion > 3 && nVersion < 7)
-            READWRITE(nAccumulatorCheckpoint);
-
-        // Sapling active
-        if (nVersion >= 8)
-            READWRITE(hashFinalSaplingRoot);
     }
 
     void SetNull()
@@ -99,8 +85,6 @@ public:
         nNonce64 = 0;
         nHeight = 0;
         mix_hash.SetNull();
-        nAccumulatorCheckpoint.SetNull();
-        hashFinalSaplingRoot.SetNull();
     }
 
     bool IsNull() const
@@ -114,7 +98,6 @@ public:
 
     uint256 GetHashFull(uint256& mix_hash) const;
     uint256 GetKAWPOWHeaderHash() const;
-    uint256 GetEQUIHASHHeaderHash() const;
     std::string ToString() const;
 
     /// Use for testing algo switch
@@ -135,6 +118,9 @@ public:
     // network and disk
     std::vector<CTransactionRef> vtx;
 
+    // POS block signature
+    std::vector<unsigned char> vchBlockSig;
+
     // memory only
     mutable bool fChecked;
 
@@ -144,7 +130,7 @@ public:
         SetNull();
     }
 
-    CBlock(const CBlockHeader &header)
+    CBlock(const CBlockHeader& header)
     {
         SetNull();
         *((CBlockHeader*)this) = header;
@@ -153,67 +139,63 @@ public:
     ADD_SERIALIZE_METHODS;
 
     template <typename Stream, typename Operation>
-    inline void SerializationOp(Stream& s, Operation ser_action) {
+    inline void SerializationOp(Stream& s, Operation ser_action)
+    {
         READWRITE(*(CBlockHeader*)this);
         READWRITE(vtx);
+        if (IsProofOfStake())
+            READWRITE(vchBlockSig);
     }
 
     void SetNull()
     {
         CBlockHeader::SetNull();
         vtx.clear();
+        vchBlockSig.clear();
         fChecked = false;
     }
 
     CBlockHeader GetBlockHeader() const
     {
         CBlockHeader block;
-        block.nVersion       = nVersion;
-        block.hashPrevBlock  = hashPrevBlock;
+        block.nVersion = nVersion;
+        block.hashPrevBlock = hashPrevBlock;
         block.hashMerkleRoot = hashMerkleRoot;
-        block.nTime          = nTime;
-        block.nBits          = nBits;
-        block.nNonce         = nNonce;
+        block.nTime = nTime;
+        block.nBits = nBits;
+        block.nNonce = nNonce;
 
         // KAWPOW
-        block.nHeight        = nHeight;
-        block.nNonce64       = nNonce64;
-        block.mix_hash       = mix_hash;
-
-        if(nVersion > 3 && nVersion < 7)
-            block.nAccumulatorCheckpoint = nAccumulatorCheckpoint;
-        if (nVersion >= 8)
-            block.hashFinalSaplingRoot   = hashFinalSaplingRoot;
-
+        block.nHeight = nHeight;
+        block.nNonce64 = nNonce64;
+        block.mix_hash = mix_hash;
         return block;
     }
 
-    // void SetPrevBlockHash(uint256 prevHash) 
+    // void SetPrevBlockHash(uint256 prevHash)
     // {
     //     block.hashPrevBlock = prevHash;
     // }
 
-    bool IsProofOfStake() const
-    {
-        return (vtx.size() > 1 && vtx[1]->IsCoinStake());
-    }
-
-    bool IsProofOfWork() const
-    {
-        return !IsProofOfStake();
-    }
-
     std::string ToString() const;
 
-    void print() const;
+    // POS methods
+    bool IsProofOfWork() const
+    {
+        return vtx.size() > 0 && !vtx[0]->IsCoinStake();
+    }
+
+    bool IsProofOfStake() const
+    {
+        return vtx.size() > 1 && vtx[1]->IsCoinStake();
+    }
 };
 
 /** Describes a place in the block chain to another node such that if the
  * other node doesn't have the same branch, it can find a recent common trunk.
  * The further back it is, the further before the fork it may be.
  */
-struct CBlockLocator
-{
+struct CBlockLocator {
     std::vector<uint256> vHave;
 
     CBlockLocator() {}
@@ -223,7 +205,8 @@ struct CBlockLocator
     ADD_SERIALIZE_METHODS;
 
     template <typename Stream, typename Operation>
-    inline void SerializationOp(Stream& s, Operation ser_action) {
+    inline void SerializationOp(Stream& s, Operation ser_action)
+    {
         int nVersion = s.GetVersion();
         if (!(s.GetType() & SER_GETHASH))
             READWRITE(nVersion);
@@ -248,7 +231,7 @@ struct CBlockLocator
 class CKAWPOWInput : private CBlockHeader
 {
 public:
-    CKAWPOWInput(const CBlockHeader &header)
+    CKAWPOWInput(const CBlockHeader& header)
     {
         CBlockHeader::SetNull();
         *((CBlockHeader*)this) = header;
@@ -257,41 +240,14 @@ public:
     ADD_SERIALIZE_METHODS;
 
     template <typename Stream, typename Operation>
-    inline void SerializationOp(Stream& s, Operation ser_action) {
-        READWRITE(this->nVersion);
-        READWRITE(hashPrevBlock);
-        READWRITE(hashMerkleRoot);
-        READWRITE(nTime);
-        READWRITE(nBits);
-        READWRITE(nHeight);
-        READWRITE(nNonce64);       
-        READWRITE(mix_hash);       
-    }
-};
-
-class CEQUIHASHInput : private CBlockHeader
-{
-public:
-    uint32_t nHeight;
-    CEQUIHASHInput(const CBlockHeader &header)
+    inline void SerializationOp(Stream& s, Operation ser_action)
     {
-        CBlockHeader::SetNull();
-        *((CBlockHeader*)this) = header;
-        nHeight = 0;
-    }
-
-    ADD_SERIALIZE_METHODS;
-
-    template <typename Stream, typename Operation>
-    inline void SerializationOp(Stream& s, Operation ser_action) {
         READWRITE(this->nVersion);
         READWRITE(hashPrevBlock);
         READWRITE(hashMerkleRoot);
         READWRITE(nTime);
         READWRITE(nBits);
         READWRITE(nHeight);
-        READWRITE(nNonce64);       
-        READWRITE(mix_hash); 
     }
 };
 

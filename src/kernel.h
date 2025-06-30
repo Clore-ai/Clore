@@ -1,77 +1,50 @@
-// Copyright (c) 2011-2013 The PPCoin developers
-// Copyright (c) 2013-2014 The NovaCoin Developers
-// Copyright (c) 2014-2018 The BlackCoin Developers
-// Copyright (c) 2015-2020 The CLORE Core developers
+// Copyright (c) 2012-2013 The PPCoin developers
+// Copyright (c) 2015-2021 The PIVX developers
+// Copyright (c) 2024 The CLORE developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef CLORE_KERNEL_H
 #define CLORE_KERNEL_H
 
+#include "amount.h"
+#include "chain.h"
+#include "streams.h"
+#include "uint256.h"
+
+// Forward declarations
 #include "stakeinput.h"
 
-class CStakeKernel {
-public:
-    /**
-     * CStakeKernel Constructor
-     *
-     * @param[in]   pindexPrev      index of the parent of the kernel block
-     * @param[in]   stakeInput      input for the coinstake of the kernel block
-     * @param[in]   nBits           target difficulty bits of the kernel block
-     * @param[in]   nTimeTx         time of the kernel block
-     */
-    CStakeKernel(const CBlockIndex* const pindexPrev, CStakeInput* stakeInput, unsigned int nBits, int nTimeTx);
+class CBlock;
+class CBlockIndex;
+class COutPoint;
+class CTransaction;
+class CWallet;
 
-    // Return stake kernel hash
-    uint256 GetHash() const;
+// MODIFIER_INTERVAL: time to elapse before new modifier is computed
+static const unsigned int MODIFIER_INTERVAL = 6 * 60 * 60;
+static const int MODIFIER_INTERVAL_RATIO = 3;
 
-    // Check that the kernel hash meets the target required
-    bool CheckKernelHash(bool fSkipLog = false) const;
+// Compute the hash modifier for proof-of-stake
+bool ComputeNextStakeModifier(const CBlockIndex* pindexCurrent, uint64_t& nStakeModifier, bool& fGeneratedStakeModifier);
 
-private:
-    // kernel message hashed
-    CDataStream stakeModifier{CDataStream(SER_GETHASH, 0)};
-    int nTimeBlockFrom{0};
-    CDataStream stakeUniqueness{CDataStream(SER_GETHASH, 0)};
-    int nTime{0};
-    // hash target
-    unsigned int nBits{0};     // difficulty for the target
-    CAmount stakeValue{0};     // target multiplier
-};
+// Check whether the hash satisfies the proof-of-stake requirement
+bool CheckStakeKernelHash(unsigned int nBits, const CBlockIndex& blockFrom, const CTransaction& txPrev, const COutPoint& prevout, unsigned int nTimeTx, uint256& hashProofOfStake, bool fVerify = true);
 
-/* PoS Validation */
+// Initialize stake modifier
+void InitializeStakeModifier(const CBlockIndex* pindexGenesisBlock, uint64_t& nStakeModifier);
 
-/*
- * Stake                Check if stakeInput can stake a block on top of pindexPrev
- *
- * @param[in]   pindexPrev      index of the parent block of the block being staked
- * @param[in]   stakeInput      input for the coinstake
- * @param[in]   nBits           target difficulty bits
- * @param[in]   nTimeTx         new blocktime
- * @return      bool            true if stake kernel hash meets target protocol
- */
-bool Stake(const CBlockIndex* pindexPrev, CStakeInput* stakeInput, unsigned int nBits, int64_t& nTimeTx);
+// Get stake modifier checksum
+uint32_t GetStakeModifierChecksum(const CBlockIndex* pindex);
 
-/*
- * CheckProofOfStake    Check if block has valid proof of stake
- *
- * @param[in]   block           block with the proof being verified
- * @param[out]  strError        string returning error message (if any, else empty)
- * @param[in]   pindexPrev      index of the parent block
- *                              (if nullptr, it will be searched in mapBlockIndex)
- * @return      bool            true if the block has a valid proof of stake
- */
-bool CheckProofOfStake(const CBlock& block, std::string& strError, const CBlockIndex* pindexPrev = nullptr);
+// Check stake modifier checkpoints
+bool CheckStakeModifierCheckpoints(int nHeight, uint32_t nStakeModifierChecksum);
 
-/*
- * GetStakeKernelHash   Return stake kernel of a block
- *
- * @param[out]  hashRet         hash of the kernel (set by this function)
- * @param[in]   block           block with the kernel to return
- * @param[in]   pindexPrev      index of the parent block
- *                              (if nullptr, it will be searched in mapBlockIndex)
- * @return      bool            false if kernel cannot be initialized, true otherwise
- */
-bool GetStakeKernelHash(uint256& hashRet, const CBlock& block, const CBlockIndex* pindexPrev = nullptr);
+// Wrapper around the stake hash check
+bool CheckProofOfStake(const CBlockIndex* pindexCheck, const CTransaction& tx, const uint256& hashProofOfStake, std::unique_ptr<CStakeInput>& stake);
+
+// Stake Modifier V2 (Time Protocol v2)
+uint256 ComputeStakeModifierV2(const CBlockIndex* pindexPrev, const uint256& kernel);
+bool CheckStakeKernelHashV2(const CBlockIndex* pindexPrev, const CTransaction& txPrev, const COutPoint& prevout, unsigned int nTimeTx, uint256& hashProofOfStake, bool fVerify = true);
 
 #endif // CLORE_KERNEL_H

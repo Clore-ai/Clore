@@ -18,21 +18,6 @@
 
 namespace Checkpoints {
 
-    bool fEnabled = true;
-
-    bool CheckBlock(int nHeight, const uint256& hash, bool fMatchesCheckpoint)
-    {
-        if (!fEnabled)
-            return true;
-
-        const MapCheckpoints& checkpoints = GetParams().Checkpoints().mapCheckpoints;
-
-        MapCheckpoints::const_iterator i = checkpoints.find(nHeight);
-        // If looking for an exact match, then return false
-        if (i == checkpoints.end()) return !fMatchesCheckpoint;
-        return hash == i->second;
-    }
-
     CBlockIndex* GetLastCheckpoint(const CCheckpointData& data)
     {
         const MapCheckpoints& checkpoints = data.mapCheckpoints;

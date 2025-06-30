@@ -1,21 +1,20 @@
 dnl require autoconf 2.60 (AS_ECHO/AS_ECHO_N)
 AC_PREREQ([2.60])
-define(_CLIENT_VERSION_MAJOR, 5)
-define(_CLIENT_VERSION_MINOR, 0)
-define(_CLIENT_VERSION_REVISION, 2)
-define(_CLIENT_VERSION_BUILD, 0)
+define(_CLIENT_VERSION_MAJOR, 4)
+define(_CLIENT_VERSION_MINOR, 4)
+define(_CLIENT_VERSION_REVISION, 4)
+define(_CLIENT_VERSION_BUILD, 2)
 define(_CLIENT_VERSION_IS_RELEASE, true)
-define(_COPYRIGHT_YEAR, 2025)
+define(_COPYRIGHT_YEAR, 2021)
 define(_COPYRIGHT_HOLDERS,[The %s developers])
 define(_COPYRIGHT_HOLDERS_SUBSTITUTION,[[Clore Core]])
-AC_INIT([Clore Core],[_CLIENT_VERSION_MAJOR._CLIENT_VERSION_MINOR._CLIENT_VERSION_REVISION],[https://github.com/clore-ai/clore/issues],[clore],[https://blockchain.clore.ai])
+AC_INIT([Clore Core],[_CLIENT_VERSION_MAJOR._CLIENT_VERSION_MINOR._CLIENT_VERSION_REVISION],[https://gitlab.com/cloreai-public/blockchain/issues],[clore],[https://blockchain.clore.ai])
 AC_CONFIG_SRCDIR([src/validation.cpp])
 AC_CONFIG_HEADERS([src/config/clore-config.h])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([build-aux/m4])
 
 CLORE_DAEMON_NAME=clore_blockchaind
-CLORE_GUI_NAME=clore-qt
 clore_cli_NAME=clore-cli
 CLORE_TX_NAME=clore-tx
 
@@ -83,7 +82,7 @@ AC_PATH_TOOL(RANLIB, ranlib)
 AC_PATH_TOOL(STRIP, strip)
 AC_PATH_TOOL(GCOV, gcov)
 AC_PATH_PROG(LCOV, lcov)
-dnl Python 3.x is supported from 3.4 on (see https://github.com/clore-ai/clore/issues/7893)
+dnl Python 3.x is supported from 3.4 on (see https://gitlab.com/cloreai-public/blockchain/issues/7893)
 AC_PATH_PROGS([PYTHON], [python3.6 python3.5 python3.4 python3 python2.7 python2 python])
 AC_PATH_PROG(GENHTML, genhtml)
 AC_PATH_PROG([GIT], [git])
@@ -108,6 +107,12 @@ AC_ARG_ENABLE([wallet],
   [disable wallet (enabled by default)])],
   [enable_wallet=$enableval],
   [enable_wallet=yes])
+
+# Disable GUI
+enable_gui=no
+
+# Disable QR code support
+use_qr=no
 
 AC_ARG_WITH([miniupnpc],
   [AS_HELP_STRING([--with-miniupnpc],
@@ -140,12 +145,6 @@ AC_ARG_ENABLE([extended-functional-tests],
     AS_HELP_STRING([--enable-extended-functional-tests],[enable expensive functional tests when using lcov (default no)]),
     [use_extended_functional_tests=$enableval],
     [use_extended_functional_tests=no])
-
-AC_ARG_WITH([qrencode],
-  [AS_HELP_STRING([--with-qrencode],
-  [enable QR code support (default is yes if qt is enabled and libqrencode is found)])],
-  [use_qr=$withval],
-  [use_qr=auto])
 
 AC_ARG_ENABLE([hardening],
   [AS_HELP_STRING([--disable-hardening],
@@ -410,7 +409,6 @@ case $host in
 
          openssl_prefix=`$BREW --prefix openssl 2>/dev/null`
          bdb_prefix=`$BREW --prefix berkeley-db 2>/dev/null`
-         qt5_prefix=`$BREW --prefix qt5 2>/dev/null`
          if test x$openssl_prefix != x; then
            PKG_CONFIG_PATH="$openssl_prefix/lib/pkgconfig:$PKG_CONFIG_PATH"
            export PKG_CONFIG_PATH
@@ -418,10 +416,6 @@ case $host in
          if test x$bdb_prefix != x; then
            CPPFLAGS="$CPPFLAGS -I$bdb_prefix/include"
            LIBS="$LIBS -L$bdb_prefix/lib"
-         fi
-         if test x$qt5_prefix != x; then
-           PKG_CONFIG_PATH="$qt5_prefix/lib/pkgconfig:$PKG_CONFIG_PATH"
-           export PKG_CONFIG_PATH
          fi
        fi
      else
@@ -732,12 +726,8 @@ if test x$use_upnp != xno; then
   )
 fi
 
-CLORE_QT_INIT
 
-dnl sets $clore_enable_qt, $clore_enable_qt_test, $clore_enable_qt_dbus
-CLORE_QT_CONFIGURE([$use_pkgconfig], [qt5])
-
-if test x$build_clore_cli$build_clore_tx$build_clore_blockchaind$clore_enable_qt$use_tests$use_bench = xnononononono; then
+if test x$build_clore_cli$build_clore_tx$build_clore_blockchaind$use_tests$use_bench = xnononononono; then
     use_boost=no
 else
     use_boost=yes
@@ -919,11 +909,8 @@ if test x$use_pkgconfig = xyes; then
     [
       PKG_CHECK_MODULES([SSL], [libssl],, [AC_MSG_ERROR(openssl  not found.)])
       PKG_CHECK_MODULES([CRYPTO], [libcrypto],,[AC_MSG_ERROR(libcrypto  not found.)])
-      CLORE_QT_CHECK([PKG_CHECK_MODULES([PROTOBUF], [protobuf], [have_protobuf=yes], [CLORE_QT_FAIL(libprotobuf not found)])])
-      if test x$use_qr != xno; then
-        CLORE_QT_CHECK([PKG_CHECK_MODULES([QR], [libqrencode], [have_qrencode=yes], [have_qrencode=no])])
-      fi
-      if test x$build_clore_cli$build_clore_tx$build_clore_blockchaind$clore_enable_qt$use_tests != xnonononono; then
+      
+      if test x$build_clore_cli$build_clore_tx$build_clore_blockchaind$use_tests != xnonononono; then
         PKG_CHECK_MODULES([EVENT], [libevent],, [AC_MSG_ERROR(libevent not found.)])
         if test x$TARGET_OS != xwindows; then
           PKG_CHECK_MODULES([EVENT_PTHREADS], [libevent_pthreads],, [AC_MSG_ERROR(libevent_pthreads not found.)])
@@ -948,7 +935,7 @@ else
   AC_CHECK_HEADER([openssl/ssl.h],, AC_MSG_ERROR(libssl headers missing),)
   AC_CHECK_LIB([ssl],         [main],SSL_LIBS=-lssl, AC_MSG_ERROR(libssl missing))
 
-  if test x$build_clore_cli$build_clore_tx$build_clore_blockchaind$clore_enable_qt$use_tests != xnonononono; then
+  if test x$build_clore_cli$build_clore_tx$build_clore_blockchaind$use_tests != xnonononono; then
     AC_CHECK_HEADER([event2/event.h],, AC_MSG_ERROR(libevent headers missing),)
     AC_CHECK_LIB([event],[main],EVENT_LIBS=-levent,AC_MSG_ERROR(libevent missing))
     if test x$TARGET_OS != xwindows; then
@@ -979,11 +966,6 @@ else
     esac
   fi
 
-  CLORE_QT_CHECK(AC_CHECK_LIB([protobuf] ,[main],[PROTOBUF_LIBS=-lprotobuf], CLORE_QT_FAIL(libprotobuf not found)))
-  if test x$use_qr != xno; then
-    CLORE_QT_CHECK([AC_CHECK_LIB([qrencode], [main],[QR_LIBS=-lqrencode], [have_qrencode=no])])
-    CLORE_QT_CHECK([AC_CHECK_HEADER([qrencode.h],, have_qrencode=no)])
-  fi
 fi
 
 save_CXXFLAGS="${CXXFLAGS}"
@@ -997,7 +979,7 @@ dnl univalue check
 
 need_bundled_univalue=yes
 
-if test x$build_clore_cli$build_clore_tx$build_clore_blockchaind$clore_enable_qt$use_tests$use_bench = xnonononono; then
+if test x$build_clore_cli$build_clore_tx$build_clore_blockchaind$use_tests$use_bench = xnonononono; then
   need_bundled_univalue=no
 else
 
@@ -1040,8 +1022,6 @@ fi
 AM_CONDITIONAL([EMBEDDED_UNIVALUE],[test x$need_bundled_univalue = xyes])
 AC_SUBST(UNIVALUE_CFLAGS)
 AC_SUBST(UNIVALUE_LIBS)
-
-CLORE_QT_PATH_PROGS([PROTOC], [protoc],$protoc_bin_path)
 
 AC_MSG_CHECKING([whether to build clore_blockchaind])
 AM_CONDITIONAL([BUILD_CLORE_BLOCKCHAIND], [test x$build_clore_blockchaind = xyes])
@@ -1121,45 +1101,7 @@ else
   fi
 fi
 
-dnl these are only used when qt is enabled
-BUILD_TEST_QT=""
-if test x$clore_enable_qt != xno; then
-  dnl enable dbus support
-  AC_MSG_CHECKING([whether to build GUI with support for D-Bus])
-  if test x$clore_enable_qt_dbus != xno; then
-    AC_DEFINE([USE_DBUS],[1],[Define if dbus support should be compiled in])
-  fi
-  AC_MSG_RESULT($clore_enable_qt_dbus)
 
-  dnl enable qr support
-  AC_MSG_CHECKING([whether to build GUI with support for QR codes])
-  if test x$have_qrencode = xno; then
-    if test x$use_qr = xyes; then
-     AC_MSG_ERROR("QR support requested but cannot be built. use --without-qrencode")
-    fi
-    AC_MSG_RESULT(no)
-  else
-    if test x$use_qr != xno; then
-      AC_MSG_RESULT(yes)
-      AC_DEFINE([USE_QRCODE],[1],[Define if QR support should be compiled in])
-      use_qr=yes
-    else
-      AC_MSG_RESULT(no)
-    fi
-  fi
-
-  if test x$XGETTEXT = x; then
-    AC_MSG_WARN("xgettext is required to update qt translations")
-  fi
-
-  AC_MSG_CHECKING([whether to build test_clore-qt])
-  if test x$use_gui_tests$clore_enable_qt_test = xyesyes; then
-    AC_MSG_RESULT([yes])
-    BUILD_TEST_QT="yes"
-  else
-    AC_MSG_RESULT([no])
-  fi
-fi
 
 AM_CONDITIONAL([ENABLE_ZMQ], [test "x$use_zmq" = "xyes"])
 
@@ -1179,7 +1121,7 @@ else
   AC_MSG_RESULT([no])
 fi
 
-if test x$build_clore_cli$build_clore_tx$build_clore_libs$build_clore_blockchaind$clore_enable_qt$use_bench$use_tests = xnonononononono; then
+if test x$build_clore_cli$build_clore_tx$build_clore_libs$build_clore_blockchaind$use_bench$use_tests = xnonononononono; then
   AC_MSG_ERROR([No targets! Please specify at least one of: --with-cli --with-tx --with-libs --with-daemon --with-gui --enable-bench or --enable-tests])
 fi
 
@@ -1188,10 +1130,7 @@ AM_CONDITIONAL([BUILD_DARWIN], [test x$BUILD_OS = xdarwin])
 AM_CONDITIONAL([TARGET_WINDOWS], [test x$TARGET_OS = xwindows])
 AM_CONDITIONAL([ENABLE_WALLET],[test x$enable_wallet = xyes])
 AM_CONDITIONAL([ENABLE_TESTS],[test x$BUILD_TEST = xyes])
-AM_CONDITIONAL([ENABLE_QT],[test x$clore_enable_qt = xyes])
-AM_CONDITIONAL([ENABLE_QT_TESTS],[test x$BUILD_TEST_QT = xyes])
 AM_CONDITIONAL([ENABLE_BENCH],[test x$use_bench = xyes])
-AM_CONDITIONAL([USE_QRCODE], [test x$use_qr = xyes])
 AM_CONDITIONAL([USE_LCOV],[test x$use_lcov = xyes])
 AM_CONDITIONAL([GLIBC_BACK_COMPAT],[test x$use_glibc_compat = xyes])
 AM_CONDITIONAL([HARDEN],[test x$use_hardening = xyes])
@@ -1218,8 +1157,6 @@ AC_SUBST(COPYRIGHT_HOLDERS, "_COPYRIGHT_HOLDERS")
 AC_SUBST(COPYRIGHT_HOLDERS_SUBSTITUTION, "_COPYRIGHT_HOLDERS_SUBSTITUTION")
 AC_SUBST(COPYRIGHT_HOLDERS_FINAL, "_COPYRIGHT_HOLDERS_FINAL")
 AC_SUBST(CLORE_DAEMON_NAME)
-AC_SUBST(CLORE_GUI_NAME)
-AC_SUBST(clore_cli_NAME)
 AC_SUBST(CLORE_TX_NAME)
 
 AC_SUBST(RELDFLAGS)
@@ -1246,13 +1183,8 @@ AC_SUBST(EVENT_PTHREADS_LIBS)
 AC_SUBST(ZMQ_LIBS)
 AC_SUBST(PROTOBUF_LIBS)
 AC_SUBST(QR_LIBS)
-AC_CONFIG_FILES([Makefile src/Makefile doc/man/Makefile share/setup.nsi share/qt/Info.plist test/config.ini])
-AC_CONFIG_FILES([contrib/devtools/split-debug.sh],[chmod +x contrib/devtools/split-debug.sh])
-AM_COND_IF([HAVE_DOXYGEN], [AC_CONFIG_FILES([doc/Doxyfile])])
-AC_CONFIG_LINKS([contrib/filter-lcov.py:contrib/filter-lcov.py])
-AC_CONFIG_LINKS([test/functional/test_runner.py:test/functional/test_runner.py])
-AC_CONFIG_LINKS([test/util/clore-util-test.py:test/util/clore-util-test.py])
-AC_CONFIG_LINKS([src/crypto/md_helper.c:src/crypto/md_helper.c])
+AC_CONFIG_FILES([Makefile src/Makefile doc/man/Makefile test/config.ini])
+
 
 dnl boost's m4 checks do something really nasty: they export these vars. As a
 dnl result, they leak into secp256k1's configure and crazy things happen.
@@ -1310,11 +1242,6 @@ echo "Options used to compile and link:"
 echo "  build clore-cli = $build_clore_cli"
 echo "  build clore-tx  = $build_clore_tx"
 echo "  with wallet     = $enable_wallet"
-echo "  with gui / qt   = $clore_enable_qt"
-if test x$clore_enable_qt != xno; then
-    echo "    qt version    = $clore_qt_got_major_vers"
-    echo "    with qr       = $use_qr"
-fi
 echo "  with zmq        = $use_zmq"
 echo "  with test       = $use_tests"
 echo "  with bench      = $use_bench"

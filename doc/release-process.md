@@ -2,9 +2,9 @@
 
 Before every release candidate:
 
-- Update translations (ping wumpus on IRC) see [translation_process.md](https://github.com/clore-ai/clore/blob/master/doc/translation_process.md#synchronising-translations).
+- Update translations (ping wumpus on IRC) see [translation_process.md](https://gitlab.com/cloreai-public/blockchain/blob/master/doc/translation_process.md#synchronising-translations).
 
-- Update manpages, see [gen-manpages.sh](https://github.com/clore-ai/clore/blob/master/contrib/devtools/README.md#gen-manpagessh).
+- Update manpages, see [gen-manpages.sh](https://gitlab.com/cloreai-public/blockchain/blob/master/contrib/devtools/README.md#gen-manpagessh).
 
 Before every minor and major release:
 
@@ -20,8 +20,7 @@ Before every minor and major release:
 
 Before every major release:
 
-- Update hardcoded [seeds](/contrib/seeds/README.md), see [this pull request](https://github.com/clore-ai/clore/pull/7415) for an example.
-- Update [`BLOCK_CHAIN_SIZE`](/src/qt/intro.cpp) to the current size plus some overhead.
+- Update hardcoded [seeds](/contrib/seeds/README.md), see [this pull request](https://gitlab.com/cloreai-public/blockchain/pull/7415) for an example.
 - Update `src/chainparams.cpp` chainTxData with statistics about the transaction count and rate.
 - Update version of `contrib/gitian-descriptors/*.yml`: usually one'd want to do this on master after branching off the release - but be sure to at least do it before a new major release
 
@@ -35,7 +34,7 @@ Check out the source code in the following directory hierarchy.
     git clone https://github.com/clore-core/gitian.sigs.git
     git clone https://github.com/clore-core/clore-detached-sigs.git
     git clone https://github.com/devrandom/gitian-builder.git
-    git clone https://github.com/clore-ai/clore.git
+    git clone https://gitlab.com/cloreai-public/blockchain.git
 
 ### Clore maintainers/release engineers, suggestion for writing release notes
 
@@ -308,6 +307,6 @@ clorecoin.net (see below for clorecoin.net update instructions).
 
   - Archive release notes for the new version to `doc/release-notes/` (branch `master` and branch of the release)
 
-  - Create a [new GitHub release](https://github.com/clore-ai/clore/releases/new) with a link to the arcCLORE_BLOCKCHAIND release notes.
+  - Create a [new GitHub release](https://gitlab.com/cloreai-public/blockchain/releases/new) with a link to the arcCLORE_BLOCKCHAIND release notes.
 
   - Celebrate

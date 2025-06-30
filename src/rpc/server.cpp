@@ -34,7 +34,6 @@ using namespace boost::placeholders;
 #include "assets/assets.h"
 
 static bool fRPCRunning = false;
-static std::atomic<bool> g_rpc_running{false};
 static bool fRPCInWarmup = true;
 static std::string rpcWarmupStatus("RPC server started");
 static CCriticalSection cs_rpcWarmup;
@@ -187,33 +186,6 @@ std::vector<unsigned char> ParseHexV(const UniValue& v, std::string strName)
 std::vector<unsigned char> ParseHexO(const UniValue& o, std::string strKey)
 {
     return ParseHexV(find_value(o, strKey), strKey);
-}
-
-int ParseInt(const UniValue& o, std::string strKey)
-{
-    const UniValue& v = find_value(o, strKey);
-    if (v.isNum())
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter, " + strKey + "is not an int");
-
-    return v.get_int();
-}
-
-double ParseDoubleV(const UniValue& v, const std::string &strName)
-{
-    std::string strNum = v.getValStr();
-    double num;
-    if (!ParseDouble(strNum, &num))
-        throw JSONRPCError(RPC_INVALID_PARAMETER, strName+" must be a be number (not '"+strNum+"')");
-    return num;
-}
-
-bool ParseBool(const UniValue& o, std::string strKey)
-{
-    const UniValue& v = find_value(o, strKey);
-    if (v.isBool())
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter, " + strKey + "is not a bool");
-
-    return v.get_bool();
 }
 
 /**

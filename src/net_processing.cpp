@@ -1641,10 +1641,10 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
             return false;
         }
 
-        if (AreTransferScriptsSizeDeployed() && nVersion < EQUIHASH_VERSION) {
-            LogPrintf("peer=%d using obsolete version %i; disconnecting because peer isn't signalling protocol version for equihash support\n", pfrom->GetId(), nVersion);
+        if (AreTransferScriptsSizeDeployed() && nVersion < KAWPOW_VERSION) {
+            LogPrintf("peer=%d using obsolete version %i; disconnecting because peer isn't signalling protocol version for kawpow support\n", pfrom->GetId(), nVersion);
             connman->PushMessage(pfrom, CNetMsgMaker(INIT_PROTO_VERSION).Make(NetMsgType::REJECT, strCommand, REJECT_OBSOLETE,
-                                                                              strprintf("Version must be %d or greater or equal to", EQUIHASH_VERSION)));
+                                                                              strprintf("Version must be %d or greater or equal to", KAWPOW_VERSION)));
             pfrom->fDisconnect = true;
             return false;
         }
@@ -2281,7 +2281,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
                         if (!orphanTx.HasWitness() && !stateDummy.CorruptionPossible()) {
                             // Do not use rejection cache for witness transactions or
                             // witness-stripped transactions, as they can have been malleated.
-                            // See https://github.com/clore-ai/clore/issues/8279 for details.
+                            // See https://gitlab.com/cloreai-public/blockchain/issues/8279 for details.
                             assert(recentRejects);
                             recentRejects->insert(orphanHash);
                         }
@@ -2327,7 +2327,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
             if (!tx.HasWitness() && !state.CorruptionPossible()) {
                 // Do not use rejection cache for witness transactions or
                 // witness-stripped transactions, as they can have been malleated.
-                // See https://github.com/clore-ai/clore/issues/8279 for details.
+                // See https://gitlab.com/cloreai-public/blockchain/issues/8279 for details.
                 assert(recentRejects);
                 recentRejects->insert(tx.GetHash());
                 if (RecursiveDynamicUsage(*ptx) < 100000) {

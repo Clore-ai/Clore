@@ -21,8 +21,20 @@ import time
 from .authproxy import JSONRPCException
 from . import coverage
 from .test_node import TestNode
-from .util import (MAX_NODES, PortSeed, assert_equal, check_json_precision, connect_nodes_bi, disconnect_nodes,
-                   initialize_data_dir, log_filename, p2p_port, set_node_times, sync_blocks, sync_mempools)
+from .util import (
+    MAX_NODES,
+    PortSeed,
+    assert_equal,
+    check_json_precision,
+    connect_nodes_bi,
+    disconnect_nodes,
+    initialize_data_dir,
+    log_filename,
+    p2p_port,
+    set_node_times,
+    sync_blocks,
+    sync_mempools,
+)
 
 
 class TestStatus(Enum):
@@ -60,29 +72,88 @@ class CloreTestFramework:
         self.mocktime = 0
         self.set_test_params()
 
-        assert hasattr(self, "num_nodes"), "Test must set self.num_nodes in set_test_params()"
+        assert hasattr(
+            self, "num_nodes"
+        ), "Test must set self.num_nodes in set_test_params()"
 
     def main(self):
         """Main function. This should not be overridden by the subclass test scripts."""
         parser = optparse.OptionParser(usage="%prog [options]")
-        parser.add_option("--cachedir", dest="cachedir", default=os.path.normpath(os.path.dirname(os.path.realpath(__file__)) + "/../../cache"), help="Directory for caching pregenerated datadirs")
-        parser.add_option("--coveragedir", dest="coveragedir", help="Write tested RPC commands into this directory")
-        parser.add_option("--configfile", dest="configfile", help="Location of the test framework config file")
-        parser.add_option("--loglevel", dest="loglevel", default="INFO", help="log events at this level and higher to the console. Can be set to DEBUG, INFO, WARNING, ERROR or CRITICAL. Passing --loglevel DEBUG will output all logs to console. Note that logs at all levels are always written to the test_framework.log file in the temporary test directory.")
-        parser.add_option("--nocleanup", dest="nocleanup", default=False, action="store_true", help="Leave clore_blockchainds and test.* datadir on exit or error")
-        parser.add_option("--noshutdown", dest="noshutdown", default=False, action="store_true", help="Don't stop clore_blockchainds after the test execution")
-        parser.add_option("--pdbonfailure", dest="pdbonfailure", default=False, action="store_true", help="Attach a python debugger if test fails")
-        parser.add_option("--portseed", dest="port_seed", default=os.getpid(), type='int', help="The seed to use for assigning port numbers (default: current process id)")
-        parser.add_option("--srcdir", dest="srcdir", default=os.path.normpath(os.path.dirname(os.path.realpath(__file__)) + "/../../../src"), help="Source directory containing clore_blockchaind/clore-cli (default: %default)")
+        parser.add_option(
+            "--cachedir",
+            dest="cachedir",
+            default=os.path.normpath(
+                os.path.dirname(os.path.realpath(__file__)) + "/../../cache"
+            ),
+            help="Directory for caching pregenerated datadirs",
+        )
+        parser.add_option(
+            "--coveragedir",
+            dest="coveragedir",
+            help="Write tested RPC commands into this directory",
+        )
+        parser.add_option(
+            "--configfile",
+            dest="configfile",
+            help="Location of the test framework config file",
+        )
+        parser.add_option(
+            "--loglevel",
+            dest="loglevel",
+            default="INFO",
+            help="log events at this level and higher to the console. Can be set to DEBUG, INFO, WARNING, ERROR or CRITICAL. Passing --loglevel DEBUG will output all logs to console. Note that logs at all levels are always written to the test_framework.log file in the temporary test directory.",
+        )
+        parser.add_option(
+            "--nocleanup",
+            dest="nocleanup",
+            default=False,
+            action="store_true",
+            help="Leave clore_blockchainds and test.* datadir on exit or error",
+        )
+        parser.add_option(
+            "--noshutdown",
+            dest="noshutdown",
+            default=False,
+            action="store_true",
+            help="Don't stop clore_blockchainds after the test execution",
+        )
+        parser.add_option(
+            "--pdbonfailure",
+            dest="pdbonfailure",
+            default=False,
+            action="store_true",
+            help="Attach a python debugger if test fails",
+        )
+        parser.add_option(
+            "--portseed",
+            dest="port_seed",
+            default=os.getpid(),
+            type="int",
+            help="The seed to use for assigning port numbers (default: current process id)",
+        )
+        parser.add_option(
+            "--srcdir",
+            dest="srcdir",
+            default=os.path.normpath(
+                os.path.dirname(os.path.realpath(__file__)) + "/../../../src"
+            ),
+            help="Source directory containing clore_blockchaind/clore-cli (default: %default)",
+        )
         parser.add_option("--tmpdir", dest="tmpdir", help="Root directory for datadirs")
-        parser.add_option("--tracerpc", dest="trace_rpc", default=False, action="store_true", help="Print out all RPC calls as they are made")
+        parser.add_option(
+            "--tracerpc",
+            dest="trace_rpc",
+            default=False,
+            action="store_true",
+            help="Print out all RPC calls as they are made",
+        )
 
         self.add_options(parser)
         (self.options, self.args) = parser.parse_args()
 
         PortSeed.n = self.options.port_seed
 
-        os.environ['PATH'] = self.options.srcdir + ":" + self.options.srcdir + "/qt:" + os.environ['PATH']
+        # os.environ['PATH'] = self.options.srcdir + ":" + self.options.srcdir + "/qt:" + os.environ['PATH']
 
         check_json_precision()
 
@@ -98,7 +169,9 @@ class CloreTestFramework:
             try:
                 os.makedirs(self.options.tmpdir, exist_ok=False)
             except OSError:
-                self.options.tmpdir = os.path.abspath(self.options.tmpdir + str(randint(0, 48)))
+                self.options.tmpdir = os.path.abspath(
+                    self.options.tmpdir + str(randint(0, 48))
+                )
                 os.makedirs(self.options.tmpdir, exist_ok=False)
         else:
             self.options.tmpdir = tempfile.mkdtemp(prefix="test")
@@ -126,7 +199,9 @@ class CloreTestFramework:
             self.log.warning("Exiting after keyboard interrupt: %s", e)
 
         if success == TestStatus.FAILED and self.options.pdbonfailure:
-            self.log.info("Testcase failed. Attaching python debugger. Enter ? for help")
+            self.log.info(
+                "Testcase failed. Attaching python debugger. Enter ? for help"
+            )
             pdb.set_trace()
 
         if not self.options.noshutdown:
@@ -136,9 +211,15 @@ class CloreTestFramework:
         else:
             for node in self.nodes:
                 node.cleanup_on_exit = False
-            self.log.info("Note: clore_blockchaind's were not stopped and may still be running")
+            self.log.info(
+                "Note: clore_blockchaind's were not stopped and may still be running"
+            )
 
-        if not self.options.nocleanup and not self.options.noshutdown and success != TestStatus.FAILED:
+        if (
+            not self.options.nocleanup
+            and not self.options.noshutdown
+            and success != TestStatus.FAILED
+        ):
             self.log.info("Cleaning up")
             shutil.rmtree(self.options.tmpdir)
         else:
@@ -151,7 +232,10 @@ class CloreTestFramework:
             self.log.info("Test skipped")
             sys.exit(TEST_EXIT_SKIPPED)
         else:
-            self.log.error("Test failed. Test logging available at %s/test_framework.log", self.options.tmpdir)
+            self.log.error(
+                "Test failed. Test logging available at %s/test_framework.log",
+                self.options.tmpdir,
+            )
             logging.shutdown()
             sys.exit(TEST_EXIT_FAILED)
 
@@ -199,7 +283,9 @@ class CloreTestFramework:
 
     # Public helper methods. These can be accessed by the subclass test scripts.
 
-    def add_nodes(self, num_nodes, extra_args=None, rpchost=None, timewait=None, binary=None):
+    def add_nodes(
+        self, num_nodes, extra_args=None, rpchost=None, timewait=None, binary=None
+    ):
         """Instantiate TestNode objects"""
 
         if extra_args is None:
@@ -210,8 +296,18 @@ class CloreTestFramework:
         assert_equal(len(binary), num_nodes)
         for i in range(num_nodes):
             self.nodes.append(
-                TestNode(i, self.options.tmpdir, extra_args[i], rpchost, timewait=timewait, binary=binary[i],
-                         stderr=None, mocktime=self.mocktime, coverage_dir=self.options.coveragedir))
+                TestNode(
+                    i,
+                    self.options.tmpdir,
+                    extra_args[i],
+                    rpchost,
+                    timewait=timewait,
+                    binary=binary[i],
+                    stderr=None,
+                    mocktime=self.mocktime,
+                    coverage_dir=self.options.coveragedir,
+                )
+            )
 
     def start_node(self, i, extra_args=None, stderr=None):
         """Start a clore_blockchaind"""
@@ -265,24 +361,32 @@ class CloreTestFramework:
         self.start_node(i, extra_args)
 
     def assert_start_raises_init_error(self, i, extra_args=None, expected_msg=None):
-        with tempfile.SpooledTemporaryFile(max_size=2 ** 16) as log_stderr:
+        with tempfile.SpooledTemporaryFile(max_size=2**16) as log_stderr:
             try:
                 self.start_node(i, extra_args, stderr=log_stderr)
                 self.stop_node(i)
             except Exception as e:
-                assert 'clore_blockchaind exited' in str(e)  # node must have shutdown
+                assert "clore_blockchaind exited" in str(e)  # node must have shutdown
                 self.nodes[i].running = False
                 self.nodes[i].process = None
                 if expected_msg is not None:
                     log_stderr.seek(0)
-                    stderr = log_stderr.read().decode('utf-8')
+                    stderr = log_stderr.read().decode("utf-8")
                     if expected_msg not in stderr:
-                        raise AssertionError("Expected error \"" + expected_msg + "\" not found in:\n" + stderr)
+                        raise AssertionError(
+                            'Expected error "'
+                            + expected_msg
+                            + '" not found in:\n'
+                            + stderr
+                        )
             else:
                 if expected_msg is None:
                     assert_msg = "clore_blockchaind should have exited with an error"
                 else:
-                    assert_msg = "clore_blockchaind should have exited with expected error " + expected_msg
+                    assert_msg = (
+                        "clore_blockchaind should have exited with expected error "
+                        + expected_msg
+                    )
                 raise AssertionError(assert_msg)
 
     def wait_for_node_exit(self, i, timeout):
@@ -325,7 +429,8 @@ class CloreTestFramework:
         2017 + (201 * 1 * 60)
 
         NOTE: the timestamp should match time of genesis block.
-        NOTE: the timestamp could be retrieved via "getblockhash 0" + "getblock <hash>"."""
+        NOTE: the timestamp could be retrieved via "getblockhash 0" + "getblock <hash>".
+        """
         self.mocktime = 1524179366 + (201 * 1 * 60)
 
     def disable_mocktime(self):
@@ -335,19 +440,25 @@ class CloreTestFramework:
 
     def _start_logging(self):
         # Add logger and logging handlers
-        self.log = logging.getLogger('TestFramework')
+        self.log = logging.getLogger("TestFramework")
         self.log.setLevel(logging.DEBUG)
         # Create file handler to log all messages
-        fh = logging.FileHandler(self.options.tmpdir + '/test_framework.log')
+        fh = logging.FileHandler(self.options.tmpdir + "/test_framework.log")
         fh.setLevel(logging.DEBUG)
         # Create console handler to log messages to stderr. By default this logs only error messages, but can be configured with --loglevel.
         ch = logging.StreamHandler(sys.stdout)
         # User can provide log level as a number or string (eg DEBUG). loglevel was caught as a string, so try to convert it to an int
-        ll = int(self.options.loglevel) if self.options.loglevel.isdigit() else self.options.loglevel.upper()
+        ll = (
+            int(self.options.loglevel)
+            if self.options.loglevel.isdigit()
+            else self.options.loglevel.upper()
+        )
         ch.setLevel(ll)
         # Format logs the same as clore_blockchaind's debug.log with microprecision (so log files can be concatenated and sorted)
-        formatter = logging.Formatter(fmt='%(asctime)s.%(msecs)03d000 %(name)s (%(levelname)s): %(message)s',
-                                      datefmt='%Y-%m-%d %H:%M:%S')
+        formatter = logging.Formatter(
+            fmt="%(asctime)s.%(msecs)03d000 %(name)s (%(levelname)s): %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
+        )
         formatter.converter = time.gmtime
         fh.setFormatter(formatter)
         ch.setFormatter(formatter)
@@ -371,7 +482,7 @@ class CloreTestFramework:
         assert self.num_nodes <= MAX_NODES
         create_cache = False
         for i in range(MAX_NODES):
-            if not os.path.isdir(os.path.join(self.options.cachedir, 'node' + str(i))):
+            if not os.path.isdir(os.path.join(self.options.cachedir, "node" + str(i))):
                 create_cache = True
                 break
 
@@ -386,12 +497,28 @@ class CloreTestFramework:
             # Create cache directories, run clore_blockchainds:
             for i in range(MAX_NODES):
                 datadir = initialize_data_dir(self.options.cachedir, i)
-                args = [os.getenv("CLORE_BLOCKCHAIND", "clore_blockchaind"), "-server", "-keypool=1", "-datadir=" + datadir, "-discover=0"]
+                args = [
+                    os.getenv("CLORE_BLOCKCHAIND", "clore_blockchaind"),
+                    "-server",
+                    "-keypool=1",
+                    "-datadir=" + datadir,
+                    "-discover=0",
+                ]
                 if i > 0:
                     args.append("-connect=127.0.0.1:" + str(p2p_port(0)))
                 self.nodes.append(
-                    TestNode(i, self.options.cachedir, extra_args=[], rpchost=None, timewait=None, binary=None,
-                             stderr=None, mocktime=self.mocktime, coverage_dir=None))
+                    TestNode(
+                        i,
+                        self.options.cachedir,
+                        extra_args=[],
+                        rpchost=None,
+                        timewait=None,
+                        binary=None,
+                        stderr=None,
+                        mocktime=self.mocktime,
+                        coverage_dir=None,
+                    )
+                )
                 self.nodes[i].args = args
                 self.start_node(i)
 
@@ -431,7 +558,9 @@ class CloreTestFramework:
             from_dir = os.path.join(self.options.cachedir, "node" + str(i))
             to_dir = os.path.join(self.options.tmpdir, "node" + str(i))
             shutil.copytree(from_dir, to_dir)
-            initialize_data_dir(self.options.tmpdir, i)  # Overwrite port/rpcport in clore.conf
+            initialize_data_dir(
+                self.options.tmpdir, i
+            )  # Overwrite port/rpcport in clore.conf
 
     def _initialize_chain_clean(self):
         """Initialize empty blockchain for use by the test.

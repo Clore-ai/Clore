@@ -29,7 +29,7 @@ cd ~/
 # Removes any existing builds and starts clean WARNING
 rm -rf ~/clorecoin ~/sign ~/release
 
-git clone https://github.com/clore-ai/clore
+git clone https://gitlab.com/cloreai-public/blockchain
 cd ~/clorecoin
 git checkout $BRANCH
 

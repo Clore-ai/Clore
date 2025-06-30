@@ -5,11 +5,11 @@ etc.
 
 There are currently two sets of tests in this directory:
 
-- [functional](/test/functional) which test the functionality of 
-clore_blockchaind and clore-qt by interacting with them through the RPC and P2P
-interfaces.
+- [functional](/test/functional) which test the functionality of
+  clore_blockchaind by interacting with them through the RPC and P2P
+  interfaces.
 - [util](test/util) which tests the clore utilities, currently only
-clore-tx.
+  clore-tx.
 
 The util tests are run as part of `make check` target. The functional
 tests are run by the travis continuous build process whenever a pull
@@ -95,7 +95,6 @@ or
 pkill -9 clore_blockchaind
 ```
 
-
 ##### Data directory cache
 
 A pre-mined blockchain with 200 blocks is generated the first time a
@@ -115,9 +114,9 @@ killall clore_blockchaind
 The tests contain logging at different levels (debug, info, warning, etc). By
 default:
 
-- when run through the test_runner harness, *all* logs are written to
+- when run through the test_runner harness, _all_ logs are written to
   `test_framework.log` and no logs are output to the console.
-- when run directly, *all* logs are written to `test_framework.log` and INFO
+- when run directly, _all_ logs are written to `test_framework.log` and INFO
   level and above are output to the console.
 - when run on Travis, no logs are output to the console. However, if a test
   fails, the `test_framework.log` and clore_blockchaind `debug.log`s will all be dumped
@@ -177,11 +176,11 @@ Note: gdb attach step may require `sudo`
 
 ### Util tests
 
-Util tests can be run locally by running `test/util/clore-util-test.py`. 
+Util tests can be run locally by running `test/util/clore-util-test.py`.
 Use the `-v` option for verbose output.
 
 # Writing functional tests
 
 You are encouraged to write functional tests for new or existing features.
-Further information about the functional test framework and individual 
+Further information about the functional test framework and individual
 tests is found in [test/functional](/test/functional).

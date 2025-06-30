@@ -17,7 +17,6 @@ static const uint32_t TESTNET_X16RV2ACTIVATIONTIME = 1567533600;
 static const uint32_t REGTEST_X16RV2ACTIVATIONTIME = 1569931200;
 
 uint32_t nKAWPOWActivationTime;
-uint32_t nEQUIHASHActivationTime;
 
 BlockNetwork bNetwork = BlockNetwork();
 
@@ -46,12 +45,12 @@ uint256 CBlockHeader::GetHash() const
             nTimeToUse = REGTEST_X16RV2ACTIVATIONTIME;
         }
         if (nTime >= nTimeToUse) {
-            return HashX16R(BEGIN(nVersion), END(nNonce), hashPrevBlock);
+            return HashX16RV2(BEGIN(nVersion), END(nNonce), hashPrevBlock);
         }
 
         return HashX16R(BEGIN(nVersion), END(nNonce), hashPrevBlock);
     } else {
-        return HashX16R(BEGIN(nVersion), END(nNonce), hashPrevBlock);
+        return KAWPOWHash_OnlyMix(*this);
     }
 }
 
@@ -70,7 +69,7 @@ uint256 CBlockHeader::GetHashFull(uint256& mix_hash) const
 
         return HashX16R(BEGIN(nVersion), END(nNonce), hashPrevBlock);
     } else {
-        return HashX16R(BEGIN(nVersion), END(nNonce), hashPrevBlock);
+        return KAWPOWHash(*this, mix_hash);
     }
 }
 
@@ -99,13 +98,6 @@ uint256 CBlockHeader::GetKAWPOWHeaderHash() const
     return SerializeHash(input);
 }
 
-uint256 CBlockHeader::GetEQUIHASHHeaderHash() const
-{
-    CKAWPOWInput input{*this};
-
-    return SerializeHash(input);
-}
-
 std::string CBlockHeader::ToString() const
 {
     std::stringstream s;
@@ -122,13 +114,12 @@ std::string CBlockHeader::ToString() const
 std::string CBlock::ToString() const
 {
     std::stringstream s;
-    s << strprintf("CBlock(hash=%s, ver=0x%08x, hashPrevBlock=%s, hashMerkleRoot=%s, nTime=%u, nBits=%08x, nNonce=%u, hashFinalSaplingRoot=%s, nNonce64=%u, vtx=%u)\n",
+    s << strprintf("CBlock(hash=%s, ver=0x%08x, hashPrevBlock=%s, hashMerkleRoot=%s, nTime=%u, nBits=%08x, nNonce=%u, nNonce64=%u, vtx=%u)\n",
         GetHash().ToString(),
         nVersion,
         hashPrevBlock.ToString(),
         hashMerkleRoot.ToString(),
         nTime, nBits, nNonce, nNonce64,
-        hashFinalSaplingRoot.ToString(),
         vtx.size());
     for (const auto& tx : vtx) {
         s << "  " << tx->ToString() << "\n";

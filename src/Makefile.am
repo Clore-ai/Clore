@@ -30,7 +30,6 @@ LIBCLORE_CONSENSUS=libclore_consensus.a
 LIBclore_cli=libclore_cli.a
 LIBCLORE_UTIL=libclore_util.a
 LIBCLORE_CRYPTO=crypto/libclore_crypto.a
-LIBCLOREQT=qt/libcloreqt.a
 LIBSECP256K1=secp256k1/libsecp256k1.la
 
 if ENABLE_ZMQ
@@ -168,6 +167,8 @@ CLORE_CORE_H = \
   dbwrapper.h \
   limitedmap.h \
   memusage.h \
+  masternode.h \
+  masternodeconfig.h \
   merkleblock.h \
   miner.h \
   net.h \
@@ -233,8 +234,11 @@ CLORE_CORE_H = \
   zmq/zmqabstractnotifier.h \
   zmq/zmqconfig.h\
   zmq/zmqnotificationinterface.h \
-  zmq/zmqpublishnotifier.h
-
+  zmq/zmqpublishnotifier.h \
+  stakeinput.h \
+  stakeconsensus.h \
+  blocksignature.h \
+  kernel.h
 
 obj/build.h: FORCE
 	@$(MKDIR_P) $(builddir)/obj
@@ -242,7 +246,7 @@ obj/build.h: FORCE
 	  "$(abs_top_srcdir)"
 libclore_util_a-clientversion.$(OBJEXT): obj/build.h
 
-# server: shared between clore_blockchaind and clore-qt
+# server: shared between clore_blockchaind and clore-cli
 libclore_server_a_CPPFLAGS = $(AM_CPPFLAGS) $(CLORE_INCLUDES) $(MINIUPNPC_CPPFLAGS) $(EVENT_CFLAGS) $(EVENT_PTHREADS_CFLAGS)
 libclore_server_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 libclore_server_a_SOURCES = \
@@ -254,6 +258,7 @@ libclore_server_a_SOURCES = \
   checkpoints.cpp \
   consensus/consensus.cpp \
   consensus/tx_verify.cpp \
+  consensus/upgrades.cpp \
   httprpc.cpp \
   httpserver.cpp \
   init.cpp \
@@ -287,6 +292,10 @@ libclore_server_a_SOURCES = \
   rpc/rewards.cpp \
   rpc/safemode.cpp \
   rpc/server.cpp \
+  rpc/staking.cpp \
+  rpc/masternode.cpp \
+  masternode.cpp \
+  masternodeconfig.cpp \
   script/sigcache.cpp \
   script/ismine.cpp \
   timedata.cpp \
@@ -297,6 +306,10 @@ libclore_server_a_SOURCES = \
   validation.cpp \
   validationinterface.cpp \
   versionbits.cpp \
+  stakeinput.cpp \
+  stakeconsensus.cpp \
+  blocksignature.cpp \
+  kernel.cpp \
   $(CLORE_CORE_H)
 
 if ENABLE_ZMQ
@@ -308,8 +321,7 @@ libclore_zmq_a_SOURCES = \
   zmq/zmqpublishnotifier.cpp
 endif
 
-
-# wallet: shared between clore_blockchaind and clore-qt, but only linked
+# wallet: shared between clore_blockchaind and clore-cli, but only linked
 # when wallet enabled
 libclore_wallet_a_CPPFLAGS = $(AM_CPPFLAGS) $(CLORE_INCLUDES)
 libclore_wallet_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
@@ -324,9 +336,6 @@ libclore_wallet_a_SOURCES = \
   wallet/wallet.cpp \
   wallet/walletdb.cpp \
   wallet/bip39.cpp \
-  stakeinput.cpp \
-  kernel.cpp \
-  legacy/stakemodifier.cpp \
   $(CLORE_CORE_H)
 
 # crypto primitives library
@@ -418,7 +427,7 @@ libclore_consensus_a_SOURCES = \
   LibBoolEE.h \
   $(CLORE_CORE_H)
 
-# common: shared between clore_blockchaind, and clore-qt and non-server tools
+# common: shared between clore_blockchaind, and clore-cli and non-server tools
 libclore_common_a_CPPFLAGS = $(AM_CPPFLAGS) $(CLORE_INCLUDES)
 libclore_common_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 libclore_common_a_SOURCES = \
@@ -438,8 +447,6 @@ libclore_common_a_SOURCES = \
   script/sign.cpp \
   script/standard.cpp \
   warnings.cpp \
-  stakeinput.cpp \
-  kernel.cpp \
   $(CLORE_CORE_H)
 
 # util: shared between all executables.
@@ -459,7 +466,6 @@ libclore_util_a_SOURCES = \
   support/cleanse.cpp \
   sync.cpp \
   threadinterrupt.cpp \
-  uint256.cpp \
   util.cpp \
   utilmoneystr.cpp \
   utilstrencodings.cpp \
@@ -471,7 +477,7 @@ libclore_util_a_SOURCES += compat/glibc_compat.cpp
 AM_LDFLAGS += $(COMPAT_LDFLAGS)
 endif
 
-# cli: shared between clore-cli and clore-qt
+# cli: shared between clore-cli and clore-tx
 libclore_cli_a_CPPFLAGS = $(AM_CPPFLAGS) $(CLORE_INCLUDES)
 libclore_cli_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 libclore_cli_a_SOURCES = \
@@ -493,10 +499,12 @@ endif
 
 clore_blockchaind_LDADD = \
   $(LIBCLORE_SERVER) \
+  $(LIBCLORE_WALLET) \
+  $(LIBCLORE_SERVER) \
+  $(LIBCLORE_WALLET) \
   $(LIBCLORE_COMMON) \
   $(LIBUNIVALUE) \
   $(LIBCLORE_UTIL) \
-  $(LIBCLORE_WALLET) \
   $(LIBCLORE_ZMQ) \
   $(LIBCLORE_CONSENSUS) \
   $(LIBCLORE_CRYPTO) \
@@ -636,10 +644,3 @@ if ENABLE_BENCH
 include Makefile.bench.include
 endif
 
-if ENABLE_QT
-include Makefile.qt.include
-endif
-
-if ENABLE_QT_TESTS
-include Makefile.qttest.include
-endif

@@ -10,7 +10,6 @@ src/clore-tx
 src/test/test_clore
 src/test/test_clore_fuzzy
 src/test/test_clore_hash
-src/qt/test/test_clore-qt
 .vscode
 output.txt
 
@@ -39,15 +38,8 @@ src/config/clore-config.h
 src/config/clore-config.h.in
 src/config/stamp-h1
 share/setup.nsi
-share/qt/Info.plist
 
 
-
-src/qt/*.moc
-src/qt/moc_*.cpp
-src/qt/forms/ui_*.h
-
-src/qt/test/moc*.cpp
 
 .settings
 .cproject
@@ -80,15 +72,12 @@ src/qt/test/moc*.cpp
 *.lo
 *.la
 
-# Compilation and Qt preprocessor part
+# Compilation 
 *.qm
 Makefile
-clore-qt
-Clore-Qt.app
 
 # Unit-tests
 Makefile.test
-clore-qt_test
 
 # Resources cpp
 qrc_*.cpp
@@ -124,3 +113,5 @@ cmake-build-debug
 CMakeLists.txt
 db-4.8.30.NC/
 db4/
+release-builds/
+release-packages/

@@ -28,7 +28,7 @@ Build-Depends: debhelper,
 Standards-Version: 3.9.2
 Homepage: https://blockchain.clore.ai
 Vcs-Git: git://github.com/CloreChain/Clore.git
-Vcs-Browser: https://github.com/clore-ai/clore
+Vcs-Browser: https://gitlab.com/cloreai-public/blockchain
 
 Package: clore_blockchaind
 Architecture: any

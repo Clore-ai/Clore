@@ -1,6 +1,7 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2016 The Bitcoin Core developers
-// Copyright (c) 2017-2021 The Raven Core developers
+// Copyright (c) 2015-2020 The PIVX Core developers
+// Copyright (c) 2024 The CLORE Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -9,23 +10,73 @@
 
 #include "amount.h"
 #include "uint256.h"
+#include <boost/optional.hpp>
 #include <map>
 #include <string>
 
-namespace Consensus {
-
-enum DeploymentPos
+namespace Consensus
 {
+
+enum DeploymentPos {
     DEPLOYMENT_TESTDUMMY,
-    DEPLOYMENT_ASSETS, // Deployment of HIP2
-    DEPLOYMENT_MSG_REST_ASSETS, // Delpoyment of HIP5 and Restricted assets
+    DEPLOYMENT_ASSETS,          // Deployment of HIP2
+    DEPLOYMENT_MSG_REST_ASSETS, // Deployment of HIP5 and Restricted assets
     DEPLOYMENT_TRANSFER_SCRIPT_SIZE,
     DEPLOYMENT_ENFORCE_VALUE,
     DEPLOYMENT_COINBASE_ASSETS,
+    DEPLOYMENT_POS, // Deployment of Proof of Stake consensus
     // DEPLOYMENT_CSV, // Deployment of BIP68, BIP112, and BIP113.
-//    DEPLOYMENT_SEGWIT, // Deployment of BIP141, BIP143, and BIP147.
+    //    DEPLOYMENT_SEGWIT, // Deployment of BIP141, BIP143, and BIP147.
     // NOTE: Also add new deployments to VersionBitsDeploymentInfo in versionbits.cpp
     MAX_VERSION_BITS_DEPLOYMENTS
+};
+
+/**
+ * Index into Params.vUpgrades and NetworkUpgradeInfo
+ *
+ * Being array indices, these MUST be numbered consecutively.
+ *
+ * The order of these indices MUST match the order of the upgrades on-chain, as
+ * several functions depend on the enum being sorted.
+ */
+enum UpgradeIndex : uint32_t {
+    BASE_NETWORK,
+    ENABLE_POS_STAKING,       // Proof of Stake preparation phase (hybrid PoW/PoS)
+    UPGRADE_POS_V2,           // Proof of Stake v2 (improved stake modifier)
+    ENABLE_POS_REWARDS,       // Proof of Stake completion phase (PoW disabled completely)
+    UPGRADE_BIP65,            // BIP65 CLTV activation
+    ENABLE_POS_VALIDATORS,    // Stake modifier v2
+    ENABLE_POS_TIME_PROTO_v2, // Time protocol v2
+    UPGRADE_TESTDUMMY,        // Test dummy upgrade
+    // NOTE: Also add new upgrades to NetworkUpgradeInfo in upgrades.cpp
+    MAX_NETWORK_UPGRADES
+};
+
+struct NetworkUpgrade {
+    /**
+     * The first protocol version which will understand the new consensus rules
+     */
+    int nProtocolVersion;
+
+    /**
+     * Height of the first block for which the new consensus rules will be active
+     */
+    int nActivationHeight;
+
+    /**
+     * Special value for nActivationHeight indicating that the upgrade is always active.
+     */
+    static constexpr int ALWAYS_ACTIVE = 0;
+
+    /**
+     * Special value for nActivationHeight indicating that the upgrade will never activate.
+     */
+    static constexpr int NO_ACTIVATION_HEIGHT = -1;
+
+    /**
+     * The hash of the block at height nActivationHeight, if known.
+     */
+    boost::optional<uint256> hashActivationBlock;
 };
 
 /**
@@ -42,27 +93,6 @@ struct BIP9Deployment {
     uint32_t nOverrideMinerConfirmationWindow;
     /** Use to override the the activation threshold on a specific BIP */
     uint32_t nOverrideRuleChangeActivationThreshold;
-};
-
-enum UpgradeIndex : uint32_t {
-    BASE_NETWORK,
-    UPGRADE_POS,
-    UPGRADE_POS_V2,
-    UPGRADE_ZC,
-    UPGRADE_ZC_V2,
-    UPGRADE_BIP65,
-    UPGRADE_ZC_PUBLIC,
-    UPGRADE_V3_4,
-    UPGRADE_V4_0,
-    UPGRADE_V5_0,
-    UPGRADE_V5_2,
-    UPGRADE_V5_3,
-    UPGRADE_V5_5,
-    UPGRADE_V5_6,
-    UPGRADE_V6_0,
-    UPGRADE_TESTDUMMY,
-    // NOTE: Also add new upgrades to NetworkUpgradeInfo in upgrades.cpp
-    MAX_NETWORK_UPGRADES
 };
 
 /**
@@ -92,63 +122,64 @@ struct Params {
     /** Proof of work parameters */
     uint256 powLimit;
     uint256 kawpowLimit;
-    uint256 equihashLimit;
     bool fPowAllowMinDifficultyBlocks;
     bool fPowNoRetargeting;
     int64_t nPowTargetSpacing;
     int64_t nPowTargetTimespan;
-    int64_t kawpowHeight;
-    int64_t equihashHeight;
-    int64_t posHeight;
     int64_t DifficultyAdjustmentInterval() const { return nPowTargetTimespan / nPowTargetSpacing; }
     uint256 nMinimumChainWork;
     uint256 defaultAssumeValid;
     bool nSegwitEnabled;
     bool nCSVEnabled;
 
-    /** Proof of stake parameters */
+    // Proof of Stake parameters
     uint256 posLimitV1;
     uint256 posLimitV2;
-    int nBudgetCycleBlocks;
-    int nBudgetFeeConfirmations;
-    int nCoinbaseMaturity;
-    int nFutureTimeDriftPoW;
-    int nFutureTimeDriftPoS;
-    CAmount nMaxMoneyOut;
-    CAmount nMNCollateralAmt;
-    int nMNCollateralMinConf;
-    CAmount nMNBlockReward;
-    CAmount nNewMNBlockReward;
-    int64_t nProposalEstablishmentTime;
     int nStakeMinAge;
     int nStakeMinDepth;
     int64_t nTargetTimespan;
     int64_t nTargetTimespanV2;
-    int64_t nTargetSpacing;
     int nTimeSlotLength;
+    int nFutureTimeDriftPoW;
+    int nFutureTimeDriftPoS;
+    int nStakeTimestampMask; // Mask for stake timestamps
+
+    // Masternode parameters
+    int nBudgetCycleBlocks;
+    int nBudgetFeeConfirmations;
+    int nCoinbaseMaturity;
+    CAmount nMaxMoneyOut;
+    int64_t nProposalEstablishmentTime;
     int nMaxProposalPayments;
-    int nActivationHeight;
+
+    // spork keys
+    std::string strSporkPubKey;
+    std::string strSporkPubKeyOld;
+    int64_t nTime_EnforceNewSporkKey;
+    int64_t nTime_RejectOldSporkKey;
 
     // height-based activations
     int height_last_invalid_UTXO;
-    int height_last_ZC_AccumCheckpoint;
-    int height_last_ZC_WrappedSerials;
 
     // validation by-pass
     int64_t nCloreBadBlockTime;
     unsigned int nCloreBadBlockBits;
 
-    int64_t TargetTimespan(const bool fV2 = true) const { return fV2 ? nTargetTimespan : nTargetTimespan; }
+    // Map with network updates
+    NetworkUpgrade vUpgrades[MAX_NETWORK_UPGRADES];
+
+    int64_t TargetTimespan(const bool fV2 = true) const { return fV2 ? nTargetTimespanV2 : nTargetTimespan; }
     uint256 ProofOfStakeLimit(const bool fV2) const { return fV2 ? posLimitV2 : posLimitV1; }
     bool MoneyRange(const CAmount& nValue) const { return (nValue >= 0 && nValue <= nMaxMoneyOut); }
-    bool IsTimeProtocolV2(const int nHeight) const { return false; }
-    int MasternodeCollateralMinConf() const { return nMNCollateralMinConf; }
+    bool IsTimeProtocolV2(const int nHeight) const { return NetworkUpgradeActive(nHeight, ENABLE_POS_TIME_PROTO_v2); }
+    bool IsPurePosActive(const int nHeight) const { return NetworkUpgradeActive(nHeight, ENABLE_POS_REWARDS); }
 
     int FutureBlockTimeDrift(const int nHeight) const
     {
         // PoS (TimeV2): 14 seconds
         if (IsTimeProtocolV2(nHeight)) return nTimeSlotLength - 1;
         // PoS (TimeV1): 3 minutes - PoW: 2 hours
+        return (NetworkUpgradeActive(nHeight, ENABLE_POS_STAKING) ? nFutureTimeDriftPoS : nFutureTimeDriftPoW);
     }
 
     bool IsValidBlockTimeStamp(const int64_t nTime, const int nHeight) const
@@ -159,20 +190,16 @@ struct Params {
         return (nTime % nTimeSlotLength) == 0;
     }
 
-    bool HasStakeMinAgeOrDepth(const int contextHeight, const uint32_t contextTime,
-                               const int utxoFromBlockHeight, const uint32_t utxoFromBlockTime) const
+    bool HasStakeMinAgeOrDepth(const int contextHeight, const uint32_t contextTime, const int utxoFromBlockHeight, const uint32_t utxoFromBlockTime) const
     {
         // before stake modifier V2, we require the utxo to be nStakeMinAge old
+        if (!NetworkUpgradeActive(contextHeight, Consensus::ENABLE_POS_VALIDATORS))
+            return (utxoFromBlockTime + nStakeMinAge <= contextTime);
         // with stake modifier V2+, we require the utxo to be nStakeMinDepth deep in the chain
         return (contextHeight - utxoFromBlockHeight >= nStakeMinDepth);
     }
 
-
-    /**
-     * Returns true if the given network upgrade is active as of the given block
-     * height. Caller must check that the height is >= 0 (and handle unknown
-     * heights).
-     */    
+    bool NetworkUpgradeActive(int nHeight, Consensus::UpgradeIndex idx) const;
 };
 } // namespace Consensus
 

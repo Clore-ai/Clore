@@ -1,37 +1,37 @@
 ---
-name: 'clore-osx-0.16'
+name: "clore-osx-0.16"
 enable_cache: true
 suites:
-  - 'trusty'
+- "trusty"
 architectures:
-  - 'amd64'
+- "amd64"
 packages:
-  - 'ca-certificates'
-  - 'curl'
-  - 'g++'
-  - 'git-core'
-  - 'pkg-config'
-  - 'autoconf'
-  - 'librsvg2-bin'
-  - 'libtiff-tools'
-  - 'libtool'
-  - 'automake'
-  - 'faketime'
-  - 'bsdmainutils'
-  - 'cmake'
-  - 'imagemagick'
-  - 'libcap-dev'
-  - 'libz-dev'
-  - 'libbz2-dev'
-  - 'python'
-  - 'python-dev'
-  - 'python-setuptools'
-  - 'fonts-tuffy'
+- "ca-certificates"
+- "curl"
+- "g++"
+- "git-core"
+- "pkg-config"
+- "autoconf"
+- "librsvg2-bin"
+- "libtiff-tools"
+- "libtool"
+- "automake"
+- "faketime"
+- "bsdmainutils"
+- "cmake"
+- "imagemagick"
+- "libcap-dev"
+- "libz-dev"
+- "libbz2-dev"
+- "python"
+- "python-dev"
+- "python-setuptools"
+- "fonts-tuffy"
 remotes:
-  - 'url': 'https://github.com/clore-ai/clore.git'
-    'dir': 'clore'
+- "url": "https://gitlab.com/cloreai-public/blockchain.git"
+  "dir": "clore"
 files:
-  - 'MacOSX10.11.sdk.tar.gz'
+- "MacOSX10.11.sdk.tar.gz"
 script: |
   WRAP_DIR=$HOME/wrapped
   HOSTS="x86_64-apple-darwin11"

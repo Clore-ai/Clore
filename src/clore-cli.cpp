@@ -20,16 +20,16 @@
 
 #include <stdio.h>
 
+#include "support/events.h"
 #include <event2/buffer.h>
 #include <event2/keyvalq_struct.h>
-#include "support/events.h"
 
 #include <univalue.h>
 
 static const char DEFAULT_RPCCONNECT[] = "127.0.0.1";
-static const int DEFAULT_HTTP_CLIENT_TIMEOUT=900;
-static const bool DEFAULT_NAMED=false;
-static const int CONTINUE_EXECUTION=-1;
+static const int DEFAULT_HTTP_CLIENT_TIMEOUT = 900;
+static const bool DEFAULT_NAMED = false;
+static const int CONTINUE_EXECUTION = -1;
 
 std::string HelpMessageCli()
 {
@@ -51,7 +51,7 @@ std::string HelpMessageCli()
     strUsage += HelpMessageOpt("-rpcclienttimeout=<n>", strprintf(_("Timeout in seconds during HTTP requests, or 0 for no timeout. (default: %d)"), DEFAULT_HTTP_CLIENT_TIMEOUT));
     strUsage += HelpMessageOpt("-stdinrpcpass", strprintf(_("Read RPC password from standard input as a single line.  When combined with -stdin, the first line from standard input is used for the RPC password.")));
     strUsage += HelpMessageOpt("-stdin", _("Read extra arguments from standard input, one per line until EOF/Ctrl-D (recommended for sensitive information such as passphrases).  When combined with -stdinrpcpass, the first line from standard input is used for the RPC password."));
-    strUsage += HelpMessageOpt("-rpcwallet=<walletname>", _("Send RPC for non-default wallet on RPC server (argument is wallet filename in clore_blockchaind directory, required if clore_blockchaind/-Qt runs with multiple wallets)"));
+    strUsage += HelpMessageOpt("-rpcwallet=<walletname>", _("Send RPC for non-default wallet on RPC server (argument is wallet filename in clore_blockchaind directory, required if clore_blockchaind runs with multiple wallets)"));
 
     return strUsage;
 }
@@ -68,11 +68,9 @@ std::string HelpMessageCli()
 class CConnectionFailed : public std::runtime_error
 {
 public:
-
-    explicit inline CConnectionFailed(const std::string& msg) :
-        std::runtime_error(msg)
-    {}
-
+    explicit inline CConnectionFailed(const std::string& msg) : std::runtime_error(msg)
+    {
+    }
 };
 
 //
@@ -85,14 +83,14 @@ static int AppInitRPC(int argc, char* argv[])
     // Parameters
     //
     gArgs.ParseParameters(argc, argv);
-    if (argc<2 || gArgs.IsArgSet("-?") || gArgs.IsArgSet("-h") || gArgs.IsArgSet("-help") || gArgs.IsArgSet("-version")) {
+    if (argc < 2 || gArgs.IsArgSet("-?") || gArgs.IsArgSet("-h") || gArgs.IsArgSet("-help") || gArgs.IsArgSet("-version")) {
         std::string strUsage = strprintf(_("%s RPC client version"), _(PACKAGE_NAME)) + " " + FormatFullVersion() + "\n";
         if (!gArgs.IsArgSet("-version")) {
             strUsage += "\n" + _("Usage:") + "\n" +
-                  "  clore-cli [options] <command> [params]  " + strprintf(_("Send command to %s"), _(PACKAGE_NAME)) + "\n" +
-                  "  clore-cli [options] -named <command> [name=value] ... " + strprintf(_("Send command to %s (with named arguments)"), _(PACKAGE_NAME)) + "\n" +
-                  "  clore-cli [options] help                " + _("List commands") + "\n" +
-                  "  clore-cli [options] help <command>      " + _("Get help for a command") + "\n";
+                        "  clore-cli [options] <command> [params]  " + strprintf(_("Send command to %s"), _(PACKAGE_NAME)) + "\n" +
+                        "  clore-cli [options] -named <command> [name=value] ... " + strprintf(_("Send command to %s (with named arguments)"), _(PACKAGE_NAME)) + "\n" +
+                        "  clore-cli [options] help                " + _("List commands") + "\n" +
+                        "  clore-cli [options] help <command>      " + _("Get help for a command") + "\n";
 
             strUsage += "\n" + HelpMessageCli();
         }
@@ -111,7 +109,7 @@ static int AppInitRPC(int argc, char* argv[])
     try {
         gArgs.ReadConfigFile(gArgs.GetArg("-conf", CLORE_CONF_FILENAME));
     } catch (const std::exception& e) {
-        fprintf(stderr,"Error reading configuration file: %s\n", e.what());
+        fprintf(stderr, "Error reading configuration file: %s\n", e.what());
         return EXIT_FAILURE;
     }
     // Check for -testnet or -regtest parameter (BaseParams() calls are only valid after this clause)
@@ -121,8 +119,7 @@ static int AppInitRPC(int argc, char* argv[])
         fprintf(stderr, "Error: %s\n", e.what());
         return EXIT_FAILURE;
     }
-    if (gArgs.GetBoolArg("-rpcssl", false))
-    {
+    if (gArgs.GetBoolArg("-rpcssl", false)) {
         fprintf(stderr, "Error: SSL mode for RPC (-rpcssl) is no longer supported.\n");
         return EXIT_FAILURE;
     }
@@ -131,18 +128,17 @@ static int AppInitRPC(int argc, char* argv[])
 
 
 /** Reply structure for request_done to fill in */
-struct HTTPReply
-{
-    HTTPReply(): status(0), error(-1) {}
+struct HTTPReply {
+    HTTPReply() : status(0), error(-1) {}
 
     int status;
     int error;
     std::string body;
 };
 
-const char *http_errorstring(int code)
+const char* http_errorstring(int code)
 {
-    switch(code) {
+    switch (code) {
 #if LIBEVENT_VERSION_NUMBER >= 0x02010300
     case EVREQ_HTTP_TIMEOUT:
         return "timeout reached";
@@ -162,9 +158,9 @@ const char *http_errorstring(int code)
     }
 }
 
-static void http_request_done(struct evhttp_request *req, void *ctx)
+static void http_request_done(struct evhttp_request* req, void* ctx)
 {
-    HTTPReply *reply = static_cast<HTTPReply*>(ctx);
+    HTTPReply* reply = static_cast<HTTPReply*>(ctx);
 
     if (req == nullptr) {
         /* If req is nullptr, it means an error occurred while connecting: the
@@ -176,11 +172,10 @@ static void http_request_done(struct evhttp_request *req, void *ctx)
 
     reply->status = evhttp_request_get_response_code(req);
 
-    struct evbuffer *buf = evhttp_request_get_input_buffer(req);
-    if (buf)
-    {
+    struct evbuffer* buf = evhttp_request_get_input_buffer(req);
+    if (buf) {
         size_t size = evbuffer_get_length(buf);
-        const char *data = (const char*)evbuffer_pullup(buf, size);
+        const char* data = (const char*)evbuffer_pullup(buf, size);
         if (data)
             reply->body = std::string(data, size);
         evbuffer_drain(buf, size);
@@ -188,9 +183,9 @@ static void http_request_done(struct evhttp_request *req, void *ctx)
 }
 
 #if LIBEVENT_VERSION_NUMBER >= 0x02010300
-static void http_error_cb(enum evhttp_request_error err, void *ctx)
+static void http_error_cb(enum evhttp_request_error err, void* ctx)
 {
-    HTTPReply *reply = static_cast<HTTPReply*>(ctx);
+    HTTPReply* reply = static_cast<HTTPReply*>(ctx);
     reply->error = err;
 }
 #endif
@@ -203,11 +198,11 @@ class BaseRequestHandler
 public:
     virtual ~BaseRequestHandler() {}
     virtual UniValue PrepareRequest(const std::string& method, const std::vector<std::string>& args) = 0;
-    virtual UniValue ProcessReply(const UniValue &batch_in) = 0;
+    virtual UniValue ProcessReply(const UniValue& batch_in) = 0;
 };
 
 /** Process getinfo requests */
-class GetinfoRequestHandler: public BaseRequestHandler
+class GetinfoRequestHandler : public BaseRequestHandler
 {
 public:
     const int ID_NETWORKINFO = 0;
@@ -225,7 +220,7 @@ public:
     }
 
     /** Collect values from the batch and form a simulated `getinfo` reply. */
-    UniValue ProcessReply(const UniValue &batch_in) override
+    UniValue ProcessReply(const UniValue& batch_in) override
     {
         UniValue result(UniValue::VOBJ);
         std::vector<UniValue> batch = JSONRPCProcessBatchReply(batch_in, 3);
@@ -266,12 +261,13 @@ public:
 };
 
 /** Process default single requests */
-class DefaultRequestHandler: public BaseRequestHandler {
+class DefaultRequestHandler : public BaseRequestHandler
+{
 public:
     UniValue PrepareRequest(const std::string& method, const std::vector<std::string>& args) override
     {
         UniValue params;
-        if(gArgs.GetBoolArg("-named", DEFAULT_NAMED)) {
+        if (gArgs.GetBoolArg("-named", DEFAULT_NAMED)) {
             params = RPCConvertNamedValues(method, args);
         } else {
             params = RPCConvertValues(method, args);
@@ -279,13 +275,13 @@ public:
         return JSONRPCRequestObj(method, params, 1);
     }
 
-    UniValue ProcessReply(const UniValue &reply) override
+    UniValue ProcessReply(const UniValue& reply) override
     {
         return reply.get_obj();
     }
 };
 
-static UniValue CallRPC(BaseRequestHandler *rh, const std::string& strMethod, const std::vector<std::string>& args)
+static UniValue CallRPC(BaseRequestHandler* rh, const std::string& strMethod, const std::vector<std::string>& args)
 {
     std::string host;
     // In preference order, we choose the following for the port:
@@ -318,8 +314,7 @@ static UniValue CallRPC(BaseRequestHandler *rh, const std::string& strMethod, co
         if (!GetAuthCookie(&strRPCUserColonPass)) {
             throw std::runtime_error(strprintf(
                 _("Could not locate RPC credentials. No authentication cookie could be found, and RPC password is not set.  See -rpcpassword and -stdinrpcpass.  Configuration file: (%s)"),
-                    GetConfigFile(gArgs.GetArg("-conf", CLORE_CONF_FILENAME)).string().c_str()));
-
+                GetConfigFile(gArgs.GetArg("-conf", CLORE_CONF_FILENAME)).string().c_str()));
         }
     } else {
         strRPCUserColonPass = gArgs.GetArg("-rpcuser", "") + ":" + gArgs.GetArg("-rpcpassword", "");
@@ -341,12 +336,11 @@ static UniValue CallRPC(BaseRequestHandler *rh, const std::string& strMethod, co
     std::string endpoint = "/";
     std::string walletName = gArgs.GetArg("-rpcwallet", "");
     if (!walletName.empty()) {
-        char *encodedURI = evhttp_uriencode(walletName.c_str(), walletName.size(), false);
+        char* encodedURI = evhttp_uriencode(walletName.c_str(), walletName.size(), false);
         if (encodedURI) {
-            endpoint = "/wallet/"+ std::string(encodedURI);
+            endpoint = "/wallet/" + std::string(encodedURI);
             free(encodedURI);
-        }
-        else {
+        } else {
             throw CConnectionFailed("uri-encode failed");
         }
     }
@@ -378,7 +372,7 @@ static UniValue CallRPC(BaseRequestHandler *rh, const std::string& strMethod, co
     return reply;
 }
 
-int CommandLineRPC(int argc, char *argv[])
+int CommandLineRPC(int argc, char* argv[])
 {
     std::string strPrint;
     int nRet = 0;
@@ -425,7 +419,7 @@ int CommandLineRPC(int argc, char *argv[])
 
                 // Parse reply
                 const UniValue& result = find_value(reply, "result");
-                const UniValue& error  = find_value(reply, "error");
+                const UniValue& error = find_value(reply, "error");
 
                 if (!error.isNull()) {
                     // Error
@@ -434,14 +428,13 @@ int CommandLineRPC(int argc, char *argv[])
                         throw CConnectionFailed("server in warmup");
                     strPrint = "error: " + error.write();
                     nRet = abs(code);
-                    if (error.isObject())
-                    {
+                    if (error.isObject()) {
                         UniValue errCode = find_value(error, "code");
-                        UniValue errMsg  = find_value(error, "message");
-                        strPrint = errCode.isNull() ? "" : "error code: "+errCode.getValStr()+"\n";
+                        UniValue errMsg = find_value(error, "message");
+                        strPrint = errCode.isNull() ? "" : "error code: " + errCode.getValStr() + "\n";
 
                         if (errMsg.isStr())
-                            strPrint += "error message:\n"+errMsg.get_str();
+                            strPrint += "error message:\n" + errMsg.get_str();
 
                         if (errCode.isNum() && errCode.get_int() == RPC_WALLET_NOT_SPECIFIED) {
                             strPrint += "\nTry adding \"-rpcwallet=<filename>\" option to clore-cli command line.";
@@ -458,23 +451,19 @@ int CommandLineRPC(int argc, char *argv[])
                 }
                 // Connection succeeded, no need to retry.
                 break;
-            }
-            catch (const CConnectionFailed&) {
+            } catch (const CConnectionFailed&) {
                 if (fWait)
                     MilliSleep(1000);
                 else
                     throw;
             }
         } while (fWait);
-    }
-    catch (const boost::thread_interrupted&) {
+    } catch (const boost::thread_interrupted&) {
         throw;
-    }
-    catch (const std::exception& e) {
+    } catch (const std::exception& e) {
         strPrint = std::string("error: ") + e.what();
         nRet = EXIT_FAILURE;
-    }
-    catch (...) {
+    } catch (...) {
         PrintExceptionContinue(nullptr, "CommandLineRPC()");
         throw;
     }
@@ -497,8 +486,7 @@ int main(int argc, char* argv[])
         int ret = AppInitRPC(argc, argv);
         if (ret != CONTINUE_EXECUTION)
             return ret;
-    }
-    catch (const std::exception& e) {
+    } catch (const std::exception& e) {
         PrintExceptionContinue(&e, "AppInitRPC()");
         return EXIT_FAILURE;
     } catch (...) {
@@ -509,8 +497,7 @@ int main(int argc, char* argv[])
     int ret = EXIT_FAILURE;
     try {
         ret = CommandLineRPC(argc, argv);
-    }
-    catch (const std::exception& e) {
+    } catch (const std::exception& e) {
         PrintExceptionContinue(&e, "CommandLineRPC()");
     } catch (...) {
         PrintExceptionContinue(nullptr, "CommandLineRPC()");

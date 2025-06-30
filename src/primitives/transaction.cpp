@@ -132,27 +132,3 @@ std::string CTransaction::ToString() const
         str += "    " + tx_out.ToString() + "\n";
     return str;
 }
-bool CTxIn::IsZerocoinSpend() const
-{
-    return prevout.hash.IsNull();
-}
-
-bool CTransaction::IsCoinStake() const
-{
-    if (vin.empty())
-        return false;
-
-    bool fAllowNull = vin[0].IsZerocoinSpend();
-    if (vin[0].prevout.IsNull() && !fAllowNull)
-        return false;
-
-    return (vout.size() >= 2 && vout[0].IsEmpty());
-}
-bool CTransaction::HasP2CSOutputs() const
-{
-    for(const CTxOut& txout : vout) {
-        if (txout.scriptPubKey.IsPayToColdStaking())
-            return true;
-    }
-    return false;
-}

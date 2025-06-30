@@ -6,10 +6,10 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include <base58.h>
-#include <assets/assets.h>
-#include <validation.h>
 #include "script/standard.h"
+#include <assets/assets.h>
+#include <base58.h>
+#include <validation.h>
 
 #include "pubkey.h"
 #include "script/script.h"
@@ -25,34 +25,43 @@ CScriptID::CScriptID(const CScript& in) : uint160(Hash160(in.begin(), in.end()))
 
 const char* GetTxnOutputType(txnouttype t)
 {
-    switch (t)
-    {
-    case TX_NONSTANDARD: return "nonstandard";
-    case TX_PUBKEY: return "pubkey";
-    case TX_PUBKEYHASH: return "pubkeyhash";
-    case TX_SCRIPTHASH: return "scripthash";
-    case TX_MULTISIG: return "multisig";
-    case TX_COLDSTAKE: return "coldstake";
-    case TX_NULL_DATA: return "nulldata";
-    case TX_RESTRICTED_ASSET_DATA: return "nullassetdata";
-    case TX_WITNESS_V0_KEYHASH: return "witness_v0_keyhash";
-    case TX_WITNESS_V0_SCRIPTHASH: return "witness_v0_scripthash";
+    switch (t) {
+    case TX_NONSTANDARD:
+        return "nonstandard";
+    case TX_PUBKEY:
+        return "pubkey";
+    case TX_PUBKEYHASH:
+        return "pubkeyhash";
+    case TX_SCRIPTHASH:
+        return "scripthash";
+    case TX_MULTISIG:
+        return "multisig";
+    case TX_NULL_DATA:
+        return "nulldata";
+    case TX_RESTRICTED_ASSET_DATA:
+        return "nullassetdata";
+    case TX_WITNESS_V0_KEYHASH:
+        return "witness_v0_keyhash";
+    case TX_WITNESS_V0_SCRIPTHASH:
+        return "witness_v0_scripthash";
 
     /** CLORE START */
-    case TX_NEW_ASSET: return ASSET_NEW_STRING;
-    case TX_TRANSFER_ASSET: return ASSET_TRANSFER_STRING;
-    case TX_REISSUE_ASSET: return ASSET_REISSUE_STRING;
-    /** CLORE END */
+    case TX_NEW_ASSET:
+        return ASSET_NEW_STRING;
+    case TX_TRANSFER_ASSET:
+        return ASSET_TRANSFER_STRING;
+    case TX_REISSUE_ASSET:
+        return ASSET_REISSUE_STRING;
+        /** CLORE END */
     }
     return nullptr;
 }
 
-bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, std::vector<std::vector<unsigned char> >& vSolutionsRet)
+bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, std::vector<std::vector<unsigned char>>& vSolutionsRet)
 {
     // Templates
     static std::multimap<txnouttype, CScript> mTemplates;
-    if (mTemplates.empty())
-    {
+    if (mTemplates.empty()) {
         // Standard tx, sender provides pubkey, receiver adds signature
         mTemplates.insert(std::make_pair(TX_PUBKEY, CScript() << OP_PUBKEY << OP_CHECKSIG));
 
@@ -67,10 +76,9 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, std::vector<std::v
 
     // Shortcut for pay-to-script-hash, which are more constrained than the other types:
     // it is always OP_HASH160 20 [20 byte hash] OP_EQUAL
-    if (scriptPubKey.IsPayToScriptHash())
-    {
+    if (scriptPubKey.IsPayToScriptHash()) {
         typeRet = TX_SCRIPTHASH;
-        std::vector<unsigned char> hashBytes(scriptPubKey.begin()+2, scriptPubKey.begin()+22);
+        std::vector<unsigned char> hashBytes(scriptPubKey.begin() + 2, scriptPubKey.begin() + 22);
         vSolutionsRet.push_back(hashBytes);
         return true;
     }
@@ -79,7 +87,7 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, std::vector<std::v
     bool fIsOwner = false;
     if (scriptPubKey.IsAssetScript(nType, fIsOwner)) {
         typeRet = (txnouttype)nType;
-        std::vector<unsigned char> hashBytes(scriptPubKey.begin()+3, scriptPubKey.begin()+23);
+        std::vector<unsigned char> hashBytes(scriptPubKey.begin() + 3, scriptPubKey.begin() + 23);
         vSolutionsRet.push_back(hashBytes);
         return true;
     }
@@ -106,7 +114,7 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, std::vector<std::v
     // So long as script passes the IsUnspendable() test and all but the first
     // byte passes the IsPushOnly() test we don't care what exactly is in the
     // script.
-    if (scriptPubKey.size() >= 1 && scriptPubKey[0] == OP_RETURN && scriptPubKey.IsPushOnly(scriptPubKey.begin()+1)) {
+    if (scriptPubKey.size() >= 1 && scriptPubKey[0] == OP_RETURN && scriptPubKey.IsPushOnly(scriptPubKey.begin() + 1)) {
         typeRet = TX_NULL_DATA;
         return true;
     }
@@ -115,7 +123,7 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, std::vector<std::v
     //
     // So long as script passes the IsUnspendable() test and all but the first three
     // byte passes the IsPushOnly()
-    if (scriptPubKey.size() >= 1 && scriptPubKey[0] == OP_CLORE_ASSET && scriptPubKey.IsPushOnly(scriptPubKey.begin()+1)) {
+    if (scriptPubKey.size() >= 1 && scriptPubKey[0] == OP_CLORE_ASSET && scriptPubKey.IsPushOnly(scriptPubKey.begin() + 1)) {
         typeRet = TX_RESTRICTED_ASSET_DATA;
 
         if (scriptPubKey.size() >= 23 && scriptPubKey[1] != OP_RESERVED) {
@@ -127,8 +135,7 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, std::vector<std::v
 
     // Scan templates
     const CScript& script1 = scriptPubKey;
-    for (const std::pair<txnouttype, CScript>& tplate : mTemplates)
-    {
+    for (const auto& tplate : mTemplates) {
         const CScript& script2 = tplate.second;
         vSolutionsRet.clear();
 
@@ -138,18 +145,15 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, std::vector<std::v
         // Compare
         CScript::const_iterator pc1 = script1.begin();
         CScript::const_iterator pc2 = script2.begin();
-        while (true)
-        {
-            if (pc1 == script1.end() && pc2 == script2.end())
-            {
+        while (true) {
+            if (pc1 == script1.end() && pc2 == script2.end()) {
                 // Found a match
                 typeRet = tplate.first;
-                if (typeRet == TX_MULTISIG)
-                {
+                if (typeRet == TX_MULTISIG) {
                     // Additional checks for TX_MULTISIG:
                     unsigned char m = vSolutionsRet.front()[0];
                     unsigned char n = vSolutionsRet.back()[0];
-                    if (m < 1 || n < 1 || m > n || vSolutionsRet.size()-2 != n)
+                    if (m < 1 || n < 1 || m > n || vSolutionsRet.size() - 2 != n)
                         return false;
                 }
                 return true;
@@ -160,10 +164,8 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, std::vector<std::v
                 break;
 
             // Template matching opcodes:
-            if (opcode2 == OP_PUBKEYS)
-            {
-                while (vch1.size() >= 33 && vch1.size() <= 65)
-                {
+            if (opcode2 == OP_PUBKEYS) {
+                while (vch1.size() >= 33 && vch1.size() <= 65) {
                     vSolutionsRet.push_back(vch1);
                     if (!script1.GetOp(pc1, opcode1, vch1))
                         break;
@@ -174,57 +176,26 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, std::vector<std::v
                 // to other if/else statements
             }
 
-            if (opcode2 == OP_PUBKEY)
-            {
+            if (opcode2 == OP_PUBKEY) {
                 if (vch1.size() < 33 || vch1.size() > 65)
                     break;
                 vSolutionsRet.push_back(vch1);
-            }
-            else if (opcode2 == OP_PUBKEYHASH)
-            {
+            } else if (opcode2 == OP_PUBKEYHASH) {
                 if (vch1.size() != sizeof(uint160))
                     break;
                 vSolutionsRet.push_back(vch1);
-            }
-            else if (opcode2 == OP_SMALLINTEGER)
-            {   // Single-byte small integer pushed onto vSolutions
+            } else if (opcode2 == OP_SMALLINTEGER) { // Single-byte small integer pushed onto vSolutions
                 if (opcode1 == OP_0 ||
-                    (opcode1 >= OP_1 && opcode1 <= OP_16))
-                {
+                    (opcode1 >= OP_1 && opcode1 <= OP_16)) {
                     char n = (char)CScript::DecodeOP_N(opcode1);
                     vSolutionsRet.push_back(valtype(1, n));
-                }
-                else
+                } else
                     break;
-            }
-            else if (opcode1 != opcode2 || vch1 != vch2)
-            {
+            } else if (opcode1 != opcode2 || vch1 != vch2) {
                 // Others must match exactly
                 break;
             }
         }
-    }
-     // Check for Cold Staking (P2CS) script
-    if (scriptPubKey.size() == 51 &&
-        scriptPubKey[0] == OP_DUP &&
-        scriptPubKey[1] == OP_HASH160 &&
-        scriptPubKey[2] == OP_ROT &&
-        scriptPubKey[3] == OP_IF &&
-        (scriptPubKey[4] == OP_CHECKCOLDSTAKEVERIFY || scriptPubKey[4] == OP_CHECKCOLDSTAKEVERIFY_LOF) &&
-        scriptPubKey[5] == 0x14 &&  // PUSHDATA(20)
-        scriptPubKey[26] == OP_ELSE &&
-        scriptPubKey[27] == 0x14 &&  // PUSHDATA(20)
-        scriptPubKey[48] == OP_ENDIF &&
-        scriptPubKey[49] == OP_EQUALVERIFY &&
-        scriptPubKey[50] == OP_CHECKSIG)
-    {
-        std::vector<unsigned char> stakeKey(scriptPubKey.begin() + 6, scriptPubKey.begin() + 26);
-        std::vector<unsigned char> spendKey(scriptPubKey.begin() + 28, scriptPubKey.begin() + 48);
-        vSolutionsRet.clear();
-        vSolutionsRet.push_back(stakeKey);
-        vSolutionsRet.push_back(spendKey);
-        typeRet = TX_COLDSTAKE;
-        return true;
     }
 
     vSolutionsRet.clear();
@@ -232,7 +203,7 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, std::vector<std::v
     return false;
 }
 
-bool ExtractDestination(const CScript& scriptPubKey, CTxDestination& addressRet, bool fColdStake)
+bool ExtractDestination(const CScript& scriptPubKey, CTxDestination& addressRet)
 {
     std::vector<valtype> vSolutions;
     txnouttype whichType;
@@ -240,29 +211,20 @@ bool ExtractDestination(const CScript& scriptPubKey, CTxDestination& addressRet,
         return false;
     }
 
-    if (whichType == TX_PUBKEY)
-    {
+    if (whichType == TX_PUBKEY) {
         CPubKey pubKey(vSolutions[0]);
         if (!pubKey.IsValid())
             return false;
 
         addressRet = pubKey.GetID();
         return true;
-    }
-    else if (whichType == TX_PUBKEYHASH)
-    {
+    } else if (whichType == TX_PUBKEYHASH) {
         addressRet = CKeyID(uint160(vSolutions[0]));
         return true;
-    }
-    else if (whichType == TX_COLDSTAKE) {
-        addressRet = CKeyID(uint160(vSolutions[!fColdStake]));
-        return true;
-    }
-    else if (whichType == TX_SCRIPTHASH)
-    {
+    } else if (whichType == TX_SCRIPTHASH) {
         addressRet = CScriptID(uint160(vSolutions[0]));
         return true;
-    /** CLORE START */
+        /** CLORE START */
     } else if (whichType == TX_NEW_ASSET || whichType == TX_REISSUE_ASSET || whichType == TX_TRANSFER_ASSET) {
         addressRet = CKeyID(uint160(vSolutions[0]));
         return true;
@@ -272,7 +234,7 @@ bool ExtractDestination(const CScript& scriptPubKey, CTxDestination& addressRet,
             return true;
         }
     }
-     /** CLORE END */
+    /** CLORE END */
     // Multisig txns have more than one address...
     return false;
 }
@@ -289,11 +251,9 @@ bool ExtractDestinations(const CScript& scriptPubKey, txnouttype& typeRet, std::
         return false;
     }
 
-    if (typeRet == TX_MULTISIG)
-    {
+    if (typeRet == TX_MULTISIG) {
         nRequiredRet = vSolutions.front()[0];
-        for (unsigned int i = 1; i < vSolutions.size()-1; i++)
-        {
+        for (unsigned int i = 1; i < vSolutions.size() - 1; i++) {
             CPubKey pubKey(vSolutions[i]);
             if (!pubKey.IsValid())
                 continue;
@@ -304,23 +264,11 @@ bool ExtractDestinations(const CScript& scriptPubKey, txnouttype& typeRet, std::
 
         if (addressRet.empty())
             return false;
-    }
-    else if (typeRet == TX_COLDSTAKE)
-    {
-        if (vSolutions.size() < 2)
-            return false;
-        nRequiredRet = 2;
-        addressRet.push_back(CKeyID(uint160(vSolutions[0])));
-        addressRet.push_back(CKeyID(uint160(vSolutions[1])));
-        return true;
-
-    } 
-    else
-    {
+    } else {
         nRequiredRet = 1;
         CTxDestination address;
         if (!ExtractDestination(scriptPubKey, address))
-           return false;
+            return false;
         addressRet.push_back(address);
     }
 
@@ -332,28 +280,26 @@ namespace
 class CScriptVisitor : public boost::static_visitor<bool>
 {
 private:
-    CScript *script;
-public:
-    explicit CScriptVisitor(CScript *scriptin) { script = scriptin; }
+    CScript* script;
 
-    bool operator()(const CNoDestination &dest) const {
+public:
+    explicit CScriptVisitor(CScript* scriptin) { script = scriptin; }
+
+    bool operator()(const CNoDestination& dest) const
+    {
         script->clear();
         return false;
     }
 
-    bool operator()(const CKeyID &keyID) const {
+    bool operator()(const CKeyID& keyID) const
+    {
         script->clear();
         *script << OP_DUP << OP_HASH160 << ToByteVector(keyID) << OP_EQUALVERIFY << OP_CHECKSIG;
         return true;
     }
 
-    bool operator()(const CExchangeKeyID &keyID) const {
-        script->clear();
-        *script << OP_EXCHANGEADDR << OP_DUP << OP_HASH160 << ToByteVector(keyID) << OP_EQUALVERIFY << OP_CHECKSIG;
-        return true;
-    }
-    
-    bool operator()(const CScriptID &scriptID) const {
+    bool operator()(const CScriptID& scriptID) const
+    {
         script->clear();
         *script << OP_HASH160 << ToByteVector(scriptID) << OP_EQUAL;
         return true;
@@ -363,35 +309,34 @@ public:
 
 namespace
 {
-    class CNullAssetScriptVisitor : public boost::static_visitor<bool>
+class CNullAssetScriptVisitor : public boost::static_visitor<bool>
+{
+private:
+    CScript* script;
+
+public:
+    explicit CNullAssetScriptVisitor(CScript* scriptin) { script = scriptin; }
+
+    bool operator()(const CNoDestination& dest) const
     {
-    private:
-        CScript *script;
-    public:
-        explicit CNullAssetScriptVisitor(CScript *scriptin) { script = scriptin; }
+        script->clear();
+        return false;
+    }
 
-        bool operator()(const CNoDestination &dest) const {
-            script->clear();
-            return false;
-        }
+    bool operator()(const CKeyID& keyID) const
+    {
+        script->clear();
+        *script << OP_CLORE_ASSET << ToByteVector(keyID);
+        return true;
+    }
 
-        bool operator()(const CKeyID &keyID) const {
-            script->clear();
-            *script << OP_CLORE_ASSET << ToByteVector(keyID);
-            return true;
-        }
-
-        bool operator()(const CScriptID &scriptID) const {
-            script->clear();
-            *script << OP_CLORE_ASSET << ToByteVector(scriptID);
-            return true;
-        }
-        bool operator()(const CExchangeKeyID& keyID) const {
-            script->clear();
-            *script << OP_CLORE_ASSET << ToByteVector(keyID);
-            return true;
-        }
-    };
+    bool operator()(const CScriptID& scriptID) const
+    {
+        script->clear();
+        *script << OP_CLORE_ASSET << ToByteVector(scriptID);
+        return true;
+    }
+};
 } // namespace
 
 CScript GetScriptForDestination(const CTxDestination& dest)
@@ -402,7 +347,7 @@ CScript GetScriptForDestination(const CTxDestination& dest)
     return script;
 }
 
-CScript GetScriptForNullAssetDataDestination(const CTxDestination &dest)
+CScript GetScriptForNullAssetDataDestination(const CTxDestination& dest)
 {
     CScript script;
 
@@ -426,22 +371,12 @@ CScript GetScriptForMultisig(int nRequired, const std::vector<CPubKey>& keys)
     return script;
 }
 
-CScript GetScriptForStakeDelegation(const CKeyID& stakingKey, const CKeyID& spendingKey)
-{
-    CScript script;
-    script << OP_DUP << OP_HASH160 << OP_ROT <<
-            OP_IF << OP_CHECKCOLDSTAKEVERIFY << ToByteVector(stakingKey) <<
-            OP_ELSE << ToByteVector(spendingKey) << OP_ENDIF <<
-            OP_EQUALVERIFY << OP_CHECKSIG;
-    return script;
-}
-
 CScript GetScriptForWitness(const CScript& redeemscript)
 {
     CScript ret;
 
     txnouttype typ;
-    std::vector<std::vector<unsigned char> > vSolutions;
+    std::vector<std::vector<unsigned char>> vSolutions;
     if (Solver(redeemscript, typ, vSolutions)) {
         if (typ == TX_PUBKEY) {
             unsigned char h160[20];
@@ -449,8 +384,8 @@ CScript GetScriptForWitness(const CScript& redeemscript)
             ret << OP_0 << std::vector<unsigned char>(&h160[0], &h160[20]);
             return ret;
         } else if (typ == TX_PUBKEYHASH) {
-           ret << OP_0 << vSolutions[0];
-           return ret;
+            ret << OP_0 << vSolutions[0];
+            return ret;
         }
     }
     uint256 hash;
@@ -459,6 +394,7 @@ CScript GetScriptForWitness(const CScript& redeemscript)
     return ret;
 }
 
-bool IsValidDestination(const CTxDestination& dest) {
+bool IsValidDestination(const CTxDestination& dest)
+{
     return dest.which() != 0;
 }

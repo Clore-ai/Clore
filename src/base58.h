@@ -67,8 +67,6 @@ inline bool DecodeBase58Check(const char* psz, std::vector<unsigned char>& vchRe
  */
 inline bool DecodeBase58Check(const std::string& str, std::vector<unsigned char>& vchRet);
 
-inline bool DecodeBase58Check(const std::string& str, std::vector<unsigned char>& vchRet, int max_ret_len);
-
 /**
  * Base class for all base58-encoded data
  */
@@ -108,7 +106,6 @@ class CCloreAddress : public CBase58Data {
 public:
     bool Set(const CKeyID &id);
     bool Set(const CScriptID &id);
-    bool Set(const CExchangeKeyID &id);
     bool Set(const CTxDestination &dest);
     bool IsValid() const;
     bool IsValid(const CChainParams &params) const;
@@ -170,8 +167,7 @@ public:
 typedef CCloreExtKeyBase<CExtKey, BIP32_EXTKEY_SIZE, CChainParams::EXT_SECRET_KEY> CCloreExtKey;
 typedef CCloreExtKeyBase<CExtPubKey, BIP32_EXTKEY_SIZE, CChainParams::EXT_PUBLIC_KEY> CCloreExtPubKey;
 
-std::string EncodeDestination(const CTxDestination& dest, bool isStaking, bool isExchange);
-std::string EncodeDestination(const CTxDestination& dest, const CChainParams::Base58Type addrType = CChainParams::PUBKEY_ADDRESS);
+std::string EncodeDestination(const CTxDestination& dest);
 CTxDestination DecodeDestination(const std::string& str);
 bool IsValidDestinationString(const std::string& str);
 bool IsValidDestinationString(const std::string& str, const CChainParams& params);

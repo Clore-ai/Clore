@@ -3,6 +3,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include "base58.h"
 #include "chain.h"
 #include "rpc/safemode.h"
 #include "rpc/server.h"
@@ -16,7 +17,6 @@
 #include "wallet.h"
 #include "merkleblock.h"
 #include "core_io.h"
-#include "base58.h"
 
 #include "rpcwallet.h"
 
@@ -622,7 +622,7 @@ UniValue dumpwallet(const JSONRPCRequest& request)
 
     /* Prevent arbitrary files from being overwritten. There have been reports
      * that users have overwritten wallet files this way:
-     * https://github.com/clore-ai/clore/issues/9934
+     * https://gitlab.com/cloreai-public/blockchain/issues/9934
      * It may also avoid other security issues.
      */
     if (boost::filesystem::exists(filepath)) {

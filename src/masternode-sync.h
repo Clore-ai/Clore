@@ -1,27 +1,32 @@
 // Copyright (c) 2014-2015 The Dash developers
 // Copyright (c) 2015-2022 The PIVX Core developers
-// Distributed under the MIT software license, see the accompanying
-// file COPYING or https://www.opensource.org/licenses/mit-license.php.
+// Copyright (c) 2024 The CLORE Core developers
+// Distributed under the MIT/X11 software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef MASTERNODE_SYNC_H
-#define MASTERNODE_SYNC_H
+#ifndef CLORE_MASTERNODE_SYNC_H
+#define CLORE_MASTERNODE_SYNC_H
 
-#include "net.h"    // for NodeId
-#include "uint256.h"
+#include "chain.h"
+#include "net.h"
 
-#include <atomic>
-#include <string>
-#include <map>
-
-#define MASTERNODE_SYNC_TIMEOUT 5
+#include <univalue.h>
 
 class CMasternodeSync;
-extern CMasternodeSync masternodeSync;
 
-struct TierTwoPeerData {
-    // map of message --> last request timestamp, bool hasResponseArrived.
-    std::map<const char*, std::pair<int64_t, bool>> mapMsgData;
-};
+static const int MASTERNODE_SYNC_FAILED = -1;
+static const int MASTERNODE_SYNC_INITIAL = 0;
+static const int MASTERNODE_SYNC_SPORKS = 1;
+static const int MASTERNODE_SYNC_LIST = 2;
+static const int MASTERNODE_SYNC_MNW = 3;
+static const int MASTERNODE_SYNC_FINISHED = 999;
+
+static const int MASTERNODE_SYNC_TICK_SECONDS = 6;
+static const int MASTERNODE_SYNC_TIMEOUT_SECONDS = 30; // our blocks are 2.5 minutes so 30 seconds should be fine
+
+static const int MASTERNODE_SYNC_ENOUGH_PEERS = 6;
+
+extern CMasternodeSync masternodeSync;
 
 //
 // CMasternodeSync : Sync masternode assets in stages
@@ -29,75 +34,67 @@ struct TierTwoPeerData {
 
 class CMasternodeSync
 {
-public:
-    int64_t lastFailure;
-    int nCountFailures;
-
-    std::atomic<int64_t> lastProcess;
-
-    // sum of all counts
-    int sumMasternodeList;
-    int sumMasternodeWinner;
-    int sumBudgetItemProp;
-    int sumBudgetItemFin;
-    // peers that reported counts
-    int countMasternodeList;
-    int countMasternodeWinner;
-    int countBudgetItemProp;
-    int countBudgetItemFin;
-
-    // Count peers we've requested the list from
-    int RequestedMasternodeAttempt;
+private:
+    // Keep track of current asset
+    int nRequestedMasternodeAssets;
+    // Count peers we've requested the asset from
+    int nRequestedMasternodeAttempt;
 
     // Time when current masternode asset sync started
-    int64_t nAssetSyncStarted;
+    int64_t nTimeAssetSyncStarted;
 
-    CMasternodeSync();
+    // Last time when we received some masternode asset ...
+    int64_t nTimeLastMasternodeList;
+    int64_t nTimeLastPaymentVote;
 
+    // ... or failed
+    int64_t nTimeLastFailure;
+
+    // How many times we failed
+    int nCountFailures;
+
+    // Keep track of current block index
+    const CBlockIndex* pCurrentBlockIndex;
+
+    bool CheckNodeHeight(CNode* pnode, bool fDisconnectStuckNodes = false);
+    void Fail();
     void SwitchToNextAsset();
+
+    void ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv);
+
+public:
+    CMasternodeSync() { Reset(); }
+
+    SERIALIZE_METHODS(CMasternodeSync, obj)
+    {
+        READWRITE(obj.nRequestedMasternodeAssets, obj.nRequestedMasternodeAttempt, obj.nTimeAssetSyncStarted,
+            obj.nTimeLastMasternodeList, obj.nTimeLastPaymentVote, obj.nTimeLastFailure, obj.nCountFailures);
+    }
+
+    void SendGovernanceSyncRequest(CNode* pnode);
+
+    bool IsFailed() { return nRequestedMasternodeAssets == MASTERNODE_SYNC_FAILED; }
+    bool IsBlockchainSynced() { return nRequestedMasternodeAssets > MASTERNODE_SYNC_SPORKS; }
+    bool IsMasternodeListSynced() { return nRequestedMasternodeAssets > MASTERNODE_SYNC_LIST; }
+    bool IsWinnersListSynced() { return nRequestedMasternodeAssets > MASTERNODE_SYNC_MNW; }
+    bool IsSynced() { return nRequestedMasternodeAssets == MASTERNODE_SYNC_FINISHED; }
+
+    int GetAssetID() { return nRequestedMasternodeAssets; }
+    int GetAttempt() { return nRequestedMasternodeAttempt; }
+    std::string GetAssetName();
     std::string GetSyncStatus();
-    void ProcessSyncStatusMsg(int nItemID, int itemCount);
-    bool IsBudgetFinEmpty();
-    bool IsBudgetPropEmpty();
 
     void Reset();
-    void Process();
-    /*
-     * Process sync with a single node.
-     * If it returns false, the Process() step is complete.
-     * Otherwise Process() calls it again for a different node.
-     */
-    bool SyncWithNode(CNode* pnode, bool fLegacyMnObsolete);
-    bool NotCompleted();
-    void UpdateBlockchainSynced(bool isRegTestNet);
-    void ClearFulfilledRequest();
+    void SwitchToNextAsset();
 
-    // Sync message dispatcher
-    bool MessageDispatcher(CNode* pfrom, std::string& strCommand, CDataStream& vRecv);
+    void ProcessTick();
 
-private:
+    void AcceptedBlockHeader(const CBlockIndex* pindexNew);
+    void NotifyHeaderTip(const CBlockIndex* pindexNew, bool fInitialDownload);
+    void UpdatedBlockTip(const CBlockIndex* pindexNew, bool fInitialDownload);
 
-    // Tier two sync node state
-    // map of nodeID --> TierTwoPeerData
-    std::map<NodeId, TierTwoPeerData> peersSyncState;
-    static int GetNextAsset(int currentAsset);
-
-    void SyncRegtest(CNode* pnode);
-
-    template <typename... Args>
-    void RequestDataTo(CNode* pnode, const char* msg, bool forceRequest, Args&&... args);
-
-    template <typename... Args>
-    void PushMessage(CNode* pnode, const char* msg, Args&&... args);
-
-    // update peer sync state data
-    bool UpdatePeerSyncState(const NodeId& id, const char* msg, const int nextSyncStatus);
-
-    // Check if an update is needed
-    void CheckAndUpdateSyncStatus();
-
-    // Mark sync timeout
-    void syncTimeout(const std::string& reason);
+    // CLORE: Check if masternode sync is enabled
+    bool IsEnabled() const;
 };
 
-#endif
+#endif // CLORE_MASTERNODE_SYNC_H

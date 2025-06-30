@@ -608,8 +608,6 @@ inline uint256 HashX16RV2(const T1 pbegin, const T1 pend, const uint256 PrevBloc
 uint256 KAWPOWHash(const CBlockHeader& blockHeader, uint256& mix_hash);
 uint256 KAWPOWHash_OnlyMix(const CBlockHeader& blockHeader);
 
-uint256 EquihashHash(const CBlockHeader& blockHeader);
-void scrypt_hash(const char* pass, unsigned int pLen, const char* salt, unsigned int sLen, char* output, unsigned int N, unsigned int r, unsigned int p, unsigned int dkLen);
 
 #endif // CLORE_HASH_H
 

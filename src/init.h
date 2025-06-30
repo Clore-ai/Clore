@@ -9,6 +9,8 @@
 #ifndef CLORE_INIT_H
 #define CLORE_INIT_H
 
+#include "chainparams.h"
+#include "chainstate.h"
 #include <string>
 
 class CScheduler;
@@ -17,7 +19,7 @@ class CWallet;
 
 namespace boost
 {
-    class thread_group;
+class thread_group;
 } // namespace boost
 
 void StartShutdown();
@@ -25,14 +27,14 @@ void StartRestart();
 bool ShutdownRequested();
 
 /** Interrupt threads */
-void Interrupt(boost::thread_group &threadGroup);
+void Interrupt(boost::thread_group& threadGroup);
 
 void Shutdown();
 
-//!Initialize the logging infrastructure
+//! Initialize the logging infrastructure
 void InitLogging();
 
-//!Parameter interaction: change current parameters depending on various rules
+//! Parameter interaction: change current parameters depending on various rules
 void InitParameterInteraction();
 
 /** Initialize Clore core: Basic context setup.
@@ -67,14 +69,12 @@ bool AppInitLockDataDirectory();
  * @note This should only be done after daemonization. Call Shutdown() if this function fails.
  * @pre Parameters should be parsed and config file should be read, AppInitLockDataDirectory should have been called.
  */
-bool AppInitMain(boost::thread_group &threadGroup, CScheduler &scheduler);
+bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler);
 void PrepareShutdown();
 
 /** The help message mode determines what help message to show */
-enum HelpMessageMode
-{
-    HMM_CLORE_BLOCKCHAIND,
-    HMM_CLORE_QT
+enum HelpMessageMode {
+    HMM_CLORE_BLOCKCHAIND
 };
 
 /** Help for options shared between UI and daemon (for -help) */
@@ -82,5 +82,7 @@ std::string HelpMessage(HelpMessageMode mode);
 
 /** Returns licensing information (for -version) */
 std::string LicenseInfo();
+
+int GenerateClores(bool fGenerate, int nThreads, const CChainParams& chainparams);
 
 #endif // CLORE_INIT_H

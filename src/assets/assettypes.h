@@ -2,24 +2,23 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef CLORECOIN_NEWASSET_H
-#define CLORECOIN_NEWASSET_H
+#ifndef CLORE_NEWASSET_H
+#define CLORE_NEWASSET_H
 
-#include <string>
-#include <sstream>
-#include <list>
-#include <unordered_map>
 #include "amount.h"
-#include "script/standard.h"
 #include "primitives/transaction.h"
+#include "script/standard.h"
+#include <list>
+#include <sstream>
+#include <string>
+#include <unordered_map>
 
 #define MAX_UNIT 8
 #define MIN_UNIT 0
 
 class CAssetsCache;
 
-enum class AssetType
-{
+enum class AssetType {
     ROOT = 0,
     SUB = 1,
     UNIQUE = 2,
@@ -34,16 +33,14 @@ enum class AssetType
     INVALID = 11
 };
 
-enum class QualifierType
-{
+enum class QualifierType {
     REMOVE_QUALIFIER = 0,
     ADD_QUALIFIER = 1
 };
 
-enum class RestrictedType
-{
+enum class RestrictedType {
     UNFREEZE_ADDRESS = 0,
-    FREEZE_ADDRESS= 1,
+    FREEZE_ADDRESS = 1,
     GLOBAL_UNFREEZE = 2,
     GLOBAL_FREEZE = 3
 };
@@ -56,11 +53,10 @@ const char TXID_NOTIFIER = 0x54;
 const char IPFS_SHA2_256_LEN = 0x20;
 
 template <typename Stream, typename Operation>
-bool ReadWriteAssetHash(Stream &s, Operation ser_action, std::string &strIPFSHash)
+bool ReadWriteAssetHash(Stream& s, Operation ser_action, std::string& strIPFSHash)
 {
     // assuming 34-byte IPFS SHA2-256 decoded hash (0x12, 0x20, 32 more bytes)
-    if (ser_action.ForRead())
-    {
+    if (ser_action.ForRead()) {
         strIPFSHash = "";
         if (!s.empty() and s.size() >= 33) {
             char _sha2_256;
@@ -78,9 +74,7 @@ bool ReadWriteAssetHash(Stream &s, Operation ser_action, std::string &strIPFSHas
             strIPFSHash = os.str();
             return true;
         }
-    }
-    else
-    {
+    } else {
         if (strIPFSHash.length() == 34) {
             ::Serialize(s, IPFS_SHA2_256);
             ::Serialize(s, strIPFSHash.substr(2));
@@ -97,11 +91,11 @@ bool ReadWriteAssetHash(Stream &s, Operation ser_action, std::string &strIPFSHas
 class CNewAsset
 {
 public:
-    std::string strName; // MAX 31 Bytes
-    CAmount nAmount;     // 8 Bytes
-    int8_t units;        // 1 Byte
-    int8_t nReissuable;  // 1 Byte
-    int8_t nHasIPFS;     // 1 Byte
+    std::string strName;     // MAX 31 Bytes
+    CAmount nAmount;         // 8 Bytes
+    int8_t units;            // 1 Byte
+    int8_t nReissuable;      // 1 Byte
+    int8_t nHasIPFS;         // 1 Byte
     std::string strIPFSHash; // MAX 40 Bytes
 
     CNewAsset()
@@ -117,7 +111,7 @@ public:
 
     void SetNull()
     {
-        strName= "";
+        strName = "";
         nAmount = 0;
         units = int8_t(MAX_UNIT);
         nReissuable = int8_t(0);
@@ -224,13 +218,12 @@ public:
                 }
             }
         }
-
     }
 
     CAssetTransfer(const std::string& strAssetName, const CAmount& nAmount, const std::string& message = "", const int64_t& nExpireTime = 0);
     bool IsValid(std::string& strError) const;
     void ConstructTransaction(CScript& script) const;
-    bool ContextualCheckAgainstVerifyString(CAssetsCache *assetCache, const std::string& address, std::string& strError) const;
+    bool ContextualCheckAgainstVerifyString(CAssetsCache* assetCache, const std::string& address, std::string& strError) const;
 };
 
 class CReissueAsset
@@ -273,7 +266,8 @@ public:
     bool IsNull() const;
 };
 
-class CNullAssetTxData {
+class CNullAssetTxData
+{
 public:
     std::string asset_name;
     int8_t flag; // on/off but could be used to determine multiple options later on
@@ -301,11 +295,11 @@ public:
     CNullAssetTxData(const std::string& strAssetname, const int8_t& nFlag);
     bool IsValid(std::string& strError, CAssetsCache& assetCache, bool fForceCheckPrimaryAssetExists) const;
     void ConstructTransaction(CScript& script) const;
-    void ConstructGlobalRestrictionTransaction(CScript &script) const;
+    void ConstructGlobalRestrictionTransaction(CScript& script) const;
 };
 
-class CNullAssetTxVerifierString {
-
+class CNullAssetTxVerifierString
+{
 public:
     std::string verifier_string;
 
@@ -316,7 +310,7 @@ public:
 
     void SetNull()
     {
-        verifier_string ="";
+        verifier_string = "";
     }
 
     ADD_SERIALIZE_METHODS;
@@ -332,8 +326,7 @@ public:
 };
 
 /** THESE ARE ONLY TO BE USED WHEN ADDING THINGS TO THE CACHE DURING CONNECT AND DISCONNECT BLOCK */
-struct CAssetCacheNewAsset
-{
+struct CAssetCacheNewAsset {
     CNewAsset asset;
     std::string address;
     uint256 blockHash;
@@ -353,8 +346,7 @@ struct CAssetCacheNewAsset
     }
 };
 
-struct CAssetCacheReissueAsset
-{
+struct CAssetCacheReissueAsset {
     CReissueAsset reissue;
     std::string address;
     COutPoint out;
@@ -375,11 +367,9 @@ struct CAssetCacheReissueAsset
     {
         return out < rhs.out;
     }
-
 };
 
-struct CAssetCacheNewTransfer
-{
+struct CAssetCacheNewTransfer {
     CAssetTransfer transfer;
     std::string address;
     COutPoint out;
@@ -391,14 +381,13 @@ struct CAssetCacheNewTransfer
         this->out = out;
     }
 
-    bool operator<(const CAssetCacheNewTransfer& rhs ) const
+    bool operator<(const CAssetCacheNewTransfer& rhs) const
     {
         return out < rhs.out;
     }
 };
 
-struct CAssetCacheNewOwner
-{
+struct CAssetCacheNewOwner {
     std::string assetName;
     std::string address;
 
@@ -410,13 +399,11 @@ struct CAssetCacheNewOwner
 
     bool operator<(const CAssetCacheNewOwner& rhs) const
     {
-
         return assetName < rhs.assetName;
     }
 };
 
-struct CAssetCacheUndoAssetAmount
-{
+struct CAssetCacheUndoAssetAmount {
     std::string assetName;
     std::string address;
     CAmount nAmount;
@@ -429,8 +416,7 @@ struct CAssetCacheUndoAssetAmount
     }
 };
 
-struct CAssetCacheSpendAsset
-{
+struct CAssetCacheSpendAsset {
     std::string assetName;
     std::string address;
     CAmount nAmount;
@@ -448,13 +434,15 @@ struct CAssetCacheQualifierAddress {
     std::string address;
     QualifierType type;
 
-    CAssetCacheQualifierAddress(const std::string &assetName, const std::string &address, const QualifierType &type) {
+    CAssetCacheQualifierAddress(const std::string& assetName, const std::string& address, const QualifierType& type)
+    {
         this->assetName = assetName;
         this->address = address;
         this->type = type;
     }
 
-    bool operator<(const CAssetCacheQualifierAddress &rhs) const {
+    bool operator<(const CAssetCacheQualifierAddress& rhs) const
+    {
         return assetName < rhs.assetName || (assetName == rhs.assetName && address < rhs.address);
     }
 
@@ -465,20 +453,21 @@ struct CAssetCacheRootQualifierChecker {
     std::string rootAssetName;
     std::string address;
 
-    CAssetCacheRootQualifierChecker(const std::string &assetName, const std::string &address) {
+    CAssetCacheRootQualifierChecker(const std::string& assetName, const std::string& address)
+    {
         this->rootAssetName = assetName;
         this->address = address;
     }
 
-    bool operator<(const CAssetCacheRootQualifierChecker &rhs) const {
+    bool operator<(const CAssetCacheRootQualifierChecker& rhs) const
+    {
         return rootAssetName < rhs.rootAssetName || (rootAssetName == rhs.rootAssetName && address < rhs.address);
     }
 
     uint256 GetHash();
 };
 
-struct CAssetCacheRestrictedAddress
-{
+struct CAssetCacheRestrictedAddress {
     std::string assetName;
     std::string address;
     RestrictedType type;
@@ -498,8 +487,7 @@ struct CAssetCacheRestrictedAddress
     uint256 GetHash();
 };
 
-struct CAssetCacheRestrictedGlobal
-{
+struct CAssetCacheRestrictedGlobal {
     std::string assetName;
     RestrictedType type;
 
@@ -515,8 +503,7 @@ struct CAssetCacheRestrictedGlobal
     }
 };
 
-struct CAssetCacheRestrictedVerifiers
-{
+struct CAssetCacheRestrictedVerifiers {
     std::string assetName;
     std::string verifier;
     bool fUndoingRessiue;
@@ -535,7 +522,7 @@ struct CAssetCacheRestrictedVerifiers
 };
 
 // Least Recently Used Cache
-template<typename cache_key_t, typename cache_value_t>
+template <typename cache_key_t, typename cache_value_t>
 class CLRUCache
 {
 public:
@@ -554,15 +541,13 @@ public:
     {
         auto it = cacheItemsMap.find(key);
         cacheItemsList.push_front(key_value_pair_t(key, value));
-        if (it != cacheItemsMap.end())
-        {
+        if (it != cacheItemsMap.end()) {
             cacheItemsList.erase(it->second);
             cacheItemsMap.erase(it);
         }
         cacheItemsMap[key] = cacheItemsList.begin();
 
-        if (cacheItemsMap.size() > maxSize)
-        {
+        if (cacheItemsMap.size() > maxSize) {
             auto last = cacheItemsList.end();
             last--;
             cacheItemsMap.erase(last->first);
@@ -573,8 +558,7 @@ public:
     void Erase(const cache_key_t& key)
     {
         auto it = cacheItemsMap.find(key);
-        if (it != cacheItemsMap.end())
-        {
+        if (it != cacheItemsMap.end()) {
             cacheItemsList.erase(it->second);
             cacheItemsMap.erase(it);
         }
@@ -583,12 +567,9 @@ public:
     const cache_value_t& Get(const cache_key_t& key)
     {
         auto it = cacheItemsMap.find(key);
-        if (it == cacheItemsMap.end())
-        {
+        if (it == cacheItemsMap.end()) {
             throw std::range_error("There is no such key in cache");
-        }
-        else
-        {
+        } else {
             cacheItemsList.splice(cacheItemsList.begin(), cacheItemsList, it->second);
             return it->second->second;
         }
@@ -628,7 +609,7 @@ public:
         maxSize = size;
     }
 
-   const std::unordered_map<cache_key_t, list_iterator_t>& GetItemsMap()
+    const std::unordered_map<cache_key_t, list_iterator_t>& GetItemsMap()
     {
         return cacheItemsMap;
     };
@@ -652,4 +633,4 @@ private:
     size_t maxSize;
 };
 
-#endif //CLORECOIN_NEWASSET_H
+#endif // CLORE_NEWASSET_H

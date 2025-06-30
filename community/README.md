@@ -1,2 +1,0 @@
-# Clore - Community Ideas
-

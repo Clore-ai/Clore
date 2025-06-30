@@ -28,11 +28,7 @@ namespace RPCServer
 {
     void OnStarted(std::function<void ()> slot);
     void OnStopped(std::function<void ()> slot);
-    void OnPreCommand(std::function<void (const CRPCCommand&)> slot);
 }
-
-class CBlockIndex;
-class CNetAddr;
 
 /** Wrapper for UniValue::VType, which includes typeAny:
  * Used to denote don't care type. Only used by RPCTypeCheckObj */
@@ -40,7 +36,7 @@ struct UniValueType {
     explicit UniValueType(UniValue::VType _type) : typeAny(false), type(_type) {}
     UniValueType() : typeAny(true) {}
     bool typeAny;
-    UniValue::VType type{UniValue::VNULL};
+    UniValue::VType type;
 };
 
 class JSONRPCRequest
@@ -190,9 +186,6 @@ extern uint256 ParseHashV(const UniValue& v, std::string strName);
 extern uint256 ParseHashO(const UniValue& o, std::string strKey);
 extern std::vector<unsigned char> ParseHexV(const UniValue& v, std::string strName);
 extern std::vector<unsigned char> ParseHexO(const UniValue& o, std::string strKey);
-extern int ParseInt(const UniValue& o, std::string strKey);
-extern bool ParseBool(const UniValue& o, std::string strKey);
-extern double ParseDoubleV(const UniValue& v, const std::string &strName);
 
 extern CAmount AmountFromValue(const UniValue& value, bool p_isCLORE = true);
 extern std::string HelpExampleCli(const std::string& methodname, const std::string& args);
@@ -205,7 +198,6 @@ bool StartRPC();
 void InterruptRPC();
 void StopRPC();
 std::string JSONRPCExecBatch(const JSONRPCRequest& jreq, const UniValue& vReq);
-void RPCNotifyBlockChange(bool fInitialDownload, const CBlockIndex* pindex);
 
 // Retrieves any serialization flags requested in command line argument
 int RPCSerializationFlags();

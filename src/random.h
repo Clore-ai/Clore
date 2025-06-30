@@ -126,18 +126,6 @@ public:
     bool randbool() { return randbits(1); }
 };
 
-template<typename I, typename R>
-void Shuffle(I first, I last, R&& rng)
-{
-    while (first != last) {
-        size_t j = rng.randrange(last - first);
-        if (j) {
-            using std::swap;
-            swap(*first, *(first + j));
-        }
-        ++first;
-    }
-}
 /* Number of random bytes returned by GetOSRand.
  * When changing this constant make sure to change all call sites, and make
  * sure that the underlying OS APIs for all platforms support the number.

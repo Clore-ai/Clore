@@ -145,10 +145,6 @@ const char* GetOpName(opcodetype opcode)
     case OP_NOP9                   : return "OP_NOP9";
     case OP_NOP10                  : return "OP_NOP10";
 
-     // cold staking
-    case OP_CHECKCOLDSTAKEVERIFY_LOF   : return "OP_CHECKCOLDSTAKEVERIFY_LOF";
-    case OP_CHECKCOLDSTAKEVERIFY       : return "OP_CHECKCOLDSTAKEVERIFY";
-
     /** CLORE START */
     case OP_CLORE_ASSET              : return "OP_CLORE_ASSET";
     /** CLORE END */
@@ -231,28 +227,6 @@ bool CScript::IsPayToScriptHash() const
             (*this)[0] == OP_HASH160 &&
             (*this)[1] == 0x14 &&
             (*this)[22] == OP_EQUAL);
-}
-
-// P2CS script: either with or without last output free
-bool CScript::IsPayToColdStaking() const
-{
-    return (this->size() == 51 &&
-            (*this)[0] == OP_DUP &&
-            (*this)[1] == OP_HASH160 &&
-            (*this)[2] == OP_ROT &&
-            (*this)[3] == OP_IF &&
-            ((*this)[4] == OP_CHECKCOLDSTAKEVERIFY || (*this)[4] == OP_CHECKCOLDSTAKEVERIFY_LOF) &&
-            (*this)[5] == 0x14 &&
-            (*this)[26] == OP_ELSE &&
-            (*this)[27] == 0x14 &&
-            (*this)[48] == OP_ENDIF &&
-            (*this)[49] == OP_EQUALVERIFY &&
-            (*this)[50] == OP_CHECKSIG);
-}
-
-bool CScript::IsPayToColdStakingLOF() const
-{
-    return IsPayToColdStaking() && (*this)[4] == OP_CHECKCOLDSTAKEVERIFY_LOF;
 }
 
 /** CLORE START */

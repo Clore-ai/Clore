@@ -24,7 +24,6 @@
 #include <vector>
 
 
-typedef std::vector<unsigned char> valtype;
 // Maximum number of bytes pushable to the stack
 static const unsigned int MAX_SCRIPT_ELEMENT_SIZE = 520;
 
@@ -191,10 +190,8 @@ enum opcodetype
     OP_CLORE_ASSET = 0xc0,
     /** CLORE END */
 
-    OP_CHECKCOLDSTAKEVERIFY_LOF = 0xd1,
-    OP_CHECKCOLDSTAKEVERIFY = 0xd2,
+
     // template matching params
-    OP_EXCHANGEADDR = 0xe0,
     OP_SMALLINTEGER = 0xfa,
     OP_PUBKEYS = 0xfb,
     OP_PUBKEYHASH = 0xfd,
@@ -664,8 +661,6 @@ public:
     bool IsPayToPublicKeyHash() const;
 
     bool IsPayToScriptHash() const;
-    bool IsPayToColdStaking() const;
-    bool IsPayToColdStakingLOF() const;
     bool IsPayToWitnessScriptHash() const;
     bool IsWitnessProgram(int& version, std::vector<unsigned char>& program) const;
 

@@ -2,16 +2,16 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef CLORECOIN_MYASSETSDB_H
-#define CLORECOIN_MYASSETSDB_H
+#ifndef CLORE_MYASSETSDB_H
+#define CLORE_MYASSETSDB_H
 
 #include <dbwrapper.h>
 
 class CMessage;
 class COutPoint;
 
-class CMessageDB  : public CDBWrapper {
-
+class CMessageDB : public CDBWrapper
+{
 public:
     explicit CMessageDB(size_t nCacheSize, bool fMemory = false, bool fWipe = false);
 
@@ -26,13 +26,14 @@ public:
     bool EraseAllMessages(int& count);
 
     // Write / Read Database flags
-    bool WriteFlag(const std::string &name, bool fValue);
-    bool ReadFlag(const std::string &name, bool &fValue);
+    bool WriteFlag(const std::string& name, bool fValue);
+    bool ReadFlag(const std::string& name, bool& fValue);
 
     bool Flush();
 };
 
-class CMessageChannelDB  : public CDBWrapper {
+class CMessageChannelDB : public CDBWrapper
+{
 public:
     explicit CMessageChannelDB(size_t nCacheSize, bool fMemory = false, bool fWipe = false);
 
@@ -50,13 +51,14 @@ public:
     bool EraseUsedAddress(const std::string& address);
 
     // Write / Read Database flags
-    bool WriteFlag(const std::string &name, bool fValue);
-    bool ReadFlag(const std::string &name, bool &fValue);
+    bool WriteFlag(const std::string& name, bool fValue);
+    bool ReadFlag(const std::string& name, bool& fValue);
 
     bool Flush();
 };
 
-class CMyRestrictedDB : public CDBWrapper {
+class CMyRestrictedDB : public CDBWrapper
+{
 public:
     explicit CMyRestrictedDB(size_t nCacheSize, bool fMemory = false, bool fWipe = false);
 
@@ -66,17 +68,17 @@ public:
     bool WriteTaggedAddress(const std::string& address, const std::string& tag_name, const bool fAdd, const uint32_t& nHeight);
     bool ReadTaggedAddress(const std::string& address, const std::string& tag_name, bool& fAdd, uint32_t& nHeight);
     bool EraseTaggedAddress(const std::string& address, const std::string& tag_name);
-    bool LoadMyTaggedAddresses(std::vector<std::tuple<std::string, std::string, bool, uint32_t> >& vecTaggedAddresses);
+    bool LoadMyTaggedAddresses(std::vector<std::tuple<std::string, std::string, bool, uint32_t>>& vecTaggedAddresses);
 
     bool WriteRestrictedAddress(const std::string& address, const std::string& tag_name, const bool fAdd, const uint32_t& nHeight);
     bool ReadRestrictedAddress(const std::string& address, const std::string& tag_name, bool& fAdd, uint32_t& nHeight);
     bool EraseRestrictedAddress(const std::string& address, const std::string& tag_name);
-    bool LoadMyRestrictedAddresses(std::vector<std::tuple<std::string, std::string, bool, uint32_t> >& vecRestrictedAddresses);
+    bool LoadMyRestrictedAddresses(std::vector<std::tuple<std::string, std::string, bool, uint32_t>>& vecRestrictedAddresses);
 
     // Write / Read Database flags
-    bool WriteFlag(const std::string &name, bool fValue);
-    bool ReadFlag(const std::string &name, bool &fValue);
+    bool WriteFlag(const std::string& name, bool fValue);
+    bool ReadFlag(const std::string& name, bool& fValue);
 };
 
 
-#endif //CLORECOIN_MYASSETSDB_H
+#endif // CLORE_MYASSETSDB_H

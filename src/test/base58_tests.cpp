@@ -101,11 +101,6 @@ BOOST_FIXTURE_TEST_SUITE(base58_tests, BasicTestingSetup)
             return (exp_addrType == "script");
         }
 
-        bool operator()(const CExchangeKeyID&) const {
-            // Handle appropriately for the test — possibly return false or true depending on context
-            return false;
-        }
-
         bool operator()(const CNoDestination &no) const
         {
             return (exp_addrType == "none");
@@ -136,12 +131,6 @@ BOOST_FIXTURE_TEST_SUITE(base58_tests, BasicTestingSetup)
         bool operator()(const CNoDestination &no) const
         {
             return exp_payload.size() == 0;
-        }
-
-        bool operator()(const CExchangeKeyID& id) const
-        {
-            uint160 exp_key(exp_payload);
-            return exp_key == id;
         }
     };
 

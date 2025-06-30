@@ -11,12 +11,10 @@
 
 #include "script/interpreter.h"
 #include "uint256.h"
-#include "pubkey.h"
 
 #include <boost/variant.hpp>
 
 #include <stdint.h>
-
 
 static const bool DEFAULT_ACCEPT_DATACARRIER = true;
 
@@ -74,7 +72,6 @@ enum txnouttype
     TX_REISSUE_ASSET = 9,
     TX_TRANSFER_ASSET = 10,
     TX_RESTRICTED_ASSET_DATA = 11, //!< unspendable OP_CLORE_ASSET script that carries data
-    TX_COLDSTAKE = 12
     /** CLORE END */
 };
 
@@ -91,7 +88,7 @@ public:
  *  * CScriptID: TX_SCRIPTHASH destination
  *  A CTxDestination is the internal data type encoded in a clore address
  */
-typedef boost::variant<CNoDestination, CKeyID, CScriptID, CExchangeKeyID> CTxDestination;
+typedef boost::variant<CNoDestination, CKeyID, CScriptID> CTxDestination;
 
 /** Check whether a CTxDestination is a CNoDestination. */
 bool IsValidDestination(const CTxDestination& dest);
@@ -118,7 +115,7 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, std::vector<std::v
  * scripts, instead use ExtractDestinations. Currently only works for P2PK,
  * P2PKH, and P2SH scripts.
  */
-bool ExtractDestination(const CScript& scriptPubKey, CTxDestination& addressRet, bool fColdStake = false);
+bool ExtractDestination(const CScript& scriptPubKey, CTxDestination& addressRet);
 
 /**
  * Parse a standard scriptPubKey with one or more destination addresses. For
@@ -145,8 +142,6 @@ CScript GetScriptForMultisig(int nRequired, const std::vector<CPubKey>& keys);
 
 /** Generate a script that contains an address used for qualifier, and restricted assets data transactions */
 CScript GetScriptForNullAssetDataDestination(const CTxDestination &dest);
-
-CScript GetScriptForStakeDelegation(const CKeyID& stakingKey, const CKeyID& spendingKey);
 
 /**
  * Generate a pay-to-witness script for the given redeem script. If the redeem

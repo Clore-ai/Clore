@@ -16,6 +16,7 @@
 
 #include <list>
 #include <atomic>
+#include <functional>
 
 #include <boost/signals2/signal.hpp>
 
@@ -35,7 +36,6 @@ struct MainSignalsInstance {
     boost::signals2::signal<void (const CBlockIndex *, const std::shared_ptr<const CBlock>&)> NewPoWValidBlock;
     boost::signals2::signal<void (const uint256 &)> BlockFound;
     boost::signals2::signal<void (const CMessage &)> NewAssetMessage;
-    boost::signals2::signal<void (const std::string &)> AssetInventory;
 //    boost::signals2::signal<void (std::shared_ptr<CReserveScript>&)> ScriptForMining;
     
     // We are not allowed to assume the scheduler only runs in one thread,
@@ -67,33 +67,86 @@ CMainSignals& GetMainSignals()
 }
 
 void RegisterValidationInterface(CValidationInterface* pwalletIn) {
-    g_signals.m_internals->UpdatedBlockTip.connect(boost::bind(&CValidationInterface::UpdatedBlockTip, pwalletIn, _1, _2, _3));
-    g_signals.m_internals->TransactionAddedToMempool.connect(boost::bind(&CValidationInterface::TransactionAddedToMempool, pwalletIn, _1));
-    g_signals.m_internals->BlockConnected.connect(boost::bind(&CValidationInterface::BlockConnected, pwalletIn, _1, _2, _3));
-    g_signals.m_internals->BlockDisconnected.connect(boost::bind(&CValidationInterface::BlockDisconnected, pwalletIn, _1));
-    g_signals.m_internals->SetBestChain.connect(boost::bind(&CValidationInterface::SetBestChain, pwalletIn, _1));
-    g_signals.m_internals->Inventory.connect(boost::bind(&CValidationInterface::Inventory, pwalletIn, _1));
-    g_signals.m_internals->Broadcast.connect(boost::bind(&CValidationInterface::ResendWalletTransactions, pwalletIn, _1, _2));
-    g_signals.m_internals->BlockChecked.connect(boost::bind(&CValidationInterface::BlockChecked, pwalletIn, _1, _2));
-    g_signals.m_internals->NewPoWValidBlock.connect(boost::bind(&CValidationInterface::NewPoWValidBlock, pwalletIn, _1, _2));
-    g_signals.m_internals->BlockFound.connect(boost::bind(&CValidationInterface::BlockFound, pwalletIn, _1));
-    g_signals.m_internals->NewAssetMessage.connect(boost::bind(&CValidationInterface::NewAssetMessage, pwalletIn, _1));
-//    g_signals.m_internals->ScriptForMining.connect(boost::bind(&CValidationInterface::GetScriptForMining, pwalletIn, _1));
+    if (!g_signals.m_internals) return;
+    
+    // Store the connection objects when registering
+    static std::map<CValidationInterface*, std::vector<boost::signals2::connection>> connections;
+    
+    // Clear any existing connections
+    auto it = connections.find(pwalletIn);
+    if (it != connections.end()) {
+        for (auto& conn : it->second) {
+            conn.disconnect();
+        }
+        connections.erase(it);
+    }
+    
+    // Create new connections using lambda functions instead of std::bind
+    std::vector<boost::signals2::connection> new_connections;
+    
+    new_connections.push_back(g_signals.m_internals->UpdatedBlockTip.connect(
+        [pwalletIn](const CBlockIndex* p1, const CBlockIndex* p2, bool f3) {
+            pwalletIn->UpdatedBlockTip(p1, p2, f3);
+        }));
+    new_connections.push_back(g_signals.m_internals->TransactionAddedToMempool.connect(
+        [pwalletIn](const CTransactionRef& tx) {
+            pwalletIn->TransactionAddedToMempool(tx);
+        }));
+    new_connections.push_back(g_signals.m_internals->BlockConnected.connect(
+        [pwalletIn](const std::shared_ptr<const CBlock>& block, const CBlockIndex* pindex, const std::vector<CTransactionRef>& vtxConflicted) {
+            pwalletIn->BlockConnected(block, pindex, vtxConflicted);
+        }));
+    new_connections.push_back(g_signals.m_internals->BlockDisconnected.connect(
+        [pwalletIn](const std::shared_ptr<const CBlock>& block) {
+            pwalletIn->BlockDisconnected(block);
+        }));
+    new_connections.push_back(g_signals.m_internals->SetBestChain.connect(
+        [pwalletIn](const CBlockLocator& locator) {
+            pwalletIn->SetBestChain(locator);
+        }));
+    new_connections.push_back(g_signals.m_internals->Inventory.connect(
+        [pwalletIn](const uint256& hash) {
+            pwalletIn->Inventory(hash);
+        }));
+    new_connections.push_back(g_signals.m_internals->Broadcast.connect(
+        [pwalletIn](int64_t nBestBlockTime, CConnman* connman) {
+            pwalletIn->ResendWalletTransactions(nBestBlockTime, connman);
+        }));
+    new_connections.push_back(g_signals.m_internals->BlockChecked.connect(
+        [pwalletIn](const CBlock& block, const CValidationState& state) {
+            pwalletIn->BlockChecked(block, state);
+        }));
+    new_connections.push_back(g_signals.m_internals->NewPoWValidBlock.connect(
+        [pwalletIn](const CBlockIndex* pindex, const std::shared_ptr<const CBlock>& block) {
+            pwalletIn->NewPoWValidBlock(pindex, block);
+        }));
+    new_connections.push_back(g_signals.m_internals->BlockFound.connect(
+        [pwalletIn](const uint256& hash) {
+            pwalletIn->BlockFound(hash);
+        }));
+    new_connections.push_back(g_signals.m_internals->NewAssetMessage.connect(
+        [pwalletIn](const CMessage& message) {
+            pwalletIn->NewAssetMessage(message);
+        }));
+    
+    // Store the new connections
+    connections[pwalletIn] = std::move(new_connections);
 }
 
 void UnregisterValidationInterface(CValidationInterface* pwalletIn) {
-    g_signals.m_internals->BlockChecked.disconnect(boost::bind(&CValidationInterface::BlockChecked, pwalletIn, _1, _2));
-    g_signals.m_internals->Broadcast.disconnect(boost::bind(&CValidationInterface::ResendWalletTransactions, pwalletIn, _1, _2));
-    g_signals.m_internals->Inventory.disconnect(boost::bind(&CValidationInterface::Inventory, pwalletIn, _1));
-    g_signals.m_internals->SetBestChain.disconnect(boost::bind(&CValidationInterface::SetBestChain, pwalletIn, _1));
-    g_signals.m_internals->TransactionAddedToMempool.disconnect(boost::bind(&CValidationInterface::TransactionAddedToMempool, pwalletIn, _1));
-    g_signals.m_internals->BlockConnected.disconnect(boost::bind(&CValidationInterface::BlockConnected, pwalletIn, _1, _2, _3));
-    g_signals.m_internals->BlockDisconnected.disconnect(boost::bind(&CValidationInterface::BlockDisconnected, pwalletIn, _1));
-    g_signals.m_internals->UpdatedBlockTip.disconnect(boost::bind(&CValidationInterface::UpdatedBlockTip, pwalletIn, _1, _2, _3));
-    g_signals.m_internals->NewPoWValidBlock.disconnect(boost::bind(&CValidationInterface::NewPoWValidBlock, pwalletIn, _1, _2));
-    g_signals.m_internals->BlockFound.disconnect(boost::bind(&CValidationInterface::BlockFound, pwalletIn, _1));
-    g_signals.m_internals->NewAssetMessage.disconnect(boost::bind(&CValidationInterface::NewAssetMessage, pwalletIn, _1));
-//    g_signals.m_internals->ScriptForMining.disconnect(boost::bind(&CValidationInterface::GetScriptForMining, pwalletIn, _1));
+    if (!g_signals.m_internals) return;
+    
+    // Store the connection objects when registering
+    static std::map<CValidationInterface*, std::vector<boost::signals2::connection>> connections;
+    
+    // Disconnect all connections for this interface
+    auto it = connections.find(pwalletIn);
+    if (it != connections.end()) {
+        for (auto& conn : it->second) {
+            conn.disconnect();
+        }
+        connections.erase(it);
+    }
 }
 
 void UnregisterAllValidationInterfaces() {

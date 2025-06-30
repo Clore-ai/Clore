@@ -1,6 +1,6 @@
 #!/bin/sh
 # Copyright (c) 2013-2016 The Bitcoin Core developers
-# Copyright (c) 2017-2019 The Clore__Core developers
+# Copyright (c) 2022-2025 The Clore developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 

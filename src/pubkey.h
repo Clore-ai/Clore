@@ -38,17 +38,6 @@ public:
 
 typedef uint256 ChainCode;
 
-class CExchangeKeyID : public uint160
-{
-public:
-    CExchangeKeyID() : uint160() {}
-    explicit CExchangeKeyID(const uint160& in) : uint160(in) {}
-
-    operator CKeyID() const {
-        return CKeyID(static_cast<const uint160&>(*this));
-    }
-};
-
 /** An encapsulated public key. */
 class CPubKey
 {

@@ -1,4 +1,4 @@
-echo 'Please read  https://github.com/clore-ai/clore/blob/main/doc/build-osx.md '
+echo 'Please read  https://gitlab.com/cloreai-public/blockchain/blob/main/doc/build-osx.md '
 echo 'Run this script under macOS  '
 
 CLORE_ROOT=$(pwd)

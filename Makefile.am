@@ -1,6 +1,6 @@
 # Copyright (c) 2013-2016 The Bitcoin Core developers
 # Copyright (c) 2017-2019 The Raven Core developers
-# Copyright (c) 2022-2022 The Clore Core developers
+# Copyright (c) 2022-2025 The Clore Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -9,7 +9,6 @@ SUBDIRS = src
 if ENABLE_MAN
 SUBDIRS += doc/man
 endif
-.PHONY: deploy FORCE
 
 override GZIP_ENV = "-9n"
 export PYTHONPATH
@@ -20,50 +19,11 @@ pkgconfig_DATA = libcloreconsensus.pc
 endif
 
 CLORE_BLOCKCHAIND_BIN=$(top_builddir)/src/$(CLORE_DAEMON_NAME)$(EXEEXT)
-CLORE_QT_BIN=$(top_builddir)/src/qt/$(CLORE_GUI_NAME)$(EXEEXT)
 clore_cli_BIN=$(top_builddir)/src/$(clore_cli_NAME)$(EXEEXT)
-CLORE_WIN_INSTALLER=$(PACKAGE)-$(PACKAGE_VERSION)-win$(WINDOWS_BITS)-setup$(EXEEXT)
-clore_cli_INSTALL=$(top_builddir)/contrib/install_cli.sh
 
-empty :=
-space := $(empty) $(empty)
-
-OSX_APP=Clore-Qt.app
-OSX_VOLNAME = $(subst $(space),-,$(PACKAGE_NAME))
-OSX_DMG = $(OSX_VOLNAME).dmg
-OSX_BACKGROUND_SVG=background.svg
-OSX_BACKGROUND_IMAGE=background.tiff
-OSX_BACKGROUND_IMAGE_DPIS=36 72
-OSX_DSSTORE_GEN=$(top_srcdir)/contrib/macdeploy/custom_dsstore.py
-OSX_DEPLOY_SCRIPT=$(top_srcdir)/contrib/macdeploy/macdeployqtplus
-OSX_FANCY_PLIST=$(top_srcdir)/contrib/macdeploy/fancy.plist
-OSX_INSTALLER_ICONS=$(top_srcdir)/src/qt/res/icons/clore.icns
-OSX_PLIST=$(top_builddir)/share/qt/Info.plist #not installed
-OSX_QT_TRANSLATIONS = da,de,es,hu,ru,uk,zh_CN,zh_TW
-
-DIST_DOCS = $(wildcard doc/*.md) $(wildcard doc/release-notes/*.md)
-DIST_CONTRIB = $(top_srcdir)/contrib/clore-cli.bash-completion \
-	       $(top_srcdir)/contrib/clore-tx.bash-completion \
-	       $(top_srcdir)/contrib/clore_blockchaind.bash-completion \
-	       $(top_srcdir)/contrib/init \
-	       $(top_srcdir)/contrib/rpm
 DIST_SHARE = \
   $(top_srcdir)/share/genbuild.sh \
   $(top_srcdir)/share/rpcuser
-
-BIN_CHECKS=$(top_srcdir)/contrib/devtools/symbol-check.py \
-           $(top_srcdir)/contrib/devtools/security-check.py
-
-WINDOWS_PACKAGING = $(top_srcdir)/share/pixmaps/clore.ico \
-  $(top_srcdir)/share/pixmaps/nsis-header.bmp \
-  $(top_srcdir)/share/pixmaps/nsis-wizard.bmp \
-  $(top_srcdir)/doc/README_windows.txt
-
-OSX_PACKAGING = $(OSX_DEPLOY_SCRIPT) $(OSX_FANCY_PLIST) $(OSX_INSTALLER_ICONS) \
-  $(top_srcdir)/contrib/macdeploy/$(OSX_BACKGROUND_SVG) \
-  $(OSX_DSSTORE_GEN) \
-  $(top_srcdir)/contrib/macdeploy/detached-sig-apply.sh \
-  $(top_srcdir)/contrib/macdeploy/detached-sig-create.sh
 
 COVERAGE_INFO = baseline.info \
   test_clore_filtered.info total_coverage.info \
@@ -72,111 +32,6 @@ COVERAGE_INFO = baseline.info \
 
 dist-hook:
 	-$(GIT) archive --format=tar HEAD -- src/clientversion.cpp | $(AMTAR) -C $(top_distdir) -xf -
-
-$(CLORE_WIN_INSTALLER): all-recursive
-	$(MKDIR_P) $(top_builddir)/release
-	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(CLORE_BLOCKCHAIND_BIN) $(top_builddir)/release
-	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(CLORE_QT_BIN) $(top_builddir)/release
-	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(clore_cli_BIN) $(top_builddir)/release
-	@test -f $(MAKENSIS) && $(MAKENSIS) -V2 $(top_builddir)/share/setup.nsi || \
-	  echo error: could not build $@
-	@echo built $@
-
-$(OSX_APP)/Contents/PkgInfo:
-	$(MKDIR_P) $(@D)
-	@echo "APPL????" > $@
-
-$(OSX_APP)/Contents/Resources/empty.lproj:
-	$(MKDIR_P) $(@D)
-	@touch $@ 
-
-$(OSX_APP)/Contents/Info.plist: $(OSX_PLIST)
-	$(MKDIR_P) $(@D)
-	$(INSTALL_DATA) $< $@
-
-$(OSX_APP)/Contents/Resources/clore.icns: $(OSX_INSTALLER_ICONS)
-	$(MKDIR_P) $(@D)
-	$(INSTALL_DATA) $< $@
-
-$(OSX_APP)/Contents/MacOS/install_cli.sh: $(clore_cli_INSTALL)
-	$(MKDIR_P) $(@D)
-	$(INSTALL_DATA) $< $@
-
-$(OSX_APP)/Contents/MacOS/Clore-Qt: $(CLORE_QT_BIN)
-	$(MKDIR_P) $(@D)
-	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM)  $< $@
-
-$(OSX_APP)/Contents/MacOS/clore_blockchaind: $(CLORE_BLOCKCHAIND_BIN)
-	$(MKDIR_P) $(@D)
-	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM)  $< $@
-
-$(OSX_APP)/Contents/MacOS/clore-cli: $(clore_cli_BIN)
-	$(MKDIR_P) $(@D)
-	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM)  $< $@
-
-$(OSX_APP)/Contents/Resources/Base.lproj/InfoPlist.strings:
-	$(MKDIR_P) $(@D)
-	echo '{	CFBundleDisplayName = "$(PACKAGE_NAME)"; CFBundleName = "$(PACKAGE_NAME)"; }' > $@
-
-OSX_APP_BUILT=$(OSX_APP)/Contents/PkgInfo $(OSX_APP)/Contents/Resources/empty.lproj \
-  $(OSX_APP)/Contents/Resources/clore.icns $(OSX_APP)/Contents/Info.plist \
-  $(OSX_APP)/Contents/MacOS/Clore-Qt $(OSX_APP)/Contents/Resources/Base.lproj/InfoPlist.strings \
-  $(OSX_APP)/Contents/MacOS/clore_blockchaind $(OSX_APP)/Contents/MacOS/clore-cli $(OSX_APP)/Contents/MacOS/install_cli.sh
-
-osx_volname:
-	echo $(OSX_VOLNAME) >$@
-
-if BUILD_DARWIN
-$(OSX_DMG): $(OSX_APP_BUILT) $(OSX_PACKAGING) $(OSX_BACKGROUND_IMAGE)
-	$(PYTHON) $(OSX_DEPLOY_SCRIPT) $(OSX_APP) -add-qt-tr $(OSX_QT_TRANSLATIONS) -translations-dir=$(QT_TRANSLATION_DIR) -dmg -fancy $(OSX_FANCY_PLIST) -verbose 2 -volname $(OSX_VOLNAME)
-
-$(OSX_BACKGROUND_IMAGE).png: contrib/macdeploy/$(OSX_BACKGROUND_SVG)
-	sed 's/PACKAGE_NAME/$(PACKAGE_NAME)/' < "$<" | $(RSVG_CONVERT) -f png -d 36 -p 36 -o $@
-$(OSX_BACKGROUND_IMAGE)@2x.png: contrib/macdeploy/$(OSX_BACKGROUND_SVG)
-	sed 's/PACKAGE_NAME/$(PACKAGE_NAME)/' < "$<" | $(RSVG_CONVERT) -f png -d 72 -p 72 -o $@
-$(OSX_BACKGROUND_IMAGE): $(OSX_BACKGROUND_IMAGE).png $(OSX_BACKGROUND_IMAGE)@2x.png
-	tiffutil -cathidpicheck $^ -out $@
-
-deploydir: $(OSX_DMG)
-else
-APP_DIST_DIR=$(top_builddir)/dist
-APP_DIST_EXTRAS=$(APP_DIST_DIR)/.background/$(OSX_BACKGROUND_IMAGE) $(APP_DIST_DIR)/.DS_Store $(APP_DIST_DIR)/Applications
-
-$(APP_DIST_DIR)/Applications:
-	@rm -f $@
-	@cd $(@D); $(LN_S) /Applications $(@F)
-
-$(APP_DIST_EXTRAS): $(APP_DIST_DIR)/$(OSX_APP)/Contents/MacOS/Clore-Qt
-
-$(OSX_DMG): $(APP_DIST_EXTRAS)
-	$(GENISOIMAGE) -no-cache-inodes -D -l -probe -V "$(OSX_VOLNAME)" -no-pad -r -dir-mode 0755 -apple -o $@ dist
-
-dpi%.$(OSX_BACKGROUND_IMAGE): contrib/macdeploy/$(OSX_BACKGROUND_SVG)
-	sed 's/PACKAGE_NAME/$(PACKAGE_NAME)/' < "$<" | $(RSVG_CONVERT) -f png -d $* -p $* | $(IMAGEMAGICK_CONVERT) - $@
-OSX_BACKGROUND_IMAGE_DPIFILES := $(foreach dpi,$(OSX_BACKGROUND_IMAGE_DPIS),dpi$(dpi).$(OSX_BACKGROUND_IMAGE))
-$(APP_DIST_DIR)/.background/$(OSX_BACKGROUND_IMAGE): $(OSX_BACKGROUND_IMAGE_DPIFILES)
-	$(MKDIR_P) $(@D)
-	$(TIFFCP) -c none $(OSX_BACKGROUND_IMAGE_DPIFILES) $@
-
-$(APP_DIST_DIR)/.DS_Store: $(OSX_DSSTORE_GEN)
-	$(PYTHON) $< "$@" "$(OSX_VOLNAME)"
-
-$(APP_DIST_DIR)/$(OSX_APP)/Contents/MacOS/Clore-Qt: $(OSX_APP_BUILT) $(OSX_PACKAGING)
-	INSTALLNAMETOOL=$(INSTALLNAMETOOL)  OTOOL=$(OTOOL) STRIP=$(STRIP) $(PYTHON) $(OSX_DEPLOY_SCRIPT) $(OSX_APP) -translations-dir=$(QT_TRANSLATION_DIR) -add-qt-tr $(OSX_QT_TRANSLATIONS) -verbose 2
-
-deploydir: $(APP_DIST_EXTRAS)
-endif
-
-if TARGET_DARWIN
-appbundle: $(OSX_APP_BUILT)
-deploy: $(OSX_DMG)
-endif
-if TARGET_WINDOWS
-deploy: $(CLORE_WIN_INSTALLER)
-endif
-
-$(CLORE_QT_BIN): FORCE
-	$(MAKE) -C src qt/$(@F)
 
 $(CLORE_BLOCKCHAIND_BIN): FORCE
 	$(MAKE) -C src $(@F)
@@ -191,7 +46,6 @@ baseline.info:
 	$(LCOV) -c -i -d $(abs_builddir)/src -o $@
 
 baseline_filtered.info: baseline.info
-	$(abs_builddir)/contrib/filter-lcov.py $(LCOV_FILTER_PATTERN) $< $@
 	$(LCOV) -a $@ $(LCOV_OPTS) -o $@
 
 test_clore.info: baseline_filtered.info
@@ -200,7 +54,6 @@ test_clore.info: baseline_filtered.info
 	$(LCOV) -z $(LCOV_OPTS) -d $(abs_builddir)/src
 
 test_clore_filtered.info: test_clore.info
-	$(abs_builddir)/contrib/filter-lcov.py $(LCOV_FILTER_PATTERN) $< $@
 	$(LCOV) -a $@ $(LCOV_OPTS) -o $@
 
 functional_test.info: test_clore_filtered.info
@@ -209,7 +62,6 @@ functional_test.info: test_clore_filtered.info
 	$(LCOV) -z $(LCOV_OPTS) -d $(abs_builddir)/src
 
 functional_test_filtered.info: functional_test.info
-	$(abs_builddir)/contrib/filter-lcov.py $(LCOV_FILTER_PATTERN) $< $@
 	$(LCOV) -a $@ $(LCOV_OPTS) -o $@
 
 test_clore_coverage.info: baseline_filtered.info test_clore_filtered.info
@@ -232,7 +84,7 @@ endif
 
 dist_noinst_SCRIPTS = autogen.sh
 
-EXTRA_DIST = $(DIST_SHARE) test/functional/test_runner.py test/functional $(DIST_CONTRIB) $(DIST_DOCS) $(WINDOWS_PACKAGING) $(OSX_PACKAGING) $(BIN_CHECKS)
+EXTRA_DIST = $(DIST_SHARE) test/functional/test_runner.py test/functional $(DIST_CONTRIB) $(DIST_DOCS) $(BIN_CHECKS)
 
 EXTRA_DIST += \
     test/util/clore-util-test.py \
@@ -287,8 +139,6 @@ EXTRA_DIST += \
     test/util/data/txcreatesignv1.json \
     test/util/data/txcreatesignv2.hex
 
-CLEANFILES = $(OSX_DMG) $(CLORE_WIN_INSTALLER)
-
 .INTERMEDIATE: $(COVERAGE_INFO)
 
 DISTCHECK_CONFIGURE_FLAGS = --enable-man
@@ -309,5 +159,5 @@ clean-docs:
 	rm -rf doc/doxygen
 
 clean-local: clean-docs
-	rm -rf coverage_percent.txt test_clore.coverage/ total.coverage/ test/tmp/ cache/ $(OSX_APP)
+	rm -rf coverage_percent.txt test_clore.coverage/ total.coverage/ test/tmp/ cache/ 
 	rm -rf test/functional/__pycache__
