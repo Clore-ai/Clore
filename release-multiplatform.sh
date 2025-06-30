@@ -25,7 +25,7 @@
 # =============================================================================
 
 BUILD_LINUX_X64=false      # Build for Linux x86_64 (Intel/AMD servers) - Set to true for Ubuntu 22.04
-BUILD_LINUX_ARM64=true     # Build for Linux ARM64 (AWS Graviton, Apple Silicon containers)
+BUILD_LINUX_ARM64=false    # Build for Linux ARM64 (AWS Graviton, Apple Silicon containers)
 BUILD_MACOS_X64=false      # Build for Intel Macs (cross-compilation issues)
 BUILD_MACOS_ARM64=true     # Build for Apple Silicon Macs (M1/M2/M3) - only on macOS hosts
 BUILD_WINDOWS_X64=false    # Build for Windows x64 - Set to true for Ubuntu with MinGW
@@ -604,55 +604,35 @@ configure_build() {
         "linux-x64")
             # Handle different host architectures
             if [[ "$ARCH_TYPE" == "x86_64" && "$OS_TYPE" == "Linux" ]]; then
-                # Native x64 Linux build using original working configuration
-                build_log "Building Linux x64 natively using original working method..."
+                # Native x64 Linux build using contrib + depends approach
+                build_log "Building Linux x64 using contrib/install_db4.sh + depends system..."
                 
-                # Build depends first (this creates the config.site)
+                # Install Berkeley DB 4.8 using contrib script
+                export CFLAGS="-Wno-error=implicit-function-declaration"
+                ./contrib/install_db4.sh . || error "Failed to install BDB4"
+                
+                export BDB_PREFIX="${SCRIPT_DIR}/db4"
+                
+                # Build depends system for boost and other dependencies
                 build_log "Building depends for x86_64-pc-linux-gnu..."
                 cd "$SCRIPT_DIR/depends"
                 make HOST=x86_64-pc-linux-gnu -j$(nproc) || error "Failed to build depends"
                 cd "$SCRIPT_DIR"
                 
-                # Build Berkeley DB 4.8 directly (like original instructions)
-                build_log "Building Berkeley DB 4.8..."
-                bdb_prefix="$SCRIPT_DIR/db4"
-                if [[ ! -f "$bdb_prefix/lib/libdb_cxx-4.8.a" ]]; then
-                    mkdir -p "$bdb_prefix"
-                    
-                    # Download and build Berkeley DB 4.8 (original method)
-                    wget -c 'http://download.oracle.com/berkeley-db/db-4.8.30.NC.tar.gz' || error "Failed to download Berkeley DB"
-                    echo '12edc0df75bf9abd7f82f821795bcee50f42cb2e5f76a6a281b85732798364ef  db-4.8.30.NC.tar.gz' | sha256sum -c || error "Berkeley DB checksum verification failed"
-                    tar -xzvf db-4.8.30.NC.tar.gz || error "Failed to extract Berkeley DB"
-                    
-                    # Apply patch if it exists
-                    if [[ -f "./depends/patches/atomic.h" ]]; then
-                        chmod a+w ./db-4.8.30.NC/dbinc/atomic.h
-                        cp ./depends/patches/atomic.h db-4.8.30.NC/dbinc/ || warning "Failed to apply atomic.h patch"
-                    fi
-                    
-                    # Build Berkeley DB (original method)
-                    cd db-4.8.30.NC/build_unix/
-                    ../dist/configure --enable-cxx --disable-shared --with-pic --prefix="$bdb_prefix" || error "Berkeley DB configure failed"
-                    make -j$(nproc) || error "Berkeley DB build failed"
-                    make install || error "Berkeley DB install failed"
-                    cd "$SCRIPT_DIR"
-                    
-                    # Cleanup
-                    rm -f db-4.8.30.NC.tar.gz
-                    rm -rf db-4.8.30.NC
-                fi
+                # Configure using the user's original working method
+                build_log "Configuring with BDB flags and depends system..."
+                ./autogen.sh || error "autogen.sh failed"
                 
-                # Use the original working configuration exactly as provided by user
                 export CONFIG_SITE="$PWD/depends/x86_64-pc-linux-gnu/share/config.site"
                 configure_args="--prefix=$PWD/depends/x86_64-pc-linux-gnu"
+                configure_args="$configure_args BDB_LIBS=\"-L${BDB_PREFIX}/lib -ldb_cxx-4.8\""
+                configure_args="$configure_args BDB_CFLAGS=\"-I${BDB_PREFIX}/include\""
+                configure_args="$configure_args LDFLAGS=\"-L${BDB_PREFIX}/lib/\""
+                configure_args="$configure_args CPPFLAGS=\"-I${BDB_PREFIX}/include/\""
                 configure_args="$configure_args --enable-cxx"
                 configure_args="$configure_args --disable-shared"
                 configure_args="$configure_args --disable-tests"
-                configure_args="$configure_args --with-pic"
-                configure_args="$configure_args --without-bench"
-                configure_args="$configure_args --with-tx"
-                configure_args="$configure_args LDFLAGS=\"-L${bdb_prefix}/lib/\""
-                configure_args="$configure_args CPPFLAGS=\"-I${bdb_prefix}/include/\""
+                configure_args="$configure_args --disable-gui-tests"
             else
                 # Cross-platform build via Docker
                 echo -e "${YELLOW}Using Docker for Linux x64 build (cross-platform)...${NC}"
@@ -663,55 +643,35 @@ configure_build() {
         "linux-arm64")
             # Handle different host architectures
             if [[ ("$ARCH_TYPE" == "aarch64" || "$ARCH_TYPE" == "arm64") && "$OS_TYPE" == "Linux" ]]; then
-                # Native ARM64 Linux build using original working configuration
-                build_log "Building Linux ARM64 natively using original working method..."
+                # Native ARM64 Linux build using contrib + depends approach
+                build_log "Building Linux ARM64 using contrib/install_db4.sh + depends system..."
                 
-                # Build depends first (this creates the config.site)
+                # Install Berkeley DB 4.8 using contrib script
+                export CFLAGS="-Wno-error=implicit-function-declaration"
+                ./contrib/install_db4.sh . || error "Failed to install BDB4"
+                
+                export BDB_PREFIX="${SCRIPT_DIR}/db4"
+                
+                # Build depends system for boost and other dependencies
                 build_log "Building depends for aarch64-linux-gnu..."
                 cd "$SCRIPT_DIR/depends"
                 make HOST=aarch64-linux-gnu -j$(nproc) || error "Failed to build depends"
                 cd "$SCRIPT_DIR"
                 
-                # Build Berkeley DB 4.8 directly (like original instructions)
-                build_log "Building Berkeley DB 4.8..."
-                bdb_prefix="$SCRIPT_DIR/db4"
-                if [[ ! -f "$bdb_prefix/lib/libdb_cxx-4.8.a" ]]; then
-                    mkdir -p "$bdb_prefix"
-                    
-                    # Download and build Berkeley DB 4.8 (original method)
-                    wget -c 'http://download.oracle.com/berkeley-db/db-4.8.30.NC.tar.gz' || error "Failed to download Berkeley DB"
-                    echo '12edc0df75bf9abd7f82f821795bcee50f42cb2e5f76a6a281b85732798364ef  db-4.8.30.NC.tar.gz' | sha256sum -c || error "Berkeley DB checksum verification failed"
-                    tar -xzvf db-4.8.30.NC.tar.gz || error "Failed to extract Berkeley DB"
-                    
-                    # Apply patch if it exists
-                    if [[ -f "./depends/patches/atomic.h" ]]; then
-                        chmod a+w ./db-4.8.30.NC/dbinc/atomic.h
-                        cp ./depends/patches/atomic.h db-4.8.30.NC/dbinc/ || warning "Failed to apply atomic.h patch"
-                    fi
-                    
-                    # Build Berkeley DB (original method)
-                    cd db-4.8.30.NC/build_unix/
-                    ../dist/configure --enable-cxx --disable-shared --with-pic --prefix="$bdb_prefix" || error "Berkeley DB configure failed"
-                    make -j$(nproc) || error "Berkeley DB build failed"
-                    make install || error "Berkeley DB install failed"
-                    cd "$SCRIPT_DIR"
-                    
-                    # Cleanup
-                    rm -f db-4.8.30.NC.tar.gz
-                    rm -rf db-4.8.30.NC
-                fi
+                # Configure using the user's original working method
+                build_log "Configuring with BDB flags and depends system..."
+                ./autogen.sh || error "autogen.sh failed"
                 
-                # Use the original working configuration exactly as provided by user
                 export CONFIG_SITE="$PWD/depends/aarch64-linux-gnu/share/config.site"
                 configure_args="--prefix=$PWD/depends/aarch64-linux-gnu"
+                configure_args="$configure_args BDB_LIBS=\"-L${BDB_PREFIX}/lib -ldb_cxx-4.8\""
+                configure_args="$configure_args BDB_CFLAGS=\"-I${BDB_PREFIX}/include\""
+                configure_args="$configure_args LDFLAGS=\"-L${BDB_PREFIX}/lib/\""
+                configure_args="$configure_args CPPFLAGS=\"-I${BDB_PREFIX}/include/\""
                 configure_args="$configure_args --enable-cxx"
                 configure_args="$configure_args --disable-shared"
                 configure_args="$configure_args --disable-tests"
-                configure_args="$configure_args --with-pic"
-                configure_args="$configure_args --without-bench"
-                configure_args="$configure_args --with-tx"
-                configure_args="$configure_args LDFLAGS=\"-L${bdb_prefix}/lib/\""
-                configure_args="$configure_args CPPFLAGS=\"-I${bdb_prefix}/include/\""
+                configure_args="$configure_args --disable-gui-tests"
             else
                 # Cross-platform build via Docker
                 echo -e "${YELLOW}Using Docker for Linux ARM64 build (cross-platform)...${NC}"
@@ -726,72 +686,35 @@ configure_build() {
                 return 1
             fi
             
-            # Use Homebrew Berkeley DB instead of building from source on macOS
-            bdb_prefix="/opt/homebrew/opt/berkeley-db@4"
-            build_log "Using Homebrew Berkeley DB at $bdb_prefix"
+            # Use the proper approach: contrib/install_db4.sh + depends system (user's method)
+            build_log "Building macOS x64 using contrib/install_db4.sh + depends system..."
             
-            # Use similar configuration structure as Linux builds
-            configure_args="--enable-cxx"
+            # Install Berkeley DB 4.8 using contrib script
+            export CFLAGS="-Wno-error=implicit-function-declaration"
+            ./contrib/install_db4.sh . || error "Failed to install BDB4"
+            
+            export BDB_PREFIX="${SCRIPT_DIR}/db4"
+            
+            # Build depends system for boost and other dependencies
+            build_log "Building depends for x86_64-apple-darwin14..."
+            cd "$SCRIPT_DIR/depends"
+            make HOST=x86_64-apple-darwin14 -j$(sysctl -n hw.ncpu) || error "Failed to build depends"
+            cd "$SCRIPT_DIR"
+            
+            # Configure using the user's original working method
+            build_log "Configuring with BDB flags and depends system..."
+            ./autogen.sh || error "autogen.sh failed"
+            
+            export CONFIG_SITE="$PWD/depends/x86_64-apple-darwin14/share/config.site"
+            configure_args="--prefix=$PWD/depends/x86_64-apple-darwin14"
+            configure_args="$configure_args BDB_LIBS=\"-L${BDB_PREFIX}/lib -ldb_cxx-4.8\""
+            configure_args="$configure_args BDB_CFLAGS=\"-I${BDB_PREFIX}/include\""
+            configure_args="$configure_args LDFLAGS=\"-L${BDB_PREFIX}/lib/\""
+            configure_args="$configure_args CPPFLAGS=\"-I${BDB_PREFIX}/include/\""
+            configure_args="$configure_args --enable-cxx"
             configure_args="$configure_args --disable-shared"
             configure_args="$configure_args --disable-tests"
-            configure_args="$configure_args --with-pic"
-            configure_args="$configure_args --without-bench"
-            configure_args="$configure_args --with-tx"
-            configure_args="$configure_args LDFLAGS=\"-L${bdb_prefix}/lib/\""
-            configure_args="$configure_args CPPFLAGS=\"-I${bdb_prefix}/include/\""
-            
-            # Detect host architecture and set up cross-compilation if needed
-            if [[ "$ARCH_TYPE" == "arm64" ]]; then
-                # Cross-compile from Apple Silicon to Intel
-                build_log "Cross-compiling macOS x64 from Apple Silicon..."
-                export CFLAGS="-arch x86_64 -mmacosx-version-min=10.12"
-                export CXXFLAGS="-arch x86_64 -mmacosx-version-min=10.12"
-                export LDFLAGS="-arch x86_64 -mmacosx-version-min=10.12"
-                
-                # Use system paths for cross-compilation
-                configure_args="$configure_args --build=arm64-apple-darwin --host=x86_64-apple-darwin"
-                
-                # Workaround for Boost sleep implementation cross-compilation issue
-                export ac_cv_sleep=yes
-                export ac_cv_boost_sleep=yes
-                export ac_cv_working_boost_sleep=yes
-                export BOOST_THREAD_SHARED_LIB="-lboost_thread"
-                export BOOST_CPPFLAGS="-I/opt/homebrew/include"
-                export BOOST_LDFLAGS="-L/opt/homebrew/lib"
-                # Additional cross-compilation fixes
-                export boost_cv_lib_chrono=yes
-                export boost_cv_lib_system=yes
-                export boost_cv_lib_thread=yes
-                export boost_cv_lib_filesystem=yes
-                export boost_cv_lib_program_options=yes
-                
-                # Try multiple Boost locations with additional cross-compilation flags
-                if [[ -d "/opt/homebrew/lib" ]]; then
-                    export PKG_CONFIG_PATH="/opt/homebrew/lib/pkgconfig:$PKG_CONFIG_PATH"
-                    configure_args="$configure_args --with-boost=/opt/homebrew --with-boost-libdir=/opt/homebrew/lib"
-                    # Force specific Boost library links for cross-compilation
-                    export BOOST_THREAD_LIB="-lboost_thread"
-                    export BOOST_CHRONO_LIB="-lboost_chrono"
-                elif [[ -d "/usr/local/lib" ]]; then
-                    export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH"
-                    configure_args="$configure_args --with-boost=/usr/local --with-boost-libdir=/usr/local/lib"
-                fi
-            else
-                # Native Intel Mac build
-                build_log "Building macOS x64 natively on Intel Mac..."
-                
-                # Use standard paths for native Intel build
-                if [[ -d "/usr/local/lib" ]]; then
-                    export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH"
-                    configure_args="$configure_args --with-boost=/usr/local --with-boost-libdir=/usr/local/lib"
-                elif [[ -d "/opt/homebrew/lib" ]]; then
-                    export PKG_CONFIG_PATH="/opt/homebrew/lib/pkgconfig:$PKG_CONFIG_PATH"
-                    configure_args="$configure_args --with-boost=/opt/homebrew --with-boost-libdir=/opt/homebrew/lib"
-                fi
-            fi
-            
-            # Additional macOS-specific flags
-            configure_args="$configure_args --enable-reduce-exports"
+            configure_args="$configure_args --disable-gui-tests"
             ;;
         "macos-arm64")
             # macOS builds can only be done on macOS hosts
@@ -800,123 +723,55 @@ configure_build() {
                 return 1
             fi
             
-            # Use Homebrew Berkeley DB instead of building from source on macOS
-            bdb_prefix="/opt/homebrew/opt/berkeley-db@4"
-            build_log "Using Homebrew Berkeley DB at $bdb_prefix"
+            # Use the proper approach: contrib/install_db4.sh + depends system (user's method)
+            build_log "Building macOS ARM64 using contrib/install_db4.sh + depends system..."
             
-            # Use similar configuration structure as Linux builds
-            configure_args="--enable-cxx"
+            # Install Berkeley DB 4.8 using contrib script
+            export CFLAGS="-Wno-error=implicit-function-declaration"
+            ./contrib/install_db4.sh . || error "Failed to install BDB4"
+            
+            export BDB_PREFIX="${SCRIPT_DIR}/db4"
+            
+            # Build depends system for boost and other dependencies
+            build_log "Building depends for aarch64-apple-darwin14..."
+            cd "$SCRIPT_DIR/depends"
+            make HOST=aarch64-apple-darwin14 -j$(sysctl -n hw.ncpu) || error "Failed to build depends"
+            cd "$SCRIPT_DIR"
+            
+            # Configure using the user's original working method
+            build_log "Configuring with BDB flags and depends system..."
+            ./autogen.sh || error "autogen.sh failed"
+            
+            export CONFIG_SITE="$PWD/depends/aarch64-apple-darwin14/share/config.site"
+            configure_args="--prefix=$PWD/depends/aarch64-apple-darwin14"
+            configure_args="$configure_args BDB_LIBS=\"-L${BDB_PREFIX}/lib -ldb_cxx-4.8\""
+            configure_args="$configure_args BDB_CFLAGS=\"-I${BDB_PREFIX}/include\""
+            configure_args="$configure_args LDFLAGS=\"-L${BDB_PREFIX}/lib/\""
+            configure_args="$configure_args CPPFLAGS=\"-I${BDB_PREFIX}/include/\""
+            configure_args="$configure_args --enable-cxx"
             configure_args="$configure_args --disable-shared"
             configure_args="$configure_args --disable-tests"
-            configure_args="$configure_args --with-pic"
-            configure_args="$configure_args --without-bench"
-            configure_args="$configure_args --with-tx"
-            configure_args="$configure_args LDFLAGS=\"-L${bdb_prefix}/lib/\""
-            configure_args="$configure_args CPPFLAGS=\"-I${bdb_prefix}/include/\""
-            
-            # Detect host architecture and set up cross-compilation if needed
-            if [[ "$ARCH_TYPE" == "x86_64" ]]; then
-                # Cross-compile from Intel to Apple Silicon
-                build_log "Cross-compiling macOS ARM64 from Intel Mac..."
-                export CFLAGS="-arch arm64 -mmacosx-version-min=11.0"
-                export CXXFLAGS="-arch arm64 -mmacosx-version-min=11.0"
-                export LDFLAGS="-arch arm64 -mmacosx-version-min=11.0"
-                
-                configure_args="$configure_args --build=x86_64-apple-darwin --host=arm64-apple-darwin"
-                
-                # Try multiple Boost locations
-                if [[ -d "/usr/local/lib" ]]; then
-                    export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH"
-                    configure_args="$configure_args --with-boost=/usr/local"
-                elif [[ -d "/opt/homebrew/lib" ]]; then
-                    export PKG_CONFIG_PATH="/opt/homebrew/lib/pkgconfig:$PKG_CONFIG_PATH"
-                    configure_args="$configure_args --with-boost=/opt/homebrew"
-                fi
-            else
-                # Native Apple Silicon build
-                build_log "Building macOS ARM64 natively on Apple Silicon..."
-                
-                # Use Homebrew paths for native ARM64 build
-                if [[ -d "/opt/homebrew/lib" ]]; then
-                    export PKG_CONFIG_PATH="/opt/homebrew/lib/pkgconfig:$PKG_CONFIG_PATH"
-                    configure_args="$configure_args --with-boost=/opt/homebrew"
-                elif [[ -d "/usr/local/lib" ]]; then
-                    export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH"
-                    configure_args="$configure_args --with-boost=/usr/local"
-                fi
-            fi
-            
-            # Additional macOS-specific flags
-            configure_args="$configure_args --enable-reduce-exports"
+            configure_args="$configure_args --disable-gui-tests"
             ;;
         "windows-x64")
-            build_log "Configuring Windows x64 cross-compilation using original working method..."
+            build_log "Configuring Windows x64 cross-compilation using depends system (original working method)..."
             
-            # Build Berkeley DB 4.8 for Windows cross-compilation
-            build_log "Building Berkeley DB 4.8 for Windows..."
-            bdb_prefix="$SCRIPT_DIR/db4"
-            if [[ ! -f "$bdb_prefix/lib/libdb_cxx-4.8.a" ]]; then
-                mkdir -p "$bdb_prefix"
-                
-                # Download and build Berkeley DB 4.8 (original method)
-                wget -c 'http://download.oracle.com/berkeley-db/db-4.8.30.NC.tar.gz' || error "Failed to download Berkeley DB"
-                echo '12edc0df75bf9abd7f82f821795bcee50f42cb2e5f76a6a281b85732798364ef  db-4.8.30.NC.tar.gz' | sha256sum -c || error "Berkeley DB checksum verification failed"
-                tar -xzvf db-4.8.30.NC.tar.gz || error "Failed to extract Berkeley DB"
-                
-                # Apply patch if it exists
-                if [[ -f "./depends/patches/atomic.h" ]]; then
-                    chmod a+w ./db-4.8.30.NC/dbinc/atomic.h
-                    cp ./depends/patches/atomic.h db-4.8.30.NC/dbinc/ || warning "Failed to apply atomic.h patch"
-                fi
-                
-                # Build Berkeley DB for Windows cross-compilation
-                cd db-4.8.30.NC/build_unix/
-                CC=x86_64-w64-mingw32-gcc CXX=x86_64-w64-mingw32-g++ \
-                ../dist/configure --enable-cxx --disable-shared --with-pic --prefix="$bdb_prefix" --host=x86_64-w64-mingw32 || error "Berkeley DB configure failed"
-                make -j$(nproc) || error "Berkeley DB build failed"
-                make install || error "Berkeley DB install failed"
-                cd "$SCRIPT_DIR"
-                
-                # Cleanup
-                rm -f db-4.8.30.NC.tar.gz
-                rm -rf db-4.8.30.NC
-            fi
+            # Build depends first (this creates the config.site)
+            build_log "Building depends for x86_64-w64-mingw32..."
+            cd "$SCRIPT_DIR/depends"
+            make HOST=x86_64-w64-mingw32 -j$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4) || error "Failed to build depends"
+            cd "$SCRIPT_DIR"
             
-            # Use similar configuration structure as Linux builds
-            configure_args="--enable-cxx"
+            # Use the original working configuration exactly as provided by user
+            export CONFIG_SITE="$PWD/depends/x86_64-w64-mingw32/share/config.site"
+            configure_args="--prefix=$PWD/depends/x86_64-w64-mingw32"
+            configure_args="$configure_args --enable-cxx"
             configure_args="$configure_args --disable-shared"
             configure_args="$configure_args --disable-tests"
             configure_args="$configure_args --with-pic"
             configure_args="$configure_args --without-bench"
             configure_args="$configure_args --with-tx"
-            configure_args="$configure_args LDFLAGS=\"-L${bdb_prefix}/lib/\""
-            configure_args="$configure_args CPPFLAGS=\"-I${bdb_prefix}/include/\""
             host_flag="--host=x86_64-w64-mingw32"
-            export CC="x86_64-w64-mingw32-gcc"
-            export CXX="x86_64-w64-mingw32-g++"
-            
-            # Platform-specific paths for cross-compilation
-            case "$OS_TYPE" in
-                "Darwin")
-                    # macOS with Homebrew
-                    if [[ -d "/opt/homebrew/lib" ]]; then
-                        export PKG_CONFIG_PATH="/opt/homebrew/lib/pkgconfig"
-                        configure_args="$configure_args --with-boost=/opt/homebrew --with-boost-libdir=/opt/homebrew/lib"
-                    elif [[ -d "/usr/local/lib" ]]; then
-                        export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig"
-                        configure_args="$configure_args --with-boost=/usr/local --with-boost-libdir=/usr/local/lib"
-                    fi
-                    ;;
-                "Linux")
-                    # Linux with system packages
-                    export PKG_CONFIG_PATH="/usr/lib/x86_64-linux-gnu/pkgconfig:/usr/share/pkgconfig"
-                    # Set Windows-specific flags for MinGW
-                    export CPPFLAGS="-I/usr/x86_64-w64-mingw32/include"
-                    export LDFLAGS="-L/usr/x86_64-w64-mingw32/lib"
-                    # Use system Boost libraries configured for MinGW
-                    configure_args="$configure_args --with-boost-system=boost_system-mt-x64"
-                    ;;
-            esac
             ;;
     esac
     
@@ -946,6 +801,10 @@ build_target() {
     
     # Build
     make -j$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4) || error "Build failed for $target"
+    
+    # Deploy (required after make)
+    build_log "Running make deploy for $target..."
+    make deploy || error "Deploy failed for $target"
     
     # Create target directory and copy binaries
     mkdir -p "$target_dir/bin"

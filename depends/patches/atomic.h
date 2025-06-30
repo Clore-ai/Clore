@@ -9,15 +9,13 @@
 #ifndef _DB_ATOMIC_H_
 #define _DB_ATOMIC_H_
 
-/* Prevent conflicts with C++11 atomic headers */
+/*
+ * Prevent conflicts with C++11 atomic headers by avoiding std::atomic function names
+ * completely. Use Berkeley DB specific names with 'db_atomic_' prefix.
+ */
 #ifdef __cplusplus
 extern "C"
 {
-#endif
-
-/* Undefine any existing atomic_init that might conflict */
-#ifdef atomic_init
-#undef atomic_init
 #endif
 
 /*
@@ -79,8 +77,18 @@ typedef struct
  * These have no memory barriers; the caller must include them when necessary.
  */
 #define atomic_read(p) ((p)->value)
-/* Use Berkeley DB specific name to avoid C++11 conflicts completely */
-#define atomic_init(p, val) ((p)->value = (val))
+
+/*
+ * Use Berkeley DB specific name to completely avoid C++11 std::atomic conflicts.
+ * The original Berkeley DB code uses 'atomic_init' but this conflicts with C++11.
+ * We define both the new safe name and provide backward compatibility.
+ */
+#define db_atomic_init(p, val) ((p)->value = (val))
+
+/* Backward compatibility macro - only define for C code, never for C++ */
+#ifndef __cplusplus
+#define atomic_init(p, val) db_atomic_init(p, val)
+#endif
 
 #ifdef HAVE_ATOMIC_SUPPORT
 
@@ -216,7 +224,7 @@ typedef struct
 #define atomic_dec(env, p) (--(p)->value)
 #define atomic_compare_exchange(env, p, oldval, newval) \
 	(DB_ASSERT(env, atomic_read(p) == (oldval)),        \
-	 atomic_init(p, (newval)), 1)
+	 db_atomic_init(p, (newval)), 1)
 #else
 #define atomic_inc(env, p) __atomic_inc(env, p)
 #define atomic_dec(env, p) __atomic_dec(env, p)
