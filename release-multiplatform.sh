@@ -24,11 +24,11 @@
 #
 # =============================================================================
 
-BUILD_LINUX_X64=true       # Build for Linux x86_64 (Intel/AMD servers)
+BUILD_LINUX_X64=false      # Build for Linux x86_64 (Intel/AMD servers) - disabled temporarily
 BUILD_LINUX_ARM64=false    # Build for Linux ARM64 (AWS Graviton, Apple Silicon containers)
-BUILD_MACOS_X64=true       # Build for Intel Macs (also works on Apple Silicon via Rosetta)
-BUILD_MACOS_ARM64=false    # Build for Apple Silicon Macs (M1/M2/M3)
-BUILD_WINDOWS_X64=true     # Build for Windows x86_64
+BUILD_MACOS_X64=false      # Build for Intel Macs (disabled due to cross-compilation issues)
+BUILD_MACOS_ARM64=true     # Build for Apple Silicon Macs (M1/M2/M3)
+BUILD_WINDOWS_X64=false    # Build for Windows x86_64 - disabled temporarily
 
 # =============================================================================
 
@@ -355,6 +355,8 @@ RUN mkdir -p /build/db4 && \\
     cd db-4.8.30.NC/build_unix/ && \\
     ../dist/configure --enable-cxx --disable-shared --with-pic --prefix=/build/db4 --with-mutex=POSIX/pthreads && \\
     make -j\$(nproc) && \\
+    ranlib libdb-4.8.a && \\
+    ranlib libdb_cxx-4.8.a && \\
     make install && \\
     cd /build && \\
     rm -f db-4.8.30.NC.tar.gz && \\
@@ -363,7 +365,7 @@ RUN mkdir -p /build/db4 && \\
 # Build the project using Berkeley DB 4.8
 RUN export BDB_PREFIX="/build/db4" && \\
     ./autogen.sh && \\
-    ./configure --disable-tests --disable-bench --enable-static --disable-shared --without-gui \\
+    ./configure --disable-tests --disable-bench --enable-static --disable-shared --without-gui --enable-wallet \\
         BDB_LIBS="-L\${BDB_PREFIX}/lib -ldb_cxx-4.8" \\
         BDB_CFLAGS="-I\${BDB_PREFIX}/include" && \\
     make -j\$(nproc)
@@ -489,6 +491,14 @@ build_bdb4() {
     build_log "Building Berkeley DB (this may take a while)..."
     make -j$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4) || error "Berkeley DB build failed"
     
+    # Fix archive indexing issue
+    if [[ -f "libdb-4.8.a" ]]; then
+        ranlib libdb-4.8.a || true
+    fi
+    if [[ -f "libdb_cxx-4.8.a" ]]; then
+        ranlib libdb_cxx-4.8.a || true
+    fi
+    
     build_log "Installing Berkeley DB..."
     make install || error "Berkeley DB install failed"
     
@@ -549,7 +559,7 @@ configure_build() {
                 build_log "Building Linux x64 natively..."
                 build_bdb4 "$target_dir"
                 bdb_prefix="$target_dir/db4"
-                configure_args="--disable-tests --disable-bench --enable-static --disable-shared --without-gui"
+                configure_args="--disable-tests --disable-bench --enable-static --disable-shared --without-gui --enable-wallet"
                 configure_args="$configure_args BDB_LIBS=\"-L${bdb_prefix}/lib -ldb_cxx-4.8\" BDB_CFLAGS=\"-I${bdb_prefix}/include\""
             else
                 # Cross-platform build via Docker
@@ -565,7 +575,7 @@ configure_build() {
                 build_log "Building Linux ARM64 natively..."
                 build_bdb4 "$target_dir"
                 bdb_prefix="$target_dir/db4"
-                configure_args="--disable-tests --disable-bench --enable-static --disable-shared --without-gui"
+                configure_args="--disable-tests --disable-bench --enable-static --disable-shared --without-gui --enable-wallet"
                 configure_args="$configure_args BDB_LIBS=\"-L${bdb_prefix}/lib -ldb_cxx-4.8\" BDB_CFLAGS=\"-I${bdb_prefix}/include\""
             else
                 # Cross-platform build via Docker
@@ -584,7 +594,7 @@ configure_build() {
             # Use Homebrew Berkeley DB instead of building from source on macOS
             bdb_prefix="/opt/homebrew/opt/berkeley-db@4"
             build_log "Using Homebrew Berkeley DB at $bdb_prefix"
-            configure_args="--disable-tests --disable-bench --without-gui"
+            configure_args="--disable-tests --disable-bench --without-gui --enable-wallet"
             configure_args="$configure_args BDB_LIBS=\"-L${bdb_prefix}/lib -ldb_cxx-4.8\" BDB_CFLAGS=\"-I${bdb_prefix}/include\""
             
             # Detect host architecture and set up cross-compilation if needed
@@ -601,9 +611,16 @@ configure_build() {
                 # Workaround for Boost sleep implementation cross-compilation issue
                 export ac_cv_sleep=yes
                 export ac_cv_boost_sleep=yes
+                export ac_cv_working_boost_sleep=yes
                 export BOOST_THREAD_SHARED_LIB="-lboost_thread"
                 export BOOST_CPPFLAGS="-I/opt/homebrew/include"
                 export BOOST_LDFLAGS="-L/opt/homebrew/lib"
+                # Additional cross-compilation fixes
+                export boost_cv_lib_chrono=yes
+                export boost_cv_lib_system=yes
+                export boost_cv_lib_thread=yes
+                export boost_cv_lib_filesystem=yes
+                export boost_cv_lib_program_options=yes
                 
                 # Try multiple Boost locations with additional cross-compilation flags
                 if [[ -d "/opt/homebrew/lib" ]]; then
@@ -643,7 +660,7 @@ configure_build() {
             # Use Homebrew Berkeley DB instead of building from source on macOS
             bdb_prefix="/opt/homebrew/opt/berkeley-db@4"
             build_log "Using Homebrew Berkeley DB at $bdb_prefix"
-            configure_args="--disable-tests --disable-bench --without-gui"
+            configure_args="--disable-tests --disable-bench --without-gui --enable-wallet"
             configure_args="$configure_args BDB_LIBS=\"-L${bdb_prefix}/lib -ldb_cxx-4.8\" BDB_CFLAGS=\"-I${bdb_prefix}/include\""
             
             # Detect host architecture and set up cross-compilation if needed
@@ -685,7 +702,7 @@ configure_build() {
             build_log "Configuring Windows x64 cross-compilation..."
             build_bdb4 "$target_dir"
             bdb_prefix="$target_dir/db4"
-            configure_args="--disable-tests --disable-bench --enable-static --disable-shared --without-gui"
+            configure_args="--disable-tests --disable-bench --enable-static --disable-shared --without-gui --enable-wallet"
             configure_args="$configure_args BDB_LIBS=\"-L${bdb_prefix}/lib -ldb_cxx-4.8\" BDB_CFLAGS=\"-I${bdb_prefix}/include\""
             host_flag="--host=x86_64-w64-mingw32"
             export CC="x86_64-w64-mingw32-gcc"
