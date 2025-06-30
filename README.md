@@ -12,9 +12,11 @@ CLORE is a cryptocurrency blockchain that started as proof of work and transaiti
 
 ### Proof of Stake Implementation
 
-- **ENABLE_POS_STAKING**: PoS preparation phase (formerly UPGRADE_POS)
-- **ENABLE_POS_REWARDS**: PoS completion phase (formerly UPGRADE_POS_PURE)
-- Complete transition from PoW to PoS consensus
+- **4-Phase PoS Transition**: Safety-first approach with PoW security during infrastructure buildup
+- **DEPLOYMENT_POS**: BIP9 miner signaling for network readiness (currently disabled)
+- **ENABLE_POS_VALIDATORS**: Masternode infrastructure activation (Phase 1)
+- **ENABLE_POS_STAKING**: Staking logic activation with 600-block depth (Phase 2)
+- **ENABLE_POS_REWARDS**: Pure PoS enforcement, PoW permanently disabled (Phase 3)
 - Enhanced staking infrastructure with real-time weight calculation
 - Advanced PoS RPC command suite
 
@@ -195,21 +197,35 @@ For comprehensive build setup, see [MULTIPLATFORM_BUILD_SETUP.md](MULTIPLATFORM_
 
 ## Consensus Upgrade System
 
-CLORE uses a dual upgrade mechanism:
+CLORE uses a **dual upgrade mechanism** providing both safety and precision in network upgrades:
 
 ### vDeployments (BIP9 Version Bits)
 
-- **DEPLOYMENT_POS**: Miner signaling for PoS readiness
-- Threshold-based activation with time windows
-- Ensures network-wide compatibility
+- **DEPLOYMENT_POS**: Miner signaling for PoS readiness (bit 11)
+- **Threshold-based activation**: Requires miner consensus (currently disabled with threshold 999999999)
+- **Time-bounded windows**: Has start/timeout periods for activation attempts
+- **Purpose**: Ensures network has upgraded software before enabling PoS
 
-### vUpgrades (Height-Based)
+### vUpgrades (Height-Based Network Upgrades)
 
-- **ENABLE_POS_STAKING**: Masternode infrastructure activation
-- **ENABLE_POS_REWARDS**: Pure PoS enforcement
-- Deterministic activation at specific block heights
+- **ENABLE_POS_VALIDATORS**: Masternode infrastructure activation (Height: 1,000,001,439)
+- **ENABLE_POS_STAKING**: Staking logic activation with 600-block depth (Height: 1,000,002,879)
+- **ENABLE_POS_REWARDS**: Pure PoS enforcement, PoW disabled (Height: 1,000,004,319)
+- **1440-block spacing**: Gradual transition with time for infrastructure buildup
+- **Deterministic activation**: Takes effect exactly at specified block heights
 
-For detailed information, see [CONSENSUS_UPGRADE_MECHANISMS.md](CONSENSUS_UPGRADE_MECHANISMS.md).
+### PoS Transition Strategy
+
+**Safety-First Approach**: PoW mining continues to secure the network while PoS infrastructure builds up gradually. Only when both masternodes and staking are fully operational does the network transition to PoS-only consensus.
+
+| Phase       | Height          | Mining Status  | Infrastructure      | Purpose                    |
+| ----------- | --------------- | -------------- | ------------------- | -------------------------- |
+| **Phase 0** | < 1,000,001,439 | **PoW Only**   | None                | Traditional PoW mining     |
+| **Phase 1** | 1,000,001,439   | **PoW Secure** | Masternodes Online  | Infrastructure buildup     |
+| **Phase 2** | 1,000,002,879   | **PoW Secure** | + Staking Active    | Dual consensus preparation |
+| **Phase 3** | 1,000,004,319   | **PoS Only**   | Full Infrastructure | Complete PoS transition    |
+
+For detailed technical information, see [CONSENSUS_UPGRADE_MECHANISMS.md](CONSENSUS_UPGRADE_MECHANISMS.md).
 
 ## Masternode System
 
@@ -246,23 +262,27 @@ Core masternode management commands plus advanced features:
 
 ## Network Configuration
 
-### Mainnet
+### Mainnet (Production)
 
-- **PoS Preparation**: Block 999,999,900 (placeholder)
-- **PoS Completion**: Block 999,999,999 (placeholder)
-- **Spacing**: 1440 blocks between upgrades (~1 day)
+- **DEPLOYMENT_POS**: Block 999,999,999 (BIP9 signaling - currently disabled)
+- **ENABLE_POS_VALIDATORS**: Block 1,000,001,439 (Masternode infrastructure)
+- **ENABLE_POS_STAKING**: Block 1,000,002,879 (Staking logic activation)
+- **ENABLE_POS_REWARDS**: Block 1,000,004,319 (Pure PoS enforcement)
+- **Spacing**: 1440 blocks between phases (~1 day at 1 min/block)
 
-### Testnet
+### Testnet (Testing Environment)
 
-- **PoS Preparation**: Block 2000
-- **PoS Completion**: Block 3440
-- **Spacing**: 1440 blocks for proper testing
+- **ENABLE_POS_VALIDATORS**: Block 1,000 (Masternode infrastructure)
+- **ENABLE_POS_STAKING**: Block 2,440 (Staking logic activation)
+- **ENABLE_POS_REWARDS**: Block 3,880 (Pure PoS enforcement)
+- **Spacing**: 1440 blocks for proper testing of full transition
 
-### Regtest
+### Regtest (Development)
 
-- **PoS Preparation**: Block 100
-- **PoS Completion**: Block 150
-- **Spacing**: 50 blocks for rapid testing
+- **ENABLE_POS_VALIDATORS**: Block 100 (Masternode infrastructure)
+- **ENABLE_POS_STAKING**: Block 150 (Staking logic activation)
+- **ENABLE_POS_REWARDS**: Block 200 (Pure PoS enforcement)
+- **Spacing**: 50 blocks for rapid testing and development
 
 ## Testing
 

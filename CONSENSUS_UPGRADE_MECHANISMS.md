@@ -47,8 +47,8 @@ consensus.vDeployments[Consensus::DEPLOYMENT_POS].nOverrideRuleChangeActivationT
 ```cpp
 // PoS phases - height-based activation with 1440 block spacing after DEPLOYMENT_POS
 consensus.vUpgrades[Consensus::ENABLE_POS_VALIDATORS] = {70002, 1000001439, {}}; // +1440 after DEPLOYMENT_POS (999999999)
-consensus.vUpgrades[Consensus::UPGRADE_POS_STAKING] = {70002, 1000002879, {}};   // +1440 blocks
-consensus.vUpgrades[Consensus::UPGRADE_POS_REWARDS] = {70002, 1000004319, {}};   // +1440 blocks
+consensus.vUpgrades[Consensus::ENABLE_POS_STAKING] = {70002, 1000002879, {}};   // +1440 blocks
+consensus.vUpgrades[Consensus::ENABLE_POS_REWARDS] = {70002, 1000004319, {}};   // +1440 blocks
 ```
 
 ## Why CLORE Uses Both Systems
@@ -64,8 +64,8 @@ consensus.vUpgrades[Consensus::UPGRADE_POS_REWARDS] = {70002, 1000004319, {}};  
 
 - **Height-based upgrades** control the **actual PoS functionality**
 - `ENABLE_POS_VALIDATORS` (1000001439) = masternodes come online (+1440 after DEPLOYMENT_POS)
-- `UPGRADE_POS_STAKING` (1000002879) = staking logic activated (+1440 blocks)
-- `UPGRADE_POS_REWARDS` (1000004319) = Clore PoS (PoW disabled) (+1440 blocks)
+- `ENABLE_POS_STAKING` (1000002879) = staking logic activated (+1440 blocks)
+- `ENABLE_POS_REWARDS` (1000004319) = Clore PoS (PoW disabled) (+1440 blocks)
 - **Purpose**: Precise control over when PoS phases activate
 
 ## Implementation Pattern
@@ -80,10 +80,10 @@ bool posSignaled = VersionBitsState(pindex, params, DEPLOYMENT_POS) == THRESHOLD
 bool validatorsActive = NetworkUpgradeActive(height, params, ENABLE_POS_VALIDATORS);
 
 // Check if staking logic is active (height-based)
-bool stakingActive = NetworkUpgradeActive(height, params, UPGRADE_POS_STAKING);
+bool stakingActive = NetworkUpgradeActive(height, params, ENABLE_POS_STAKING);
 
 // Check if Clore PoS is active (height-based)
-bool clorePosActive = NetworkUpgradeActive(height, params, UPGRADE_POS_REWARDS);
+bool clorePosActive = NetworkUpgradeActive(height, params, ENABLE_POS_REWARDS);
 ```
 
 ### Configuration Files
@@ -129,14 +129,14 @@ CLORE uses a **safety-first approach** where PoW mining continues to secure the 
    - Prepares masternode infrastructure before staking begins
    - No consensus rule changes - infrastructure only
 
-2. **`UPGRADE_POS_STAKING`** (1,000,002,879) - **Staking Logic Activation** (+1440 blocks)
+2. **`ENABLE_POS_STAKING`** (1,000,002,879) - **Staking Logic Activation** (+1440 blocks)
 
    - Activates staking requirements and logic
    - Implements age → depth based staking with 600 block minimum
    - Upgrades stake modifier to 256-bit for improved security
    - No consensus rule changes - staking infrastructure only
 
-3. **`UPGRADE_POS_REWARDS`** (1,000,004,319) - **Clore PoS Enforcement** (+1440 blocks)
+3. **`ENABLE_POS_REWARDS`** (1,000,004,319) - **Clore PoS Enforcement** (+1440 blocks)
    - **ONLY phase with consensus rule changes**
    - Permanently disables PoW mining and block acceptance
    - Enforces Clore PoS consensus with "pow-disabled" rejection
