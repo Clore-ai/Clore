@@ -396,9 +396,9 @@ enum GetDataMsg {
     MSG_WITNESS_BLOCK = MSG_BLOCK | MSG_WITNESS_FLAG, //!< Defined in BIP144
     MSG_WITNESS_TX = MSG_TX | MSG_WITNESS_FLAG,       //!< Defined in BIP144
     MSG_FILTERED_WITNESS_BLOCK = MSG_FILTERED_BLOCK | MSG_WITNESS_FLAG,
-    // Masternode message types
-    MSG_MASTERNODE_ANNOUNCE = 5,
-    MSG_MASTERNODE_PING = 6,
+    // Validator message types
+    MSG_VALIDATOR_ANNOUNCE = 5,
+    MSG_VALIDATOR_PING = 6,
 };
 
 /** inv message data */

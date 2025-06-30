@@ -377,36 +377,36 @@ static UniValue liststakeableutxos(const JSONRPCRequest& request)
 #endif
 }
 
-// Masternode-PoS integration command
-static UniValue getmasternodestakinginfo(const JSONRPCRequest& request)
+// Validator-PoS integration command
+static UniValue getvalidatorstakinginfo(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 0)
         throw std::runtime_error(
-            "getmasternodestakinginfo\n"
-            "\nReturns information about masternode staking integration.\n"
+            "getvalidatorstakinginfo\n"
+            "\nReturns information about validator staking integration.\n"
             "\nResult:\n"
             "{\n"
-            "  \"masternodecount\": n,           (numeric) total number of masternodes\n"
-            "  \"enabledmasternodes\": n,        (numeric) number of enabled masternodes\n"
-            "  \"masternoderewards\": true|false, (boolean) whether masternode rewards are enabled\n"
-            "  \"nextpayment\": \"...\",          (string) next masternode payment info\n"
-            "  \"posmasternodeintegration\": true|false (boolean) PoS-MN integration status\n"
+            "  \"validatorcount\": n,           (numeric) total number of validators\n"
+            "  \"enabledvalidators\": n,        (numeric) number of enabled validators\n"
+            "  \"validatorrewards\": true|false, (boolean) whether validator rewards are enabled\n"
+            "  \"nextpayment\": \"...\",          (string) next validator payment info\n"
+            "  \"posvalidatorintegration\": true|false (boolean) PoS-Validator integration status\n"
             "}\n"
             "\nExamples:\n" +
-            HelpExampleCli("getmasternodestakinginfo", "") + HelpExampleRpc("getmasternodestakinginfo", ""));
+            HelpExampleCli("getvalidatorstakinginfo", "") + HelpExampleRpc("getvalidatorstakinginfo", ""));
 
     LOCK(cs_main);
 
-    // TODO: Implement actual masternode counting and payment logic
-    int masternodeCount = 0;
-    int enabledMasternodes = 0;
+    // TODO: Implement actual validator counting and payment logic
+    int validatorCount = 0;
+    int enabledValidators = 0;
 
     UniValue result(UniValue::VOBJ);
-    result.pushKV("masternodecount", masternodeCount);
-    result.pushKV("enabledmasternodes", enabledMasternodes);
-    result.pushKV("masternoderewards", true); // Always enabled in hybrid system
+    result.pushKV("validatorcount", validatorCount);
+    result.pushKV("enabledvalidators", enabledValidators);
+    result.pushKV("validatorrewards", true); // Always enabled in hybrid system
     result.pushKV("nextpayment", "Not implemented yet");
-    result.pushKV("posmasternodeintegration", true); // PoS-MN integration active
+    result.pushKV("posvalidatorintegration", true); // PoS-Validator integration active
 
     return result;
 }
@@ -420,15 +420,15 @@ static UniValue getposinfo(const JSONRPCRequest& request)
             "\nReturns comprehensive Proof of Stake information and transition status.\n"
             "\nPhases:\n"
             "  Phase 0: Pure PoW - Traditional mining only\n"
-            "  Phase 1-2: Infrastructure - PoW continues while masternodes/staking activate\n"
+            "  Phase 1-2: Infrastructure - PoW continues while validators/staking activate\n"
             "  Phase 3: PoS-Only - PoW disabled, PoS takes over with full infrastructure\n"
             "\nResult:\n"
             "{\n"
-            "  \"masternodes_active\": true|false,   (boolean) Whether masternode infrastructure is active\n"
+            "  \"validators_active\": true|false,   (boolean) Whether validator infrastructure is active\n"
             "  \"pos_active\": true|false,           (boolean) Whether PoS staking infrastructure is active\n"
             "  \"pure_pos_active\": true|false,      (boolean) Whether PoS-only phase is active\n"
             "  \"current_height\": n,               (numeric) Current blockchain height\n"
-            "  \"masternode_activation_height\": n, (numeric) Height when masternodes activate\n"
+            "  \"validator_activation_height\": n, (numeric) Height when validators activate\n"
             "  \"pos_activation_height\": n,        (numeric) Height when PoS staking activates\n"
             "  \"pure_pos_activation_height\": n,   (numeric) Height when PoS-only phase activates\n"
             "  \"consensus_phase\": \"string\",        (string) Current consensus phase\n"
@@ -448,12 +448,12 @@ static UniValue getposinfo(const JSONRPCRequest& request)
     const int nCurrentHeight = chainActive.Height();
 
     // Get upgrade activation heights
-    const int nMasternodeActivationHeight = consensus.vUpgrades[Consensus::ENABLE_POS_VALIDATORS].nActivationHeight;
+    const int nValidatorActivationHeight = consensus.vUpgrades[Consensus::ENABLE_POS_VALIDATORS].nActivationHeight;
     const int nPosActivationHeight = consensus.vUpgrades[Consensus::ENABLE_POS_STAKING].nActivationHeight;
     const int nPurePosActivationHeight = consensus.vUpgrades[Consensus::ENABLE_POS_REWARDS].nActivationHeight;
 
     // Check activation status
-    const bool fMasternodesActive = Consensus::NetworkUpgradeActive(nCurrentHeight, consensus, Consensus::ENABLE_POS_VALIDATORS);
+    const bool fValidatorsActive = Consensus::NetworkUpgradeActive(nCurrentHeight, consensus, Consensus::ENABLE_POS_VALIDATORS);
     const bool fPosActive = Consensus::NetworkUpgradeActive(nCurrentHeight, consensus, Consensus::ENABLE_POS_STAKING);
     const bool fPurePosActive = Consensus::NetworkUpgradeActive(nCurrentHeight, consensus, Consensus::ENABLE_POS_REWARDS);
 
@@ -463,8 +463,8 @@ static UniValue getposinfo(const JSONRPCRequest& request)
         strConsensusPhase = "PoS-Only (Phase 3)";
     } else if (fPosActive) {
         strConsensusPhase = "Staking Infrastructure (Phase 2)";
-    } else if (fMasternodesActive) {
-        strConsensusPhase = "Masternode Infrastructure (Phase 1)";
+    } else if (fValidatorsActive) {
+        strConsensusPhase = "Validator Infrastructure (Phase 1)";
     } else {
         strConsensusPhase = "Pure PoW (Phase 0)";
     }
@@ -476,11 +476,11 @@ static UniValue getposinfo(const JSONRPCRequest& request)
     }
 
     UniValue obj(UniValue::VOBJ);
-    obj.pushKV("masternodes_active", fMasternodesActive);
+    obj.pushKV("validators_active", fValidatorsActive);
     obj.pushKV("pos_active", fPosActive);
     obj.pushKV("pure_pos_active", fPurePosActive);
     obj.pushKV("current_height", nCurrentHeight);
-    obj.pushKV("masternode_activation_height", nMasternodeActivationHeight);
+    obj.pushKV("validator_activation_height", nValidatorActivationHeight);
     obj.pushKV("pos_activation_height", nPosActivationHeight);
     obj.pushKV("pure_pos_activation_height", nPurePosActivationHeight);
     obj.pushKV("consensus_phase", strConsensusPhase);
@@ -500,7 +500,7 @@ static const CRPCCommand commands[] =
         {"staking", "setstaking", &setstaking, {"enabled"}},
         {"staking", "getstakingrewards", &getstakingrewards, {"address"}},
         {"staking", "liststakeableutxos", &liststakeableutxos, {"minconf"}},
-        {"staking", "getmasternodestakinginfo", &getmasternodestakinginfo, {}},
+        {"staking", "getvalidatorstakinginfo", &getvalidatorstakinginfo, {}},
         {"staking", "getposinfo", &getposinfo, {}},
 };
 

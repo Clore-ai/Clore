@@ -1,4 +1,4 @@
-# CLORE Masternode Automated Setup
+# CLORE Validator Automated Setup
 
 ## Quick Start
 
@@ -16,14 +16,14 @@ The automated setup script handles everything from building CLORE to configuring
 1. **Download the script** to your VPS:
 
    ```bash
-   wget https://raw.githubusercontent.com/CloreBlockchain/clore/main/doc/masternode-setup.sh
-   chmod +x masternode-setup.sh
+   wget https://raw.githubusercontent.com/CloreBlockchain/clore/main/doc/validator-setup.sh
+   chmod +x validator-setup.sh
    ```
 
 2. **Run the automated setup**:
 
    ```bash
-   ./masternode-setup.sh
+   ./validator-setup.sh
    ```
 
 3. **Follow the on-screen instructions** when the script completes
@@ -64,8 +64,8 @@ The automated setup script handles everything from building CLORE to configuring
 
 After successful completion, you'll find:
 
-- **`masternode-info.txt`** - All your credentials, next steps, and important information
-- **`masternode-setup.log`** - Complete setup log for troubleshooting
+- **`validator-info.txt`** - All your credentials, next steps, and important information
+- **`validator-setup.log`** - Complete setup log for troubleshooting
 - **`/home/clore/.clore/clore.conf`** - Generated configuration file
 - **`/etc/systemd/system/clored.service`** - Systemd service file
 
@@ -73,30 +73,30 @@ After successful completion, you'll find:
 
 The script prepares everything but **you still need to**:
 
-1. **Get masternode private key** from your LOCAL wallet:
+1. **Get validator private key** from your LOCAL wallet:
 
    ```
-   createmasternodekey
+   createvalidatorkey
    ```
 
 2. **Edit the configuration**:
 
    ```bash
    sudo nano /home/clore/.clore/clore.conf
-   # Replace: REPLACE_WITH_YOUR_MASTERNODE_PRIVATE_KEY
+   # Replace: REPLACE_WITH_YOUR_VALIDATOR_PRIVATE_KEY
    ```
 
 3. **Prepare collateral** (LOCAL wallet):
 
    - Send exactly 10,000 CLORE to new address
    - Wait 15 confirmations
-   - Run: `listmasternodeconf`
+   - Run: `listvalidatorconf`
 
-4. **Start the masternode**:
+4. **Start the validator**:
    ```bash
    sudo systemctl start clored
    clore-cli getblockcount  # wait for sync
-   # Then from LOCAL wallet: startmasternode alias false mn1
+   # Then from LOCAL wallet: startvalidator alias false mn1
    ```
 
 ### Useful Commands
@@ -112,7 +112,7 @@ sudo systemctl restart clored
 sudo journalctl -f -u clored           # Live logs
 clore-cli getblockcount               # Current block height
 clore-cli getconnectioncount          # Peer connections
-clore-cli getmasternodestatus         # Masternode status
+clore-cli getvalidatorstatus         # Validator status
 
 # Firewall
 sudo ufw status                       # Check firewall rules
@@ -132,11 +132,11 @@ sudo ufw status                       # Check firewall rules
 - Verify service: `sudo systemctl status clored`
 - Check logs: `sudo journalctl -u clored`
 
-**Masternode not starting?**
+**Validator not starting?**
 
 - Verify you edited the config file with your private key
 - Ensure collateral has 15+ confirmations
-- Check if you're on the authorized masternode list
+- Check if you're on the authorized validator list
 
 ### Manual vs Automated Setup
 
@@ -151,10 +151,10 @@ sudo ufw status                       # Check firewall rules
 
 ### Support
 
-- **Full Documentation**: See `masternode-simple.md` for manual setup
-- **Quick Reference**: See `masternode-quick-reference.md` for commands
-- **Community Support**: CLORE Discord #masternode-support
-- **Script Issues**: Check `masternode-setup.log` for details
+- **Full Documentation**: See `validator-simple.md` for manual setup
+- **Quick Reference**: See `validator-quick-reference.md` for commands
+- **Community Support**: CLORE Discord #validator-support
+- **Script Issues**: Check `validator-setup.log` for details
 
 ---
 

@@ -92,7 +92,7 @@ const int64_t nStartupTime = GetTime();
 
 const char* const CLORE_CONF_FILENAME = "clore.conf";
 const char* const CLORE_PID_FILENAME = "clore_blockchaind.pid";
-const char* const CLORE_MASTERNODE_CONF_FILENAME = "masternode.conf";
+const char* const CLORE_VALIDATOR_CONF_FILENAME = "validator.conf";
 
 ArgsManager gArgs;
 bool fPrintToConsole = false;
@@ -599,9 +599,9 @@ fs::path GetConfigFile(const std::string& confPath)
     return pathConfigFile;
 }
 
-fs::path GetMasternodeConfigFile()
+fs::path GetValidatorConfigFile()
 {
-    fs::path pathConfigFile(gArgs.GetArg("-mnconf", CLORE_MASTERNODE_CONF_FILENAME));
+    fs::path pathConfigFile(gArgs.GetArg("-mnconf", CLORE_VALIDATOR_CONF_FILENAME));
     if (!pathConfigFile.is_absolute())
         pathConfigFile = GetDataDir(false) / pathConfigFile;
 

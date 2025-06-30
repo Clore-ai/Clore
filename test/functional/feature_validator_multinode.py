@@ -2,21 +2,21 @@
 # Copyright (c) 2025 The Clore Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
-"""Test masternode functionality in multi-node environment
+"""Test validator functionality in multi-node environment
 
 This test specifically addresses the multi-node synchronization issues.
 
 Focus Areas:
 - Multi-node synchronization fixes
-- Masternode authorization consistency across nodes
+- Validator authorization consistency across nodes
 - Configuration synchronization
 - Network connectivity and peer management
-- Cross-node masternode status validation
+- Cross-node validator status validation
 
 Key Issues Being Addressed:
 - Node 1 stuck at height 0, not syncing from Node 0
 - Cross-node sync timeouts
-- Masternode configuration consistency across network
+- Validator configuration consistency across network
 """
 
 import time
@@ -25,16 +25,16 @@ from test_framework.util import *
 from decimal import Decimal
 
 
-class MasternodeMultiNodeTest(CloreTestFramework):
+class ValidatorMultiNodeTest(CloreTestFramework):
     def set_test_params(self):
         self.setup_clean_chain = True
         self.num_nodes = 3  # Use 3 nodes for comprehensive testing
 
         # Configure nodes with different roles
         self.extra_args = [
-            ["-debug=net", "-debug=masternode", "-printtoconsole=0"],  # Mining node
-            ["-debug=net", "-debug=masternode", "-printtoconsole=0"],  # Masternode 1
-            ["-debug=net", "-debug=masternode", "-printtoconsole=0"],  # Masternode 2
+            ["-debug=net", "-debug=validator", "-printtoconsole=0"],  # Mining node
+            ["-debug=net", "-debug=validator", "-printtoconsole=0"],  # Validator 1
+            ["-debug=net", "-debug=validator", "-printtoconsole=0"],  # Validator 2
         ]
 
     def skip_test_if_missing_module(self):
@@ -44,7 +44,7 @@ class MasternodeMultiNodeTest(CloreTestFramework):
         """Setup robust network connectivity"""
         self.setup_nodes()
 
-        self.log.info("=== Setting up multi-node network for masternode testing ===")
+        self.log.info("=== Setting up multi-node network for validator testing ===")
 
         # Create mesh network topology for better connectivity
         self.log.info("Creating mesh network topology...")
@@ -69,22 +69,22 @@ class MasternodeMultiNodeTest(CloreTestFramework):
             self.log.info("Continuing with available connections...")
 
     def run_test(self):
-        """Execute multi-node masternode testing"""
-        self.log.info("Starting multi-node masternode synchronization test...")
+        """Execute multi-node validator testing"""
+        self.log.info("Starting multi-node validator synchronization test...")
 
         # Phase 1: Test basic multi-node connectivity and sync
         self.test_basic_connectivity_and_sync()
 
-        # Phase 2: Test masternode authorization consistency
+        # Phase 2: Test validator authorization consistency
         self.test_authorization_consistency()
 
         # Phase 3: Test configuration management across nodes
         self.test_configuration_consistency()
 
-        # Phase 4: Test masternode operations with sync
-        self.test_masternode_operations_with_sync()
+        # Phase 4: Test validator operations with sync
+        self.test_validator_operations_with_sync()
 
-        self.log.info("✅ Multi-node masternode testing completed successfully!")
+        self.log.info("✅ Multi-node validator testing completed successfully!")
 
     def test_basic_connectivity_and_sync(self):
         """Test basic connectivity and blockchain synchronization"""
@@ -163,7 +163,7 @@ class MasternodeMultiNodeTest(CloreTestFramework):
         self.log.info("=== Testing Authorization Consistency ===")
 
         test_cases = [
-            ("alias", "test-mn-cross-node"),
+            ("alias", "test-validator-cross-node"),
             ("alias", "authorized-test"),
             ("address", None),  # Will generate address on each node
         ]
@@ -179,7 +179,7 @@ class MasternodeMultiNodeTest(CloreTestFramework):
             auth_results = []
             for i, node in enumerate(self.nodes):
                 try:
-                    result = node.checkmasternodeauth(test_type, test_value)
+                    result = node.checkvalidatorauth(test_type, test_value)
                     auth_results.append(result)
                     self.log.info(f"Node {i} auth result: {result['authorized']}")
                 except Exception as e:
@@ -206,14 +206,14 @@ class MasternodeMultiNodeTest(CloreTestFramework):
         self.log.info("✅ Authorization consistency testing completed")
 
     def test_configuration_consistency(self):
-        """Test masternode configuration consistency across nodes"""
+        """Test validator configuration consistency across nodes"""
         self.log.info("=== Testing Configuration Consistency ===")
 
         # Test that configuration commands work on all nodes
         config_commands = [
-            "listmasternodeconf",
-            "listauthorizedmasternodes",
-            "getmasternodecount",
+            "listvalidatorconf",
+            "listauthorizedvalidators",
+            "getvalidatorcount",
         ]
 
         for cmd in config_commands:
@@ -222,12 +222,12 @@ class MasternodeMultiNodeTest(CloreTestFramework):
             results = []
             for i, node in enumerate(self.nodes):
                 try:
-                    if cmd == "listmasternodeconf":
-                        result = node.listmasternodeconf()
-                    elif cmd == "listauthorizedmasternodes":
-                        result = node.listauthorizedmasternodes()
-                    elif cmd == "getmasternodecount":
-                        result = node.getmasternodecount()
+                    if cmd == "listvalidatorconf":
+                        result = node.listvalidatorconf()
+                    elif cmd == "listauthorizedvalidators":
+                        result = node.listauthorizedvalidators()
+                    elif cmd == "getvalidatorcount":
+                        result = node.getvalidatorcount()
 
                     results.append(result)
                     self.log.info(f"Node {i} {cmd} result type: {type(result)}")
@@ -239,14 +239,14 @@ class MasternodeMultiNodeTest(CloreTestFramework):
             # Verify all nodes return same type of result
             valid_results = [r for r in results if r is not None]
             if len(valid_results) >= 2:
-                if cmd in ["listmasternodeconf", "listauthorizedmasternodes"]:
+                if cmd in ["listvalidatorconf", "listauthorizedvalidators"]:
                     # Should all be lists
                     all_lists = all(isinstance(r, list) for r in valid_results)
                     if all_lists:
                         self.log.info(f"✅ {cmd} consistency verified")
                     else:
                         self.log.warning(f"⚠️ {cmd} type inconsistency")
-                elif cmd == "getmasternodecount":
+                elif cmd == "getvalidatorcount":
                     # Should all be dicts with 'total' field
                     all_valid = all(
                         isinstance(r, dict) and "total" in r for r in valid_results
@@ -258,47 +258,47 @@ class MasternodeMultiNodeTest(CloreTestFramework):
 
         self.log.info("✅ Configuration consistency testing completed")
 
-    def test_masternode_operations_with_sync(self):
-        """Test masternode operations while maintaining sync"""
-        self.log.info("=== Testing Masternode Operations with Sync ===")
+    def test_validator_operations_with_sync(self):
+        """Test validator operations while maintaining sync"""
+        self.log.info("=== Testing Validator Operations with Sync ===")
 
-        # Create masternode configuration on node 0
-        self.log.info("Creating masternode configuration on node 0...")
+        # Create validator configuration on node 0
+        self.log.info("Creating validator configuration on node 0...")
 
         try:
             collateral_txid = (
                 "multinode111111111111111111111111111111111111111111111111111111111"
             )
-            create_result = self.nodes[0].createmasternodeconfig(
+            create_result = self.nodes[0].createvalidatorconfig(
                 "multinode-test", "127.0.0.1:8790", collateral_txid, 0
             )
 
-            self.log.info(f"Masternode created: {create_result['alias']}")
+            self.log.info(f"Validator created: {create_result['alias']}")
             assert (
                 create_result["authorized"] == True
             ), "Should be authorized in regtest"
 
             # Generate some blocks to test sync with configuration changes
-            self.log.info("Generating blocks after masternode creation...")
+            self.log.info("Generating blocks after validator creation...")
             coinbase_address = self.nodes[0].getnewaddress()
             self.nodes[0].generatetoaddress(3, coinbase_address)
 
             # Wait for sync
             time.sleep(3)
 
-            # Check masternode configuration on all nodes
-            self.log.info("Checking masternode configuration consistency...")
+            # Check validator configuration on all nodes
+            self.log.info("Checking validator configuration consistency...")
 
             config_counts = []
             for i, node in enumerate(self.nodes):
                 try:
-                    mn_list = node.listmasternodeconf()
+                    mn_list = node.listvalidatorconf()
                     config_counts.append(len(mn_list))
-                    self.log.info(f"Node {i} has {len(mn_list)} masternode configs")
+                    self.log.info(f"Node {i} has {len(mn_list)} validator configs")
 
                     if len(mn_list) > 0:
-                        # Check if our created masternode appears
-                        aliases = [mn["alias"] for mn in mn_list]
+                        # Check if our created validator appears
+                        aliases = [validator["alias"] for validator in mn_list]
                         if "multinode-test" in aliases:
                             self.log.info(
                                 f"✅ Node {i} has multinode-test configuration"
@@ -318,7 +318,7 @@ class MasternodeMultiNodeTest(CloreTestFramework):
             keys_generated = 0
             for i, node in enumerate(self.nodes):
                 try:
-                    private_key = node.createmasternodekey()
+                    private_key = node.createvalidatorkey()
                     assert isinstance(private_key, str), "Should return string"
                     assert len(private_key) > 30, "Should be reasonable length"
                     keys_generated += 1
@@ -332,17 +332,17 @@ class MasternodeMultiNodeTest(CloreTestFramework):
 
             # Clean up - remove the test configuration
             try:
-                remove_result = self.nodes[0].removemasternodeconfig("multinode-test")
+                remove_result = self.nodes[0].removevalidatorconfig("multinode-test")
                 if remove_result["removed"]:
                     self.log.info("✅ Test configuration cleaned up successfully")
             except Exception as e:
                 self.log.warning(f"Cleanup failed: {e}")
 
         except Exception as e:
-            self.log.warning(f"Masternode operations test encountered issues: {e}")
+            self.log.warning(f"Validator operations test encountered issues: {e}")
 
-        self.log.info("✅ Masternode operations with sync testing completed")
+        self.log.info("✅ Validator operations with sync testing completed")
 
 
 if __name__ == "__main__":
-    MasternodeMultiNodeTest().main()
+    ValidatorMultiNodeTest().main()

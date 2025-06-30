@@ -838,7 +838,7 @@ Architecture: $arch
 Depends: libc6, libstdc++6, libboost-system1.74.0, libboost-filesystem1.74.0
 Maintainer: CLORE Development Team <dev@clore.ai>
 Description: CLORE cryptocurrency daemon and tools
- CLORE is a proof-of-stake cryptocurrency with masternode support.
+ CLORE is a proof-of-stake cryptocurrency with validator support.
  This package includes the daemon and CLI tools.
 Homepage: https://clore.ai
 EOF

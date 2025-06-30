@@ -11,21 +11,21 @@
 **Phase 0: Pure PoW (Block 0-99)**
 
 - Traditional PoW blockchain operation
-- Masternode RPC commands available but infrastructure inactive
+- Validator RPC commands available but infrastructure inactive
 - Staking disabled (consensus not active)
 
-**Phase 1: Masternode Infrastructure (Block 100-149)**
+**Phase 1: Validator Infrastructure (Block 100-149)**
 
 - PoW mining continues for network security
-- Masternode infrastructure activated and fully operational
-- Masternode creation, management, and validation active
+- Validator infrastructure activated and fully operational
+- Validator creation, management, and validation active
 - Staking still disabled (infrastructure building phase)
 
 **Phase 2: Staking Infrastructure (Block 150-199)**
 
 - PoW mining continues for network security
 - Staking logic activated and operational
-- Full masternode-staking integration working
+- Full validator-staking integration working
 - Reward tracking and analytics active
 - **Critical**: PoW secures network while PoS infrastructure builds up
 - **Hybrid Consensus**: Both PoW and PoS is able to secure the network
@@ -34,7 +34,7 @@
 
 - PoW mining permanently disabled via consensus validation
 - Pure PoS consensus enforcement active
-- Full masternode and staking infrastructure operational
+- Full validator and staking infrastructure operational
 - Network secured by PoS with established infrastructure
 
 ### 🛡️ SAFETY-FIRST DESIGN PRINCIPLES
@@ -85,7 +85,7 @@ if (GetParams().GetConsensus().NetworkUpgradeActive(nHeightNext, Consensus::ENAB
 - Real-time phase detection and reporting
 - Comprehensive upgrade activation height tracking
 - Network-specific configuration display
-- Masternode and staking status integration
+- Validator and staking status integration
 
 **Professional Phase Reporting:**
 
@@ -95,8 +95,8 @@ if (fPurePosActive) {
     strConsensusPhase = "PoS-Only (Phase 3)";
 } else if (fPosActive) {
     strConsensusPhase = "Staking Infrastructure (Phase 2)";
-} else if (fMasternodesActive) {
-    strConsensusPhase = "Masternode Infrastructure (Phase 1)";
+} else if (fValidatorsActive) {
+    strConsensusPhase = "Validator Infrastructure (Phase 1)";
 } else {
     strConsensusPhase = "Pure PoW (Phase 0)";
 }
@@ -116,7 +116,7 @@ ENABLE_POS_REWARDS,  // PoS Completion - Pure PoS enforcement
 **Mainnet Configuration (Production-Safe):**
 
 ```cpp
-consensus.vUpgrades[Consensus::ENABLE_POS_VALIDATORS].nActivationHeight = 1000001439;      // Masternode infrastructure
+consensus.vUpgrades[Consensus::ENABLE_POS_VALIDATORS].nActivationHeight = 1000001439;      // Validator infrastructure
 consensus.vUpgrades[Consensus::ENABLE_POS_STAKING].nActivationHeight = 1000002879;  // Staking infrastructure
 consensus.vUpgrades[Consensus::ENABLE_POS_REWARDS].nActivationHeight = 1000004319;  // PoS-only enforcement
 // 1440 block spacing (≈1 day) between upgrades for safety
@@ -125,7 +125,7 @@ consensus.vUpgrades[Consensus::ENABLE_POS_REWARDS].nActivationHeight = 100000431
 **Regtest Configuration (Rapid Testing):**
 
 ```cpp
-consensus.vUpgrades[Consensus::ENABLE_POS_VALIDATORS].nActivationHeight = 100;   // Masternode infrastructure
+consensus.vUpgrades[Consensus::ENABLE_POS_VALIDATORS].nActivationHeight = 100;   // Validator infrastructure
 consensus.vUpgrades[Consensus::ENABLE_POS_STAKING].nActivationHeight = 150; // Staking infrastructure
 consensus.vUpgrades[Consensus::ENABLE_POS_REWARDS].nActivationHeight = 200;  // PoS-only enforcement
 // 50 block spacing for rapid testing
@@ -144,17 +144,17 @@ consensus.vUpgrades[Consensus::ENABLE_POS_REWARDS].nActivationHeight = 200;  // 
 
 - ✅ getposinfo shows "Pure PoW (Phase 0)"
 - ✅ PoW blocks accepted normally
-- ✅ Masternode RPC available but infrastructure not active
+- ✅ Validator RPC available but infrastructure not active
 - ✅ Staking correctly inactive
 - ✅ No rewards (expected behavior)
 
 **Phase 1 Testing (7 validations):**
 
-- ✅ getposinfo shows "Masternode Infrastructure (Phase 1)"
+- ✅ getposinfo shows "Validator Infrastructure (Phase 1)"
 - ✅ PoW blocks accepted (secures during infrastructure buildup)
-- ✅ Masternode creation working
-- ✅ Masternode listing working
-- ✅ Masternode infrastructure fully operational
+- ✅ Validator creation working
+- ✅ Validator listing working
+- ✅ Validator infrastructure fully operational
 - ✅ Staking correctly not active yet
 - ✅ No staking rewards (expected behavior)
 
@@ -162,11 +162,11 @@ consensus.vUpgrades[Consensus::ENABLE_POS_REWARDS].nActivationHeight = 200;  // 
 
 - ✅ getposinfo shows "Staking Infrastructure (Phase 2)"
 - ✅ PoW blocks still accepted (secures while PoS builds up)
-- ✅ Masternode functionality continues working
+- ✅ Validator functionality continues working
 - ✅ Staking info available
 - ✅ Stakeable UTXOs working
 - ✅ Staking rewards tracking active
-- ✅ Masternode-staking integration working
+- ✅ Validator-staking integration working
 - ✅ Staking infrastructure fully operational
 - ✅ Reward tracking operational
 
@@ -176,10 +176,10 @@ consensus.vUpgrades[Consensus::ENABLE_POS_REWARDS].nActivationHeight = 200;  // 
 - ✅ PoW disabled before reaching 200 (correct behavior)
 - ✅ getposinfo shows correct phase
 - ✅ PoW blocks correctly disabled
-- ✅ Masternode functionality preserved
+- ✅ Validator functionality preserved
 - ✅ Staking remains operational
 - ✅ Staking rewards tracking continues
-- ✅ Masternode-staking integration preserved
+- ✅ Validator-staking integration preserved
 
 **Edge Case Testing (2 validations):**
 
@@ -192,7 +192,7 @@ consensus.vUpgrades[Consensus::ENABLE_POS_REWARDS].nActivationHeight = 200;  // 
 
 - ✅ Consensus phase synchronization across all nodes
 - ✅ Network-wide state consistency during transitions
-- ✅ Multi-node masternode functionality validation
+- ✅ Multi-node validator functionality validation
 - ✅ Cross-node staking infrastructure verification
 
 ### 📊 CRITICAL VALIDATION RESULTS
@@ -204,7 +204,7 @@ consensus.vUpgrades[Consensus::ENABLE_POS_REWARDS].nActivationHeight = 200;  // 
 
 **Things That SHOULDN'T Fail DON'T Fail:**
 
-- ✅ Masternode functionality throughout all phases
+- ✅ Validator functionality throughout all phases
 - ✅ Staking functionality from Phase 2 onwards
 - ✅ Network security maintained during transitions
 
@@ -295,10 +295,10 @@ The safety-first phased PoS transition system is fully implemented, comprehensiv
 - ✅ BIP9 PoS deployment status tracking
 - ✅ Staking RPC commands accessible
 
-**Phase 3: Masternode Functionality**
+**Phase 3: Validator Functionality**
 
-- ✅ Basic masternode RPC commands (list, count, genkey, status)
-- ✅ Masternode wallet functionality testing
+- ✅ Basic validator RPC commands (list, count, genkey, status)
+- ✅ Validator wallet functionality testing
 - ✅ Collateral transaction testing capabilities
 - ℹ️ Full 2-node testing available (currently using 1-node for stability)
 
@@ -321,7 +321,7 @@ The safety-first phased PoS transition system is fully implemented, comprehensiv
 1. **Zero Segmentation Faults**: Previously crash-prone scenarios now handled gracefully
 2. **Complete Algorithm Progression**: BTC (1-199) → DGW (200+) transition flawless
 3. **Proof-of-Stake Ready**: Staking functionality confirmed accessible
-4. **Masternode Foundation**: Basic masternode RPC infrastructure working
+4. **Validator Foundation**: Basic validator RPC infrastructure working
 5. **Production Stability**: 220+ blocks generated without crashes
 6. **Memory Safety**: Enhanced pointer validation prevents corruption
 
@@ -412,9 +412,9 @@ try {
 - Community consensus required for activation
 - Testnet and regtest configurations for development
 
-### 2025-06-24 - Masternode Infrastructure
+### 2025-06-24 - Validator Infrastructure
 
-**Enhanced masternode support in regtest:**
+**Enhanced validator support in regtest:**
 
 1. **Fast Parameters** (`src/chainparams.cpp:217-218`):
 
@@ -430,8 +430,8 @@ try {
 
 - Rapid staking for development
 - Quick maturity for testing
-- Masternode functionality validation
+- Validator functionality validation
 
 ### Earlier Development
 
-**Core PoS implementation, masternode payments system, BIP9 deployment framework, and regtest configuration optimizations completed in previous development phases.**
+**Core PoS implementation, validator payments system, BIP9 deployment framework, and regtest configuration optimizations completed in previous development phases.**

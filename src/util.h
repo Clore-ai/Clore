@@ -58,7 +58,7 @@ extern CTranslationInterface translationInterface;
 
 extern const char* const CLORE_CONF_FILENAME;
 extern const char* const CLORE_PID_FILENAME;
-extern const char* const CLORE_MASTERNODE_CONF_FILENAME;
+extern const char* const CLORE_VALIDATOR_CONF_FILENAME;
 
 extern std::atomic<uint32_t> logCategories;
 
@@ -207,7 +207,7 @@ void ClearDatadirCache();
 
 fs::path GetConfigFile(const std::string& confPath);
 
-fs::path GetMasternodeConfigFile();
+fs::path GetValidatorConfigFile();
 
 #ifndef WIN32
 

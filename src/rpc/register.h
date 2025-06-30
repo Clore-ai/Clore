@@ -28,8 +28,8 @@ void RegisterAssetRPCCommands(CRPCTable& tableRPC);
 void RegisterMessageRPCCommands(CRPCTable& tableRPC);
 /** Register rewards RPC commands */
 void RegisterRewardsRPCCommands(CRPCTable& tableRPC);
-/** Register masternode RPC commands */
-void RegisterMasternodeRPCCommands(CRPCTable& tableRPC);
+/** Register validator RPC commands */
+void RegisterValidatorRPCCommands(CRPCTable& tableRPC);
 /** Register staking RPC commands */
 void RegisterStakingRPCCommands(CRPCTable& tableRPC);
 
@@ -43,7 +43,7 @@ static inline void RegisterAllCoreRPCCommands(CRPCTable& t)
     RegisterAssetRPCCommands(t);
     RegisterMessageRPCCommands(t);
     RegisterRewardsRPCCommands(t);
-    RegisterMasternodeRPCCommands(t);
+    RegisterValidatorRPCCommands(t);
     RegisterStakingRPCCommands(t);
 }
 

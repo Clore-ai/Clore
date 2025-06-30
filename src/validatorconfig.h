@@ -4,20 +4,20 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or https://www.opensource.org/licenses/mit-license.php.
 
-#ifndef CLORE_MASTERNODECONFIG_H
-#define CLORE_MASTERNODECONFIG_H
+#ifndef CLORE_VALIDATORCONFIG_H
+#define CLORE_VALIDATORCONFIG_H
 
 #include "sync.h"
 #include <string>
 #include <vector>
 
-class CMasternodeConfig;
-extern CMasternodeConfig masternodeConfig;
+class CValidatorConfig;
+extern CValidatorConfig validatorConfig;
 
-class CMasternodeConfig
+class CValidatorConfig
 {
 public:
-    class CMasternodeEntry
+    class CValidatorEntry
     {
     private:
         std::string alias;
@@ -26,7 +26,7 @@ public:
         std::string outputIndex;
 
     public:
-        CMasternodeEntry(std::string& _alias, std::string& _ip, std::string& _txHash, std::string& _outputIndex) : alias(_alias), ip(_ip), txHash(_txHash), outputIndex(_outputIndex) {}
+        CValidatorEntry(std::string& _alias, std::string& _ip, std::string& _txHash, std::string& _outputIndex) : alias(_alias), ip(_ip), txHash(_txHash), outputIndex(_outputIndex) {}
 
         const std::string& getAlias() const { return alias; }
         const std::string& getOutputIndex() const { return outputIndex; }
@@ -35,7 +35,7 @@ public:
         const std::string& getIp() const { return ip; }
     };
 
-    CMasternodeConfig() { entries = std::vector<CMasternodeEntry>(); }
+    CValidatorConfig() { entries = std::vector<CValidatorEntry>(); }
 
     void clear()
     {
@@ -43,10 +43,10 @@ public:
         entries.clear();
     }
     bool read(std::string& strErr);
-    CMasternodeConfig::CMasternodeEntry* add(std::string alias, std::string ip, std::string txHash, std::string outputIndex);
+    CValidatorConfig::CValidatorEntry* add(std::string alias, std::string ip, std::string txHash, std::string outputIndex);
     void remove(std::string alias);
 
-    std::vector<CMasternodeEntry> getEntries()
+    std::vector<CValidatorEntry> getEntries()
     {
         LOCK(cs_entries);
         return entries;
@@ -63,9 +63,9 @@ public:
     }
 
 private:
-    std::vector<CMasternodeEntry> entries;
+    std::vector<CValidatorEntry> entries;
     CCriticalSection cs_entries;
 };
 
 
-#endif // CLORE_MASTERNODECONFIG_H
+#endif // CLORE_VALIDATORCONFIG_H

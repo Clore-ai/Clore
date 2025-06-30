@@ -702,7 +702,7 @@ std::unique_ptr<CBlockTemplate> CreateNewBlockWithScript(const CScript& coinbase
     }
 
     // Infrastructure phases: PoW continues to secure network while PoS builds up
-    // - Phase 1: Masternodes can be created (PoW secure)
+    // - Phase 1: Validators can be created (PoW secure)
     // - Phase 2: Staking enabled (PoW still secure)
     return BlockAssembler(GetParams(), mempool).CreateNewBlock(coinbaseScript);
 }

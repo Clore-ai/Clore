@@ -1,4 +1,4 @@
-# CLORE Masternode Setup Guide
+# CLORE Validator Setup Guide
 
 ## Table of Contents
 
@@ -7,8 +7,8 @@
 3. [Server Preparation](#server-preparation)
 4. [CLORE Daemon Installation](#clore-daemon-installation)
 5. [Wallet Setup and Collateral](#wallet-setup-and-collateral)
-6. [Masternode Configuration](#masternode-configuration)
-7. [Starting Your Masternode](#starting-your-masternode)
+6. [Validator Configuration](#validator-configuration)
+7. [Starting Your Validator](#starting-your-validator)
 8. [Monitoring and Maintenance](#monitoring-and-maintenance)
 9. [Troubleshooting](#troubleshooting)
 10. [Security Best Practices](#security-best-practices)
@@ -17,16 +17,16 @@
 
 ## Overview
 
-This guide provides comprehensive instructions for setting up and operating a CLORE masternode. A masternode is a specially configured node that provides enhanced services to the CLORE network and receives rewards for its participation.
+This guide provides comprehensive instructions for setting up and operating a CLORE validator. A validator is a specially configured node that provides enhanced services to the CLORE network and receives rewards for its participation.
 
-**Important:** CLORE masternodes require authorization during the current network phase. Ensure you are on the authorized masternode list before proceeding.
+**Important:** CLORE validators require authorization during the current network phase. Ensure you are on the authorized validator list before proceeding.
 
-### Masternode Requirements
+### Validator Requirements
 
 - **Collateral**: 10,000 CLORE (must remain unspent)
 - **VPS**: Dedicated server with static IP address
 - **Network**: 24/7 uptime with stable internet connection
-- **Authorization**: Must be on the authorized masternode list
+- **Authorization**: Must be on the authorized validator list
 
 ---
 
@@ -81,7 +81,7 @@ apt install -y curl wget unzip build-essential libtool autotools-dev \
 
 ### 2. Create System User
 
-Create a dedicated user for the masternode:
+Create a dedicated user for the validator:
 
 ```bash
 adduser clore
@@ -169,8 +169,8 @@ rpcallowip=127.0.0.1
 rpcport=8766
 port=8788
 
-# Masternode Configuration
-masternode=1
+# Validator Configuration
+validator=1
 externalip=YOUR_SERVER_IP
 
 # Network Configuration
@@ -180,24 +180,24 @@ daemon=1
 maxconnections=256
 
 # Logging
-debug=masternode
+debug=validator
 logips=1
 logtimestamps=1
 EOF
 ```
 
-**Note**: Replace `MASTERNODE_PRIVATE_KEY_HERE` and `YOUR_SERVER_IP` with actual values (obtained in subsequent steps).
+**Note**: Replace `VALIDATOR_PRIVATE_KEY_HERE` and `YOUR_SERVER_IP` with actual values (obtained in subsequent steps).
 
 ---
 
 ## Wallet Setup and Collateral
 
-### 1. Generate Masternode Private Key
+### 1. Generate Validator Private Key
 
 TODO:
 
 ```
-createmasternodekey
+createvalidatorkey
 ```
 
 Save this key securely - you'll need it for the server configuration.
@@ -210,7 +210,7 @@ In your local wallet:
 2. Wait for 15 confirmations
 3. In the debug console, find your collateral transaction:
    ```
-   listmasternodeconf
+   listvalidatorconf
    ```
 
 Note the transaction ID (txhash) and output index.
@@ -225,27 +225,27 @@ nano ~/.clore/clore.conf
 
 Update these lines:
 
-- Replace `MASTERNODE_PRIVATE_KEY_HERE` with the key from step 1
+- Replace `VALIDATOR_PRIVATE_KEY_HERE` with the key from step 1
 - Replace `YOUR_SERVER_IP` with your server's IP address
 
 ---
 
-## Masternode Configuration
+## Validator Configuration
 
-### 1. Create Masternode Configuration Entry
+### 1. Create Validator Configuration Entry
 
-On your LOCAL wallet, create or edit `masternode.conf`:
+On your LOCAL wallet, create or edit `validator.conf`:
 
 **Location:**
 
-- **Windows**: `%APPDATA%\CLORE\masternode.conf`
-- **macOS**: `~/Library/Application Support/CLORE/masternode.conf`
-- **Linux**: `~/.clore/masternode.conf`
+- **Windows**: `%APPDATA%\CLORE\validator.conf`
+- **macOS**: `~/Library/Application Support/CLORE/validator.conf`
+- **Linux**: `~/.clore/validator.conf`
 
 Add this line (replace with your values):
 
 ```
-mn1 YOUR_SERVER_IP:8788 MASTERNODE_PRIVATE_KEY COLLATERAL_TXID COLLATERAL_OUTPUT_INDEX
+mn1 YOUR_SERVER_IP:8788 VALIDATOR_PRIVATE_KEY COLLATERAL_TXID COLLATERAL_OUTPUT_INDEX
 ```
 
 **Example:**
@@ -259,14 +259,14 @@ mn1 192.168.1.100:8788 7VatqRx...privatekey...8xNc4D 15a94b...txhash...7c3f 0
 Check if your address is authorized:
 
 ```bash
-clore-cli listauthorizedmasternodes
+clore-cli listauthorizedvalidators
 ```
 
 If you're not on the list, contact the CLORE team for authorization.
 
 ---
 
-## Starting Your Masternode
+## Starting Your Validator
 
 ### 1. Start the CLORE Daemon
 
@@ -284,26 +284,26 @@ clore-cli getblockcount
 
 Compare with the current block height from a block explorer.
 
-### 2. Start Masternode from Local Wallet
+### 2. Start Validator from Local Wallet
 
 In your local wallet's debug console:
 
 ```
-startmasternode alias false mn1
+startvalidator alias false mn1
 ```
 
-Or start all masternodes:
+Or start all validators:
 
 ```
-startmasternode all false
+startvalidator all false
 ```
 
-### 3. Verify Masternode Status
+### 3. Verify Validator Status
 
-On your server, check the masternode status:
+On your server, check the validator status:
 
 ```bash
-clore-cli getmasternodestatus
+clore-cli getvalidatorstatus
 ```
 
 You should see:
@@ -315,7 +315,7 @@ You should see:
   "netaddr": "your_server_ip:8788",
   "addr": "your_collateral_address",
   "status": 4,
-  "message": "Masternode successfully started"
+  "message": "Validator successfully started"
 }
 ```
 
@@ -371,10 +371,10 @@ View recent logs:
 tail -f ~/.clore/debug.log
 ```
 
-Check masternode info:
+Check validator info:
 
 ```bash
-clore-cli getmasternodeinfo
+clore-cli getvalidatorinfo
 ```
 
 Monitor network connection:
@@ -388,7 +388,7 @@ clore-cli getconnectioncount
 **Daily Checks:**
 
 - Verify daemon is running: `clore-cli getblockcount`
-- Check masternode status: `clore-cli getmasternodestatus`
+- Check validator status: `clore-cli getvalidatorstatus`
 - Monitor server resources: `htop` or `free -h`
 
 **Weekly Tasks:**
@@ -409,7 +409,7 @@ clore-cli getconnectioncount
 
 ### Common Issues
 
-**1. Masternode Not Starting**
+**1. Validator Not Starting**
 
 ```bash
 # Check configuration file
@@ -437,9 +437,9 @@ clore-cli stop
 clore_blockchaind
 ```
 
-**3. "Not in the masternode list" Error**
+**3. "Not in the validator list" Error**
 
-- Verify you're on the authorized masternode list
+- Verify you're on the authorized validator list
 - Ensure collateral transaction has enough confirmations (15+)
 - Check that collateral amount is exactly 10,000 CLORE
 
@@ -467,26 +467,26 @@ tail -f ~/.clore/debug.log
 # System service logs
 sudo journalctl -f -u clored
 
-# Filter for masternode messages
-grep -i masternode ~/.clore/debug.log | tail -20
+# Filter for validator messages
+grep -i validator ~/.clore/debug.log | tail -20
 ```
 
 ### Recovery Procedures
 
-**If your masternode goes offline:**
+**If your validator goes offline:**
 
 1. Check server connectivity and daemon status
 2. Restart the CLORE daemon if necessary
 3. Verify configuration hasn't changed
-4. Re-start masternode from local wallet if needed
+4. Re-start validator from local wallet if needed
 
 **If you need to change servers:**
 
-1. Stop the old masternode gracefully
+1. Stop the old validator gracefully
 2. Set up the new server following this guide
-3. Use the same masternode private key and collateral
-4. Update the IP address in your local masternode.conf
-5. Start the masternode from your local wallet
+3. Use the same validator private key and collateral
+4. Update the IP address in your local validator.conf
+5. Start the validator from your local wallet
 
 ---
 
@@ -522,8 +522,8 @@ grep -i masternode ~/.clore/debug.log | tail -20
 1. **Backup Your Wallet**
 
    - Keep encrypted backups of your wallet.dat file
-   - Store masternode private keys securely offline
-   - Document your masternode configuration
+   - Store validator private keys securely offline
+   - Document your validator configuration
 
 2. **Collateral Security**
 
@@ -541,7 +541,7 @@ grep -i masternode ~/.clore/debug.log | tail -20
 1. **VPN Considerations**
 
    - Consider using a VPN for administrative access
-   - Ensure VPN doesn't interfere with masternode connectivity
+   - Ensure VPN doesn't interfere with validator connectivity
 
 2. **DDoS Protection**
 
@@ -549,7 +549,7 @@ grep -i masternode ~/.clore/debug.log | tail -20
    - Consider using a CDN service for additional protection
 
 3. **Monitoring**
-   - Set up uptime monitoring for your masternode
+   - Set up uptime monitoring for your validator
    - Configure alerts for unusual network activity
 
 ---
@@ -565,7 +565,7 @@ grep -i masternode ~/.clore/debug.log | tail -20
 
 If you encounter issues not covered in this guide:
 
-1. Check the CLORE Discord community #masternode-support channel
+1. Check the CLORE Discord community #validator-support channel
 2. Review GitHub issues for known problems
 3. Consult the CLORE documentation repository
 
@@ -573,9 +573,9 @@ If you encounter issues not covered in this guide:
 
 ## Conclusion
 
-Successfully setting up a CLORE masternode requires careful attention to security, configuration, and ongoing maintenance. This guide provides the foundation for a secure and reliable masternode operation.
+Successfully setting up a CLORE validator requires careful attention to security, configuration, and ongoing maintenance. This guide provides the foundation for a secure and reliable validator operation.
 
-Remember that masternode operators play a crucial role in the CLORE network's security and functionality. Maintain high uptime, keep your software updated, and follow security best practices to ensure optimal performance.
+Remember that validator operators play a crucial role in the CLORE network's security and functionality. Maintain high uptime, keep your software updated, and follow security best practices to ensure optimal performance.
 
 **Important**: Always test configuration changes on a non-production environment when possible, and maintain current backups of your wallet and configuration files.
 

@@ -4,32 +4,32 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef CLORE_MASTERNODE_PAYMENTS_H
-#define CLORE_MASTERNODE_PAYMENTS_H
+#ifndef CLORE_VALIDATOR_PAYMENTS_H
+#define CLORE_VALIDATOR_PAYMENTS_H
 
 #include "key.h"
-#include "masternode.h"
 #include "util.h"
 #include "validation.h"
+#include "validator.h"
 
-class CMasternodePayments;
-class CMasternodePaymentWinner;
-class CMasternodeBlockPayees;
+class CValidatorPayments;
+class CValidatorPaymentWinner;
+class CValidatorBlockPayees;
 
-// CLORE: Masternode payments are DISABLED by default
-// Set to true in chainparams to enable masternode payments
-extern bool fMasternodePaymentsEnabled;
+// CLORE: Validator payments are DISABLED by default
+// Set to true in chainparams to enable validator payments
+extern bool fValidatorPaymentsEnabled;
 
 static const int MNPAYMENTS_SIGNATURES_REQUIRED = 6;
 static const int MNPAYMENTS_SIGNATURES_TOTAL = 10;
 
-// Minimum protocol version for masternode payments
-static const int MIN_MASTERNODE_PAYMENT_PROTO_VERSION = 70922;
+// Minimum protocol version for validator payments
+static const int MIN_VALIDATOR_PAYMENT_PROTO_VERSION = 70922;
 
 //! minimum peer version accepted by DarkSendPool
 static const int MIN_POOL_PEER_PROTO_VERSION = 70103;
 
-extern CMasternodePayments masternodePayments;
+extern CValidatorPayments validatorPayments;
 
 /// TODO: all 4 functions do not belong here really, they should be refactored/moved somewhere (main.cpp ?)
 bool IsBlockValueValid(const CBlock& block, CAmount nExpectedValue, CAmount nMinted);
@@ -37,43 +37,43 @@ bool IsBlockPayeeValid(const CTransaction& txNew, const CBlockIndex* pindexPrev)
 void FillBlockPayee(CMutableTransaction& txCoinbase, CMutableTransaction& txCoinstake, const CBlockIndex* pindexPrev, bool fProofOfStake);
 std::string GetRequiredPaymentsString(int nBlockHeight);
 
-class CMasternodePayee
+class CValidatorPayee
 {
 public:
     CScript scriptPubKey;
     int nVotes;
 
-    CMasternodePayee()
+    CValidatorPayee()
     {
         scriptPubKey = CScript();
         nVotes = 0;
     }
 
-    CMasternodePayee(CScript payee, int nVotesIn)
+    CValidatorPayee(CScript payee, int nVotesIn)
     {
         scriptPubKey = payee;
         nVotes = nVotesIn;
     }
 
-    SERIALIZE_METHODS(CMasternodePayee, obj)
+    SERIALIZE_METHODS(CValidatorPayee, obj)
     {
         READWRITE(obj.scriptPubKey, obj.nVotes);
     }
 };
 
-// Keep track of votes for payees from masternodes
-class CMasternodeBlockPayees
+// Keep track of votes for payees from validators
+class CValidatorBlockPayees
 {
 public:
     int nBlockHeight;
-    std::vector<CMasternodePayee> vecPayments;
+    std::vector<CValidatorPayee> vecPayments;
 
-    CMasternodeBlockPayees()
+    CValidatorBlockPayees()
     {
         nBlockHeight = 0;
         vecPayments.clear();
     }
-    CMasternodeBlockPayees(int nBlockHeightIn)
+    CValidatorBlockPayees(int nBlockHeightIn)
     {
         nBlockHeight = nBlockHeightIn;
         vecPayments.clear();
@@ -83,14 +83,14 @@ public:
     {
         LOCK(cs_vecPayments);
 
-        for (CMasternodePayee& payee : vecPayments) {
+        for (CValidatorPayee& payee : vecPayments) {
             if (payee.scriptPubKey == payeeIn) {
                 payee.nVotes += nIncrement;
                 return;
             }
         }
 
-        CMasternodePayee c(payeeIn, nIncrement);
+        CValidatorPayee c(payeeIn, nIncrement);
         vecPayments.push_back(c);
     }
 
@@ -99,7 +99,7 @@ public:
         LOCK(cs_vecPayments);
 
         int nVotes = -1;
-        for (CMasternodePayee& p : vecPayments) {
+        for (CValidatorPayee& p : vecPayments) {
             if (p.nVotes > nVotes) {
                 payee = p.scriptPubKey;
                 nVotes = p.nVotes;
@@ -113,7 +113,7 @@ public:
     {
         LOCK(cs_vecPayments);
 
-        for (CMasternodePayee& p : vecPayments) {
+        for (CValidatorPayee& p : vecPayments) {
             if (p.nVotes >= nVotesReq && p.scriptPubKey == payee) return true;
         }
 
@@ -123,7 +123,7 @@ public:
     bool IsTransactionValid(const CTransaction& txNew);
     std::string GetRequiredPaymentsString();
 
-    SERIALIZE_METHODS(CMasternodeBlockPayees, obj)
+    SERIALIZE_METHODS(CValidatorBlockPayees, obj)
     {
         READWRITE(obj.nBlockHeight, obj.vecPayments);
     }
@@ -133,25 +133,25 @@ private:
 };
 
 // for storing the winning payments
-class CMasternodePaymentWinner : public CSignedMessage
+class CValidatorPaymentWinner : public CSignedMessage
 {
 public:
-    CTxIn vinMasternode;
+    CTxIn vinValidator;
 
     int nBlockHeight;
     CScript payee;
 
-    CMasternodePaymentWinner()
+    CValidatorPaymentWinner()
     {
         nBlockHeight = 0;
-        vinMasternode = CTxIn();
+        vinValidator = CTxIn();
         payee = CScript();
     }
 
-    CMasternodePaymentWinner(CTxIn vinIn)
+    CValidatorPaymentWinner(CTxIn vinIn)
     {
         nBlockHeight = 0;
-        vinMasternode = vinIn;
+        vinValidator = vinIn;
         payee = CScript();
     }
 
@@ -160,7 +160,7 @@ public:
     // override CSignedMessage functions
     uint256 GetSignatureHash() const override { return GetHash(); }
     std::string GetStrMessage() const override;
-    const CTxIn GetVin() const { return vinMasternode; };
+    const CTxIn GetVin() const { return vinValidator; };
 
     bool IsValid(CNode* pnode, CValidationState& state, int chainHeight);
     void Relay();
@@ -170,15 +170,15 @@ public:
         payee = payeeIn;
     }
 
-    SERIALIZE_METHODS(CMasternodePaymentWinner, obj)
+    SERIALIZE_METHODS(CValidatorPaymentWinner, obj)
     {
-        READWRITE(obj.vinMasternode, obj.nBlockHeight, obj.payee, obj.vchSig, obj.nMessVersion);
+        READWRITE(obj.vinValidator, obj.nBlockHeight, obj.payee, obj.vchSig, obj.nMessVersion);
     }
 
     std::string ToString()
     {
         std::string ret = "";
-        ret += vinMasternode.ToString();
+        ret += vinValidator.ToString();
         ret += ", " + std::to_string(nBlockHeight);
         ret += ", " + payee.ToString();
         ret += ", " + std::to_string((int)vchSig.size());
@@ -187,22 +187,22 @@ public:
 };
 
 //
-// Masternode Payments Class
+// Validator Payments Class
 // Keeps track of who should get paid for which blocks
 //
 
-class CMasternodePayments
+class CValidatorPayments
 {
 private:
     int nSyncedFromPeer;
     int nLastBlockHeight;
 
 public:
-    std::map<uint256, CMasternodePaymentWinner> mapMasternodePayeeVotes;
-    std::map<int, CMasternodeBlockPayees> mapMasternodeBlocks;
-    std::map<CTxIn, int> mapMasternodesLastVote; // prevout.hash + prevout.n, nBlockHeight
+    std::map<uint256, CValidatorPaymentWinner> mapValidatorPayeeVotes;
+    std::map<int, CValidatorBlockPayees> mapValidatorBlocks;
+    std::map<CTxIn, int> mapValidatorsLastVote; // prevout.hash + prevout.n, nBlockHeight
 
-    CMasternodePayments()
+    CValidatorPayments()
     {
         nSyncedFromPeer = 0;
         nLastBlockHeight = 0;
@@ -210,12 +210,12 @@ public:
 
     void Clear()
     {
-        LOCK2(cs_mapMasternodeBlocks, cs_mapMasternodePayeeVotes);
-        mapMasternodeBlocks.clear();
-        mapMasternodePayeeVotes.clear();
+        LOCK2(cs_mapValidatorBlocks, cs_mapValidatorPayeeVotes);
+        mapValidatorBlocks.clear();
+        mapValidatorPayeeVotes.clear();
     }
 
-    bool AddWinningMasternode(CMasternodePaymentWinner& winner);
+    bool AddWinningValidator(CValidatorPaymentWinner& winner);
     bool ProcessBlock(int nBlockHeight);
 
     void Sync(CNode* node, int nCountNeeded);
@@ -224,48 +224,48 @@ public:
 
     bool GetBlockPayee(int nBlockHeight, CScript& payee);
     bool IsTransactionValid(const CTransaction& txNew, const CBlockIndex* pindexPrev);
-    bool IsScheduled(const CMasternode& mn, int nNotBlockHeight);
+    bool IsScheduled(const CValidator& validator, int nNotBlockHeight);
 
-    bool CanVote(CTxIn vinMasternode, int nBlockHeight)
+    bool CanVote(CTxIn vinValidator, int nBlockHeight)
     {
-        LOCK(cs_mapMasternodePayeeVotes);
+        LOCK(cs_mapValidatorPayeeVotes);
 
-        if (mapMasternodesLastVote.count(vinMasternode)) {
-            if (mapMasternodesLastVote[vinMasternode] == nBlockHeight) {
+        if (mapValidatorsLastVote.count(vinValidator)) {
+            if (mapValidatorsLastVote[vinValidator] == nBlockHeight) {
                 return false;
             }
         }
 
-        // record this masternode voted
-        mapMasternodesLastVote[vinMasternode] = nBlockHeight;
+        // record this validator voted
+        mapValidatorsLastVote[vinValidator] = nBlockHeight;
         return true;
     }
 
-    int GetMinMasternodePaymentsProto();
-    void ProcessMessageMasternodePayments(CNode* pfrom, std::string& strCommand, CDataStream& vRecv);
+    int GetMinValidatorPaymentsProto();
+    void ProcessMessageValidatorPayments(CNode* pfrom, std::string& strCommand, CDataStream& vRecv);
     std::string GetRequiredPaymentsString(int nBlockHeight);
     void FillBlockPayee(CMutableTransaction& txCoinbase, CMutableTransaction& txCoinstake, const CBlockIndex* pindexPrev, bool fProofOfStake);
     std::string ToString() const;
     int GetOldestBlock();
     int GetNewestBlock();
 
-    // CLORE: Get masternode payment amount (returns 0 if payments disabled)
-    CAmount GetMasternodePayment(int nHeight);
+    // CLORE: Get validator payment amount (returns 0 if payments disabled)
+    CAmount GetValidatorPayment(int nHeight);
 
-    // CLORE: Check if masternode payments are enabled
-    bool IsEnabled() const { return fMasternodePaymentsEnabled; }
+    // CLORE: Check if validator payments are enabled
+    bool IsEnabled() const { return fValidatorPaymentsEnabled; }
 
-    SERIALIZE_METHODS(CMasternodePayments, obj)
+    SERIALIZE_METHODS(CValidatorPayments, obj)
     {
-        READWRITE(obj.mapMasternodePayeeVotes, obj.mapMasternodeBlocks, obj.mapMasternodesLastVote);
+        READWRITE(obj.mapValidatorPayeeVotes, obj.mapValidatorBlocks, obj.mapValidatorsLastVote);
     }
 
 private:
-    mutable CCriticalSection cs_mapMasternodeBlocks;
-    mutable CCriticalSection cs_mapMasternodePayeeVotes;
+    mutable CCriticalSection cs_mapValidatorBlocks;
+    mutable CCriticalSection cs_mapValidatorPayeeVotes;
 };
 
-class CMasternodePaymentDB
+class CValidatorPaymentDB
 {
 private:
     boost::filesystem::path pathDB;
@@ -282,18 +282,18 @@ public:
         IncorrectFormat
     };
 
-    CMasternodePaymentDB();
-    bool Write(const CMasternodePayments& objToSave);
-    ReadResult Read(CMasternodePayments& objToLoad);
+    CValidatorPaymentDB();
+    bool Write(const CValidatorPayments& objToSave);
+    ReadResult Read(CValidatorPayments& objToLoad);
 };
 
-// Get masternode payment amount for a given height
-CAmount GetMasternodePayment(int nHeight);
+// Get validator payment amount for a given height
+CAmount GetValidatorPayment(int nHeight);
 
-// Check if masternode payments are enforced
+// Check if validator payments are enforced
 bool IsSporkActive(int nSporkID);
 
-// Dump masternode payments to disk
-void DumpMasternodePayments();
+// Dump validator payments to disk
+void DumpValidatorPayments();
 
-#endif // CLORE_MASTERNODE_PAYMENTS_H
+#endif // CLORE_VALIDATOR_PAYMENTS_H

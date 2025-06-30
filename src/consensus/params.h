@@ -144,7 +144,7 @@ struct Params {
     int nFutureTimeDriftPoS;
     int nStakeTimestampMask; // Mask for stake timestamps
 
-    // Masternode parameters
+    // Validator parameters
     int nBudgetCycleBlocks;
     int nBudgetFeeConfirmations;
     int nCoinbaseMaturity;

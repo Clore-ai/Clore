@@ -7,18 +7,18 @@
 
 This test validates the complete CLORE phased PoS transition with comprehensive coverage of:
 1. Block validation behavior (PoW/PoS acceptance/rejection per phase)
-2. RPC command functionality (masternode, staking commands)
+2. RPC command functionality (validator, staking commands)
 3. Multi-node consensus during phase transitions
 4. Network synchronization across phases
 5. Edge cases (blocks exactly at transition boundaries)
 
-Specific focus on masternode creation, staking activation, and reward tracking to ensure:
+Specific focus on validator creation, staking activation, and reward tracking to ensure:
 - Things that should fail do fail
 - Things that shouldn't fail don't fail
 
 Test Phases:
 - Phase 0: Pure PoW (0-99) - Traditional operation
-- Phase 1: Masternode Infrastructure (100-149) - Masternodes active, PoW secures
+- Phase 1: Validator Infrastructure (100-149) - Validators active, PoW secures
 - Phase 2: Staking Infrastructure (150-199) - Staking active, PoW secures
 - Phase 3: PoS-Only (200+) - PoW disabled, PoS takes over
 """
@@ -110,8 +110,8 @@ class PosComprehensiveTest(CloreTestFramework):
         # Test 2: Block validation - PoW should work
         self.test_block_validation_phase_0()
 
-        # Test 3: Masternode functionality - RPC available but infrastructure not active
-        self.test_masternode_comprehensive_phase_0()
+        # Test 3: Validator functionality - RPC available but infrastructure not active
+        self.test_validator_comprehensive_phase_0()
 
         # Test 4: Staking functionality - Should fail appropriately
         self.test_staking_comprehensive_phase_0()
@@ -122,7 +122,7 @@ class PosComprehensiveTest(CloreTestFramework):
         self.log.info("✅ Phase 0 comprehensive testing completed")
 
     def test_phase_1_comprehensive(self):
-        """Comprehensive testing of Phase 1: Masternode Infrastructure (100-149)"""
+        """Comprehensive testing of Phase 1: Validator Infrastructure (100-149)"""
         self.log.info("=== COMPREHENSIVE PHASE 1 TESTING ===")
 
         # Generate to block 120 (middle of Phase 1)
@@ -137,14 +137,14 @@ class PosComprehensiveTest(CloreTestFramework):
 
         # Test 1: Consensus phase verification
         self.verify_consensus_phase(
-            0, "Masternode Infrastructure (Phase 1)", True, False, False
+            0, "Validator Infrastructure (Phase 1)", True, False, False
         )
 
         # Test 2: Block validation - PoW should still work
         self.test_block_validation_phase_1()
 
-        # Test 3: Masternode functionality - Should be fully operational
-        self.test_masternode_comprehensive_phase_1()
+        # Test 3: Validator functionality - Should be fully operational
+        self.test_validator_comprehensive_phase_1()
 
         # Test 4: Staking functionality - Should still fail appropriately
         self.test_staking_comprehensive_phase_1()
@@ -176,8 +176,8 @@ class PosComprehensiveTest(CloreTestFramework):
         # Test 2: Block validation - PoW should still work
         self.test_block_validation_phase_2()
 
-        # Test 3: Masternode functionality - Should continue working
-        self.test_masternode_comprehensive_phase_2()
+        # Test 3: Validator functionality - Should continue working
+        self.test_validator_comprehensive_phase_2()
 
         # Test 4: Staking functionality - Should now work
         self.test_staking_comprehensive_phase_2()
@@ -213,8 +213,8 @@ class PosComprehensiveTest(CloreTestFramework):
         # Test 2: Block validation - PoW should be disabled
         self.test_block_validation_phase_3()
 
-        # Test 3: Masternode functionality - Should continue working
-        self.test_masternode_comprehensive_phase_3()
+        # Test 3: Validator functionality - Should continue working
+        self.test_validator_comprehensive_phase_3()
 
         # Test 4: Staking functionality - Should continue working
         self.test_staking_comprehensive_phase_3()
@@ -225,13 +225,13 @@ class PosComprehensiveTest(CloreTestFramework):
         self.log.info("✅ Phase 3 comprehensive testing completed")
 
     def verify_consensus_phase(
-        self, node_idx, expected_phase, masternodes_active, pos_active, pure_pos_active
+        self, node_idx, expected_phase, validators_active, pos_active, pure_pos_active
     ):
         """Verify consensus phase across all nodes"""
         for i in range(self.num_nodes):
             pos_info = self.nodes[i].getposinfo()
             assert_equal(pos_info["consensus_phase"], expected_phase)
-            assert_equal(pos_info["masternodes_active"], masternodes_active)
+            assert_equal(pos_info["validators_active"], validators_active)
             assert_equal(pos_info["pos_active"], pos_active)
             assert_equal(pos_info["pure_pos_active"], pure_pos_active)
 
@@ -283,108 +283,108 @@ class PosComprehensiveTest(CloreTestFramework):
             else:
                 raise AssertionError(f"Phase 3: Unexpected error: {e}")
 
-    def test_masternode_comprehensive_phase_0(self):
-        """Comprehensive masternode testing in Phase 0"""
-        self.log.info("--- Testing masternode functionality in Phase 0 ---")
+    def test_validator_comprehensive_phase_0(self):
+        """Comprehensive validator testing in Phase 0"""
+        self.log.info("--- Testing validator functionality in Phase 0 ---")
 
         # RPC commands should work but infrastructure not active
         for i in range(self.num_nodes):
             # Basic RPC commands should work
-            mn_count = self.nodes[i].getmasternodecount()
+            mn_count = self.nodes[i].getvalidatorcount()
             assert "total" in mn_count
 
-            # Authorized masternodes should work (regtest = all authorized)
-            auth_mns = self.nodes[i].listauthorizedmasternodes()
+            # Authorized validators should work (regtest = all authorized)
+            auth_mns = self.nodes[i].listauthorizedvalidators()
             assert isinstance(auth_mns, list)
 
-            # Masternode creation should work
+            # Validator creation should work
             collateral_txid = f"phase0{'0' * 59}{i}"
             alias = f"phase0-node{i}"
-            result = self.nodes[i].createmasternodeconfig(
+            result = self.nodes[i].createvalidatorconfig(
                 alias, f"127.0.0.1:879{i}", collateral_txid, 0
             )
             assert result["authorized"] == True
 
             # Clean up
-            self.nodes[i].removemasternodeconfig(alias)
+            self.nodes[i].removevalidatorconfig(alias)
 
         self.log.info(
-            "✅ Phase 0: Masternode RPC available but infrastructure not active"
+            "✅ Phase 0: Validator RPC available but infrastructure not active"
         )
 
-    def test_masternode_comprehensive_phase_1(self):
-        """Comprehensive masternode testing in Phase 1"""
-        self.log.info("--- Testing masternode functionality in Phase 1 ---")
+    def test_validator_comprehensive_phase_1(self):
+        """Comprehensive validator testing in Phase 1"""
+        self.log.info("--- Testing validator functionality in Phase 1 ---")
 
         # Infrastructure should be fully operational
         for i in range(self.num_nodes):
             # All RPC commands should work
-            mn_count = self.nodes[i].getmasternodecount()
+            mn_count = self.nodes[i].getvalidatorcount()
             assert "total" in mn_count
 
-            # Masternode creation should work
+            # Validator creation should work
             collateral_txid = f"phase1{'1' * 59}{i}"
             alias = f"phase1-node{i}"
-            result = self.nodes[i].createmasternodeconfig(
+            result = self.nodes[i].createvalidatorconfig(
                 alias, f"127.0.0.1:879{i}", collateral_txid, 0
             )
             assert result["authorized"] == True
             assert result["alias"] == alias
 
             # Listing should work
-            mn_list = self.nodes[i].listmasternodeconf()
+            mn_list = self.nodes[i].listvalidatorconf()
             found = False
-            for mn in mn_list:
-                if mn["alias"] == alias:
+            for validator in mn_list:
+                if validator["alias"] == alias:
                     found = True
                     break
-            assert found, f"Should find masternode {alias}"
+            assert found, f"Should find validator {alias}"
 
             # Clean up
-            self.nodes[i].removemasternodeconfig(alias)
+            self.nodes[i].removevalidatorconfig(alias)
 
-        self.log.info("✅ Phase 1: Masternode infrastructure fully operational")
+        self.log.info("✅ Phase 1: Validator infrastructure fully operational")
 
-    def test_masternode_comprehensive_phase_2(self):
-        """Comprehensive masternode testing in Phase 2"""
-        self.log.info("--- Testing masternode functionality in Phase 2 ---")
+    def test_validator_comprehensive_phase_2(self):
+        """Comprehensive validator testing in Phase 2"""
+        self.log.info("--- Testing validator functionality in Phase 2 ---")
 
         # Should continue working during staking phase
         for i in range(self.num_nodes):
             collateral_txid = f"phase2{'2' * 59}{i}"
             alias = f"phase2-node{i}"
-            result = self.nodes[i].createmasternodeconfig(
+            result = self.nodes[i].createvalidatorconfig(
                 alias, f"127.0.0.1:879{i}", collateral_txid, 0
             )
             assert result["authorized"] == True
 
             # Clean up
-            self.nodes[i].removemasternodeconfig(alias)
+            self.nodes[i].removevalidatorconfig(alias)
 
-        self.log.info("✅ Phase 2: Masternode functionality continues working")
+        self.log.info("✅ Phase 2: Validator functionality continues working")
 
-    def test_masternode_comprehensive_phase_3(self):
-        """Comprehensive masternode testing in Phase 3"""
-        self.log.info("--- Testing masternode functionality in Phase 3 ---")
+    def test_validator_comprehensive_phase_3(self):
+        """Comprehensive validator testing in Phase 3"""
+        self.log.info("--- Testing validator functionality in Phase 3 ---")
 
         # Should continue working in PoS-only phase
         for i in range(self.num_nodes):
             # Basic commands should work
-            auth_mns = self.nodes[i].listauthorizedmasternodes()
+            auth_mns = self.nodes[i].listauthorizedvalidators()
             assert isinstance(auth_mns, list)
 
             # Creation should work
             collateral_txid = f"phase3{'3' * 59}{i}"
             alias = f"phase3-node{i}"
-            result = self.nodes[i].createmasternodeconfig(
+            result = self.nodes[i].createvalidatorconfig(
                 alias, f"127.0.0.1:879{i}", collateral_txid, 0
             )
             assert result["authorized"] == True
 
             # Clean up
-            self.nodes[i].removemasternodeconfig(alias)
+            self.nodes[i].removevalidatorconfig(alias)
 
-        self.log.info("✅ Phase 3: Masternode functionality preserved in PoS-only")
+        self.log.info("✅ Phase 3: Validator functionality preserved in PoS-only")
 
     def test_staking_comprehensive_phase_0(self):
         """Comprehensive staking testing in Phase 0"""

@@ -2,20 +2,20 @@
 # Copyright (c) 2025 The Clore Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
-"""Test masternode lifecycle management and authorization system
+"""Test validator lifecycle management and authorization system
 
-This test validates the complete masternode lifecycle system implemented in Phase 2,
+This test validates the complete validator lifecycle system implemented in Phase 2,
 including authorization whitelist, configuration management, and all new RPC commands.
 
 Test Coverage:
-- Phase 2.1: Authorization System (listauthorizedmasternodes, checkmasternodeauth)
-- Phase 2.2: Configuration Management (create/add/remove masternodeconfig, listmasternodeconf)
+- Phase 2.1: Authorization System (listauthorizedvalidators, checkvalidatorauth)
+- Phase 2.2: Configuration Management (create/add/remove validatorconfig, listvalidatorconf)
 - Phase 2.3: Advanced Testing (multi-node, error handling, comprehensive RPC testing)
 
 Key Features Tested:
-- 20 total masternode RPC commands operational
+- 20 total validator RPC commands operational
 - Address-based authorization system
-- Automated masternode creation workflow
+- Automated validator creation workflow
 - Configuration lifecycle management
 - Network awareness (mainnet/testnet/regtest differences)
 """
@@ -26,13 +26,13 @@ from test_framework.util import *
 from decimal import Decimal
 
 
-class MasternodeLifecycleTest(CloreTestFramework):
+class ValidatorLifecycleTest(CloreTestFramework):
     def set_test_params(self):
         self.setup_clean_chain = True
         self.num_nodes = 2
         self.extra_args = [
-            ["-debug=masternode", "-debug=rpc", "-printtoconsole=0"],
-            ["-debug=masternode", "-debug=rpc", "-printtoconsole=0"],
+            ["-debug=validator", "-debug=rpc", "-printtoconsole=0"],
+            ["-debug=validator", "-debug=rpc", "-printtoconsole=0"],
         ]
 
     def skip_test_if_missing_module(self):
@@ -51,8 +51,8 @@ class MasternodeLifecycleTest(CloreTestFramework):
             self.log.warning(f"Initial sync failed: {e}, continuing...")
 
     def run_test(self):
-        """Execute comprehensive masternode lifecycle testing"""
-        self.log.info("Starting comprehensive masternode lifecycle test...")
+        """Execute comprehensive validator lifecycle testing"""
+        self.log.info("Starting comprehensive validator lifecycle test...")
 
         # Generate some blocks for testing
         coinbase_address = self.nodes[0].getnewaddress()
@@ -68,7 +68,7 @@ class MasternodeLifecycleTest(CloreTestFramework):
         # Phase 3: Test comprehensive RPC commands
         self.test_comprehensive_rpc_commands()
 
-        self.log.info("✅ All masternode lifecycle tests completed successfully!")
+        self.log.info("✅ All validator lifecycle tests completed successfully!")
 
     def test_authorization_system(self):
         """Test Phase 2.1: Authorization System"""
@@ -76,16 +76,16 @@ class MasternodeLifecycleTest(CloreTestFramework):
 
         node = self.nodes[0]
 
-        # Test listauthorizedmasternodes
-        self.log.info("Testing listauthorizedmasternodes...")
-        authorized_mns = node.listauthorizedmasternodes()
-        self.log.info(f"Authorized masternodes: {len(authorized_mns)}")
+        # Test listauthorizedvalidators
+        self.log.info("Testing listauthorizedvalidators...")
+        authorized_mns = node.listauthorizedvalidators()
+        self.log.info(f"Authorized validators: {len(authorized_mns)}")
         assert isinstance(authorized_mns, list), "Should return a list"
-        self.log.info("✅ listauthorizedmasternodes working correctly")
+        self.log.info("✅ listauthorizedvalidators working correctly")
 
-        # Test checkmasternodeauth with alias
-        self.log.info("Testing checkmasternodeauth with alias...")
-        auth_result = node.checkmasternodeauth("alias", "test-mn-01")
+        # Test checkvalidatorauth with alias
+        self.log.info("Testing checkvalidatorauth with alias...")
+        auth_result = node.checkvalidatorauth("alias", "test-validator-01")
         self.log.info(f"Authorization check result: {auth_result}")
 
         assert "authorized" in auth_result, "Should contain 'authorized' field"
@@ -97,19 +97,19 @@ class MasternodeLifecycleTest(CloreTestFramework):
             auth_result["authorized"] == True
         ), "All aliases should be authorized in regtest"
 
-        self.log.info("✅ checkmasternodeauth with alias working correctly")
+        self.log.info("✅ checkvalidatorauth with alias working correctly")
 
-        # Test checkmasternodeauth with address
-        self.log.info("Testing checkmasternodeauth with address...")
+        # Test checkvalidatorauth with address
+        self.log.info("Testing checkvalidatorauth with address...")
         test_address = node.getnewaddress()
-        auth_result = node.checkmasternodeauth("address", test_address)
+        auth_result = node.checkvalidatorauth("address", test_address)
 
         assert auth_result["type"] == "address", "Type should be 'address'"
         assert (
             auth_result["authorized"] == True
         ), "All addresses should be authorized in regtest"
 
-        self.log.info("✅ checkmasternodeauth with address working correctly")
+        self.log.info("✅ checkvalidatorauth with address working correctly")
 
         self.log.info("✅ Phase 2.1 Authorization System tests completed")
 
@@ -119,22 +119,22 @@ class MasternodeLifecycleTest(CloreTestFramework):
 
         node = self.nodes[0]
 
-        # Test listmasternodeconf (initially empty)
-        mn_conf_list = node.listmasternodeconf()
+        # Test listvalidatorconf (initially empty)
+        mn_conf_list = node.listvalidatorconf()
         assert isinstance(mn_conf_list, list), "Should return a list"
         assert len(mn_conf_list) == 0, "Should be empty initially"
-        self.log.info("✅ listmasternodeconf empty state working correctly")
+        self.log.info("✅ listvalidatorconf empty state working correctly")
 
-        # Test createmasternodeconfig
-        self.log.info("Testing createmasternodeconfig...")
+        # Test createvalidatorconfig
+        self.log.info("Testing createvalidatorconfig...")
         collateral_txid = (
             "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef12"
         )
-        create_result = node.createmasternodeconfig(
-            "test-mn-01", "127.0.0.1:8788", collateral_txid, 0
+        create_result = node.createvalidatorconfig(
+            "test-validator-01", "127.0.0.1:8788", collateral_txid, 0
         )
 
-        self.log.info(f"Create masternode result keys: {list(create_result.keys())}")
+        self.log.info(f"Create validator result keys: {list(create_result.keys())}")
 
         # Validate required fields
         required_fields = [
@@ -149,45 +149,45 @@ class MasternodeLifecycleTest(CloreTestFramework):
         for field in required_fields:
             assert field in create_result, f"Missing required field: {field}"
 
-        assert create_result["alias"] == "test-mn-01", "Alias should match"
+        assert create_result["alias"] == "test-validator-01", "Alias should match"
         assert create_result["authorized"] == True, "Should be authorized in regtest"
 
-        self.log.info("✅ createmasternodeconfig working correctly")
+        self.log.info("✅ createvalidatorconfig working correctly")
 
-        # Test listmasternodeconf (with entry)
-        mn_conf_list = node.listmasternodeconf()
+        # Test listvalidatorconf (with entry)
+        mn_conf_list = node.listvalidatorconf()
         assert len(mn_conf_list) == 1, "Should have one entry after creation"
 
         entry = mn_conf_list[0]
-        assert entry["alias"] == "test-mn-01", "Alias should match"
+        assert entry["alias"] == "test-validator-01", "Alias should match"
         assert entry["authorized"] == True, "Should be authorized"
 
-        self.log.info("✅ listmasternodeconf with entries working correctly")
+        self.log.info("✅ listvalidatorconf with entries working correctly")
 
-        # Test removemasternodeconfig
-        remove_result = node.removemasternodeconfig("test-mn-01")
+        # Test removevalidatorconfig
+        remove_result = node.removevalidatorconfig("test-validator-01")
         assert remove_result["removed"] == True, "Should be successfully removed"
 
         # Verify removal
-        mn_conf_list = node.listmasternodeconf()
+        mn_conf_list = node.listvalidatorconf()
         assert len(mn_conf_list) == 0, "Should be empty after removal"
 
         self.log.info("✅ Phase 2.2 Configuration Management tests completed")
 
     def test_comprehensive_rpc_commands(self):
-        """Test key masternode RPC commands for basic functionality"""
-        self.log.info("=== Testing Key Masternode RPC Commands ===")
+        """Test key validator RPC commands for basic functionality"""
+        self.log.info("=== Testing Key Validator RPC Commands ===")
 
         node = self.nodes[0]
 
         # Test key functional commands
         functional_commands = [
-            "createmasternodekey",
-            "getmasternodecount",
-            "listauthorizedmasternodes",
-            "listmasternodeconf",
-            "getmasternodeoutputs",
-            "listmasternodes",
+            "createvalidatorkey",
+            "getvalidatorcount",
+            "listauthorizedvalidators",
+            "listvalidatorconf",
+            "getvalidatoroutputs",
+            "listvalidators",
         ]
 
         working_commands = 0
@@ -196,29 +196,29 @@ class MasternodeLifecycleTest(CloreTestFramework):
             try:
                 self.log.info(f"Testing command: {cmd}")
 
-                if cmd == "createmasternodekey":
-                    result = node.createmasternodekey()
+                if cmd == "createvalidatorkey":
+                    result = node.createvalidatorkey()
                     assert isinstance(result, str), "Should return a string private key"
                     assert len(result) > 30, "Private key should be reasonable length"
 
-                elif cmd == "getmasternodecount":
-                    result = node.getmasternodecount()
+                elif cmd == "getvalidatorcount":
+                    result = node.getvalidatorcount()
                     assert "total" in result, "Should have total count"
 
-                elif cmd == "listauthorizedmasternodes":
-                    result = node.listauthorizedmasternodes()
+                elif cmd == "listauthorizedvalidators":
+                    result = node.listauthorizedvalidators()
                     assert isinstance(result, list), "Should return a list"
 
-                elif cmd == "listmasternodeconf":
-                    result = node.listmasternodeconf()
+                elif cmd == "listvalidatorconf":
+                    result = node.listvalidatorconf()
                     assert isinstance(result, list), "Should return a list"
 
-                elif cmd == "getmasternodeoutputs":
-                    result = node.getmasternodeoutputs()
+                elif cmd == "getvalidatoroutputs":
+                    result = node.getvalidatoroutputs()
                     assert isinstance(result, list), "Should return a list"
 
-                elif cmd == "listmasternodes":
-                    result = node.listmasternodes()
+                elif cmd == "listvalidators":
+                    result = node.listvalidators()
                     assert isinstance(result, list), "Should return a list"
 
                 working_commands += 1
@@ -238,4 +238,4 @@ class MasternodeLifecycleTest(CloreTestFramework):
 
 
 if __name__ == "__main__":
-    MasternodeLifecycleTest().main()
+    ValidatorLifecycleTest().main()

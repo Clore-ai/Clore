@@ -10002,7 +10002,7 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
             block.GetHash().ToString());
     }
     // Phase 1-2: PoW continues while PoS infrastructure builds up
-    // - Phase 1: Masternodes can be created (PoW secure)
+    // - Phase 1: Validators can be created (PoW secure)
     // - Phase 2: Staking enabled (PoW still secure)
     // Both PoW and PoS blocks are allowed during infrastructure phases
     else if (isPoSInfrastructureReady) {

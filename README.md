@@ -5,7 +5,7 @@ CLORE is a cryptocurrency blockchain that started as proof of work and transaiti
 ## Features
 
 - **Proof-of-Stake (PoS)**: Energy-efficient consensus mechanism
-- **Masternodes**: Network infrastructure nodes with additional functionality
+- **Validators**: Network infrastructure nodes with additional functionality
 - **Cross-Platform**: Supports Linux, macOS, and Windows
 
 ## Recent Updates
@@ -14,7 +14,7 @@ CLORE is a cryptocurrency blockchain that started as proof of work and transaiti
 
 - **4-Phase PoS Transition**: Safety-first approach with PoW security during infrastructure buildup
 - **DEPLOYMENT_POS**: BIP9 miner signaling for network readiness (currently disabled)
-- **ENABLE_POS_VALIDATORS**: Masternode infrastructure activation (Phase 1)
+- **ENABLE_POS_VALIDATORS**: Validator infrastructure activation (Phase 1)
 - **ENABLE_POS_STAKING**: Staking logic activation with 600-block depth (Phase 2)
 - **ENABLE_POS_REWARDS**: Pure PoS enforcement, PoW permanently disabled (Phase 3)
 - Enhanced staking infrastructure with real-time weight calculation
@@ -208,7 +208,7 @@ CLORE uses a **dual upgrade mechanism** providing both safety and precision in n
 
 ### vUpgrades (Height-Based Network Upgrades)
 
-- **ENABLE_POS_VALIDATORS**: Masternode infrastructure activation (Height: 1,000,001,439)
+- **ENABLE_POS_VALIDATORS**: Validator infrastructure activation (Height: 1,000,001,439)
 - **ENABLE_POS_STAKING**: Staking logic activation with 600-block depth (Height: 1,000,002,879)
 - **ENABLE_POS_REWARDS**: Pure PoS enforcement, PoW disabled (Height: 1,000,004,319)
 - **1440-block spacing**: Gradual transition with time for infrastructure buildup
@@ -216,18 +216,18 @@ CLORE uses a **dual upgrade mechanism** providing both safety and precision in n
 
 ### PoS Transition Strategy
 
-**Safety-First Approach**: PoW mining continues to secure the network while PoS infrastructure builds up gradually. Only when both masternodes and staking are fully operational does the network transition to PoS-only consensus.
+**Safety-First Approach**: PoW mining continues to secure the network while PoS infrastructure builds up gradually. Only when both validators and staking are fully operational does the network transition to PoS-only consensus.
 
 | Phase       | Height          | Mining Status  | Infrastructure      | Purpose                    |
 | ----------- | --------------- | -------------- | ------------------- | -------------------------- |
 | **Phase 0** | < 1,000,001,439 | **PoW Only**   | None                | Traditional PoW mining     |
-| **Phase 1** | 1,000,001,439   | **PoW Secure** | Masternodes Online  | Infrastructure buildup     |
+| **Phase 1** | 1,000,001,439   | **PoW Secure** | Validators Online   | Infrastructure buildup     |
 | **Phase 2** | 1,000,002,879   | **PoW Secure** | + Staking Active    | Dual consensus preparation |
 | **Phase 3** | 1,000,004,319   | **PoS Only**   | Full Infrastructure | Complete PoS transition    |
 
 For detailed technical information, see [CONSENSUS_UPGRADE_MECHANISMS.md](CONSENSUS_UPGRADE_MECHANISMS.md).
 
-## Masternode System
+## Validator System
 
 ### Network Authorization
 
@@ -237,25 +237,25 @@ For detailed technical information, see [CONSENSUS_UPGRADE_MECHANISMS.md](CONSEN
 
 ### RPC Commands (20 total)
 
-Core masternode management commands plus advanced features:
+Core validator management commands plus advanced features:
 
-- `masternodelist`, `getmasternodecount`, `getmasternodestatus`
-- `listauthorizedmasternodes`, `checkmasternodeauth`
-- `createmasternodeconfig`, `addmasternodeconfig`, `removemasternodeconfig`
+- `validatorlist`, `getvalidatorcount`, `getvalidatorstatus`
+- `listauthorizedvalidators`, `checkvalidatorauth`
+- `createvalidatorconfig`, `addvalidatorconfig`, `removevalidatorconfig`
 
 ## Staking System
 
 ### PoS Features
 
 - **Real-time weight calculation**: Dynamic staking power assessment
-- **Hybrid masternode-staking**: Combined infrastructure benefits
+- **Hybrid validator-staking**: Combined infrastructure benefits
 - **Professional analytics**: Comprehensive reward tracking
 - **Flexible control**: Start/stop staking with status feedback
 
 ### Staking RPC Commands
 
 - `getstakinginfo`: Enhanced real-time staking status
-- `getmasternodestakinginfo`: Masternode-PoS hybrid information
+- `getvalidatorstakinginfo`: Validator-PoS hybrid information
 - `getstakingrewards`: Complete analytics suite
 - `setstaking`: Professional staking control
 - `getposinfo`: PoS transition status
@@ -265,21 +265,21 @@ Core masternode management commands plus advanced features:
 ### Mainnet (Production)
 
 - **DEPLOYMENT_POS**: Block 999,999,999 (BIP9 signaling - currently disabled)
-- **ENABLE_POS_VALIDATORS**: Block 1,000,001,439 (Masternode infrastructure)
+- **ENABLE_POS_VALIDATORS**: Block 1,000,001,439 (Validator infrastructure)
 - **ENABLE_POS_STAKING**: Block 1,000,002,879 (Staking logic activation)
 - **ENABLE_POS_REWARDS**: Block 1,000,004,319 (Pure PoS enforcement)
 - **Spacing**: 1440 blocks between phases (~1 day at 1 min/block)
 
 ### Testnet (Testing Environment)
 
-- **ENABLE_POS_VALIDATORS**: Block 1,000 (Masternode infrastructure)
+- **ENABLE_POS_VALIDATORS**: Block 1,000 (Validator infrastructure)
 - **ENABLE_POS_STAKING**: Block 2,440 (Staking logic activation)
 - **ENABLE_POS_REWARDS**: Block 3,880 (Pure PoS enforcement)
 - **Spacing**: 1440 blocks for proper testing of full transition
 
 ### Regtest (Development)
 
-- **ENABLE_POS_VALIDATORS**: Block 100 (Masternode infrastructure)
+- **ENABLE_POS_VALIDATORS**: Block 100 (Validator infrastructure)
 - **ENABLE_POS_STAKING**: Block 150 (Staking logic activation)
 - **ENABLE_POS_REWARDS**: Block 200 (Pure PoS enforcement)
 - **Spacing**: 50 blocks for rapid testing and development
@@ -290,8 +290,8 @@ Core masternode management commands plus advanced features:
 
 - `feature_pos_comprehensive.py`: PoS upgrade sequence validation
 - `feature_pos_upgrade_sequence.py`: Multi-node synchronization testing
-- `feature_masternode_lifecycle.py`: Complete masternode workflow
-- `feature_masternode_multinode.py`: Network consistency validation
+- `feature_validator_lifecycle.py`: Complete validator workflow
+- `feature_validator_multinode.py`: Network consistency validation
 
 Perfect 3-node synchronization achieved (100% success rate).
 
@@ -303,7 +303,7 @@ Perfect 3-node synchronization achieved (100% success rate).
 
 ## Development Status
 
-- ✅ **Phase 1**: Masternode infrastructure foundation
+- ✅ **Phase 1**: Validator infrastructure foundation
 - ✅ **Phase 2**: Address-based authorization system
 - ✅ **Phase 3**: Pure PoS consensus implementation
 - 🆕 **Multi-Platform**: Cross-platform build system

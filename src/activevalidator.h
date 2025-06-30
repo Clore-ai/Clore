@@ -4,8 +4,8 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef CLORE_ACTIVEMASTERNODE_H
-#define CLORE_ACTIVEMASTERNODE_H
+#ifndef CLORE_ACTIVEVALIDATOR_H
+#define CLORE_ACTIVEVALIDATOR_H
 
 #include "key.h"
 #include "net.h"
@@ -13,29 +13,29 @@
 #include "sync.h"
 #include "util.h"
 
-// Masternode state definitions
-#define ACTIVE_MASTERNODE_INITIAL 0 // initial state
-#define ACTIVE_MASTERNODE_SYNC_IN_PROCESS 1
-#define ACTIVE_MASTERNODE_NOT_CAPABLE 3
-#define ACTIVE_MASTERNODE_STARTED 4
-#define ACTIVE_MASTERNODE_INPUT_TOO_NEW 5
+// Validator state definitions
+#define ACTIVE_VALIDATOR_INITIAL 0 // initial state
+#define ACTIVE_VALIDATOR_SYNC_IN_PROCESS 1
+#define ACTIVE_VALIDATOR_NOT_CAPABLE 3
+#define ACTIVE_VALIDATOR_STARTED 4
+#define ACTIVE_VALIDATOR_INPUT_TOO_NEW 5
 
-class CActiveMasternode
+class CActiveValidator
 {
 private:
     // critical section to protect the inner data structures
     mutable RecursiveMutex cs;
 
-    // Masternode state
-    int nState{ACTIVE_MASTERNODE_INITIAL};
+    // Validator state
+    int nState{ACTIVE_VALIDATOR_INITIAL};
     std::string strNotCapableReason;
 
-    // Masternode type
-    enum masternode_type_t {
-        MASTERNODE_UNKNOWN = 0,
-        MASTERNODE_REMOTE = 1,
-        MASTERNODE_LOCAL = 2
-    } eType{MASTERNODE_UNKNOWN};
+    // Validator type
+    enum validator_type_t {
+        VALIDATOR_UNKNOWN = 0,
+        VALIDATOR_REMOTE = 1,
+        VALIDATOR_LOCAL = 2
+    } eType{VALIDATOR_UNKNOWN};
 
     // Ping service
     bool fPingerEnabled{false};
@@ -50,13 +50,13 @@ private:
     void ManageStateLocal();
 
 public:
-    CActiveMasternode() = default;
+    CActiveValidator() = default;
 
-    // Masternode info
+    // Validator info
     COutPoint outpoint;
     CService service;
-    CPubKey pubKeyMasternode;
-    CKey keyMasternode;
+    CPubKey pubKeyValidator;
+    CKey keyValidator;
 
     // State management
     void ManageState();
@@ -65,12 +65,12 @@ public:
     std::string GetTypeString() const;
 
     // Ping
-    bool SendMasternodePing();
+    bool SendValidatorPing();
     bool UpdateSentinelPing(int version);
 
     // Accessors
     int GetState() const { return nState; }
-    masternode_type_t GetType() const { return eType; }
+    validator_type_t GetType() const { return eType; }
     bool IsPingerEnabled() const { return fPingerEnabled; }
     void SetPingerEnabled(bool enabled) { fPingerEnabled = enabled; }
     uint32_t GetSentinelVersion() const { return nSentinelVersion; }
@@ -79,6 +79,6 @@ public:
 };
 
 // Global instance
-extern CActiveMasternode activeMasternode;
+extern CActiveValidator activeValidator;
 
-#endif // CLORE_ACTIVEMASTERNODE_H
+#endif // CLORE_ACTIVEVALIDATOR_H

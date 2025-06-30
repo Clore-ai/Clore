@@ -181,7 +181,7 @@ public:
         consensus.nFutureTimeDriftPoS = 3 * 60;        // 3 minutes
         consensus.nStakeTimestampMask = 15;            // 15 second timestamp mask
 
-        // Masternode and budget parameters
+        // Validator and budget parameters
         consensus.nBudgetCycleBlocks = 30240; // 21 days at 1 minute blocks
         consensus.nBudgetFeeConfirmations = 6;
         consensus.nCoinbaseMaturity = 100;                   // 100 blocks maturity
@@ -191,7 +191,7 @@ public:
 
         // Network upgrades
         consensus.vUpgrades[Consensus::BASE_NETWORK] = {0, 0, {}};
-        consensus.vUpgrades[Consensus::ENABLE_POS_VALIDATORS] = {70002, 1000001439, {}};    // Masternode activation (VALIDATOR) at block 1,000,001,439 (+1440 after DEPLOYMENT_POS)
+        consensus.vUpgrades[Consensus::ENABLE_POS_VALIDATORS] = {70002, 1000001439, {}};    // Validator activation (VALIDATOR) at block 1,000,001,439 (+1440 after DEPLOYMENT_POS)
         consensus.vUpgrades[Consensus::ENABLE_POS_STAKING] = {70002, 1000002879, {}};       // Staking logic activation (STAKING) at block 1,000,002,879 (+1440 blocks)
         consensus.vUpgrades[Consensus::ENABLE_POS_TIME_PROTO_v2] = {70002, 1000002879, {}}; // Time protocol v2 (merged with STAKING phase)
         consensus.vUpgrades[Consensus::ENABLE_POS_REWARDS] = {70002, 1000004319, {}};       // PoS enabled, PoW disabled (REWARDS) at block 1,000,004,319 (+1440 blocks)
@@ -304,15 +304,15 @@ public:
         nKAAAWWWPOWActivationTime = 1651444217; // 2021-05-03 06:00:18
         nKAWPOWActivationTime = nKAAAWWWPOWActivationTime;
 
-        /** MASTERNODE AUTHORIZATION - MAINNET **/
-        // Initial authorized masternodes for mainnet (Phase 2 - controlled rollout)
+        /** VALIDATOR AUTHORIZATION - MAINNET **/
+        // Initial authorized validators for mainnet (Phase 2 - controlled rollout)
         // Authorization based on collateral addresses, not IP addresses for flexibility
-        vAuthorizedMasternodes = {
-            AuthorizedMasternode("clore-mn-01", "ATsQHm7qbMSe4gJnx8W5SnLNP9bKLmgD52", "Official Clore Foundation Node 1"),
-            AuthorizedMasternode("clore-mn-02", "AXLFQxg7Vo8BpMKNp3LWNVfAVrE4KaAPnR", "Official Clore Foundation Node 2"),
-            AuthorizedMasternode("clore-mn-03", "AUVHqV4yw8qz6x8VYLPM2mEuUqgHMQWGqX", "Official Clore Foundation Node 3"),
-            AuthorizedMasternode("clore-mn-04", "AYqA6vMLbmtqRQtGKh5XJnVxhYzZo6F8jS", "Clore Partner Node 1"),
-            AuthorizedMasternode("clore-mn-05", "AZWwYw5LjUuN8k9s3jKqGKTNaRvRKsZyMM", "Clore Partner Node 2")};
+        vAuthorizedValidators = {
+            AuthorizedValidator("clore-validator-01", "ATsQHm7qbMSe4gJnx8W5SnLNP9bKLmgD52", "Official Clore Foundation Node 1"),
+            AuthorizedValidator("clore-validator-02", "AXLFQxg7Vo8BpMKNp3LWNVfAVrE4KaAPnR", "Official Clore Foundation Node 2"),
+            AuthorizedValidator("clore-validator-03", "AUVHqV4yw8qz6x8VYLPM2mEuUqgHMQWGqX", "Official Clore Foundation Node 3"),
+            AuthorizedValidator("clore-validator-04", "AYqA6vMLbmtqRQtGKh5XJnVxhYzZo6F8jS", "Clore Partner Node 1"),
+            AuthorizedValidator("clore-validator-05", "AZWwYw5LjUuN8k9s3jKqGKTNaRvRKsZyMM", "Clore Partner Node 2")};
     }
 };
 
@@ -389,7 +389,7 @@ public:
         consensus.nFutureTimeDriftPoS = 3 * 60;        // 3 minutes
         consensus.nStakeTimestampMask = 15;            // 15 second timestamp mask
 
-        // Masternode and budget parameters
+        // Validator and budget parameters
         consensus.nBudgetCycleBlocks = 30240; // 21 days at 1 minute blocks
         consensus.nBudgetFeeConfirmations = 6;
         consensus.nCoinbaseMaturity = 100;                   // 100 blocks maturity
@@ -399,7 +399,7 @@ public:
 
         // Network upgrades (testnet - 1440 block spacing for proper testing)
         consensus.vUpgrades[Consensus::BASE_NETWORK] = {0, 0, {}};
-        consensus.vUpgrades[Consensus::ENABLE_POS_VALIDATORS] = {70002, 1000, {}};    // Masternode activation (VALIDATOR phase)
+        consensus.vUpgrades[Consensus::ENABLE_POS_VALIDATORS] = {70002, 1000, {}};    // Validator activation (VALIDATOR phase)
         consensus.vUpgrades[Consensus::ENABLE_POS_STAKING] = {70002, 2440, {}};       // Staking logic activation (STAKING phase) +1440 blocks
         consensus.vUpgrades[Consensus::ENABLE_POS_TIME_PROTO_v2] = {70002, 2440, {}}; // Time protocol v2 (merged with staking)
         consensus.vUpgrades[Consensus::ENABLE_POS_REWARDS] = {70002, 3880, {}};       // PoW disabled (REWARDS phase) +1440 blocks
@@ -501,13 +501,13 @@ public:
         nKAAAWWWPOWActivationTime = 1653247613; // 2021-05-03 06:00:18
         nKAWPOWActivationTime = nKAAAWWWPOWActivationTime;
 
-        /** MASTERNODE AUTHORIZATION - TESTNET **/
-        // Test masternodes for testnet (easier testing)
+        /** VALIDATOR AUTHORIZATION - TESTNET **/
+        // Test validators for testnet (easier testing)
         // Using testnet address format for authorization
-        vAuthorizedMasternodes = {
-            AuthorizedMasternode("test-mn-01", "JTestNodeAddress1234567890123456789A", "Testnet Node 1"),
-            AuthorizedMasternode("test-mn-02", "JTestNodeAddress1234567890123456789B", "Testnet Node 2"),
-            AuthorizedMasternode("test-mn-03", "JTestNodeAddress1234567890123456789C", "Testnet Node 3")};
+        vAuthorizedValidators = {
+            AuthorizedValidator("test-validator-01", "JTestNodeAddress1234567890123456789A", "Testnet Node 1"),
+            AuthorizedValidator("test-validator-02", "JTestNodeAddress1234567890123456789B", "Testnet Node 2"),
+            AuthorizedValidator("test-validator-03", "JTestNodeAddress1234567890123456789C", "Testnet Node 3")};
     }
 };
 
@@ -584,7 +584,7 @@ public:
         consensus.nFutureTimeDriftPoS = 3 * 60;        // 3 minutes
         consensus.nStakeTimestampMask = 15;            // 15 second timestamp mask
 
-        // Masternode and budget parameters (testing values)
+        // Validator and budget parameters (testing values)
         consensus.nBudgetCycleBlocks = 1440; // 1 day at 1 minute blocks
         consensus.nBudgetFeeConfirmations = 3;
         consensus.nCoinbaseMaturity = 10;              // 10 blocks maturity for testing
@@ -594,7 +594,7 @@ public:
 
         // Network upgrades (regtest - 50 block spacing for rapid testing)
         consensus.vUpgrades[Consensus::BASE_NETWORK] = {0, 0, {}};
-        consensus.vUpgrades[Consensus::ENABLE_POS_VALIDATORS] = {70002, 100, {}};    // Masternode activation (VALIDATOR phase)
+        consensus.vUpgrades[Consensus::ENABLE_POS_VALIDATORS] = {70002, 100, {}};    // Validator activation (VALIDATOR phase)
         consensus.vUpgrades[Consensus::ENABLE_POS_STAKING] = {70002, 150, {}};       // Staking logic activation (STAKING phase) +50 blocks
         consensus.vUpgrades[Consensus::ENABLE_POS_TIME_PROTO_v2] = {70002, 150, {}}; // Time protocol v2 (merged with staking)
         consensus.vUpgrades[Consensus::ENABLE_POS_REWARDS] = {70002, 200, {}};       // PoW disabled (REWARDS phase) +50 blocks
@@ -754,42 +754,42 @@ void TurnOffBIP66()
     globalChainParams->TurnOffBIP66();
 }
 
-/** MASTERNODE AUTHORIZATION Implementation **/
-bool CChainParams::IsAuthorizedMasternodeAddress(const std::string& pubkeyAddress) const
+/** VALIDATOR AUTHORIZATION Implementation **/
+bool CChainParams::IsAuthorizedValidatorAddress(const std::string& pubkeyAddress) const
 {
-    // In regtest mode, all masternodes are authorized for testing
+    // In regtest mode, all validators are authorized for testing
     if (strNetworkID == "regtest") {
         return true;
     }
 
-    for (const auto& mn : vAuthorizedMasternodes) {
-        if (mn.pubkeyAddress == pubkeyAddress) {
+    for (const auto& validator : vAuthorizedValidators) {
+        if (validator.pubkeyAddress == pubkeyAddress) {
             return true;
         }
     }
     return false;
 }
 
-bool CChainParams::IsAuthorizedMasternodeAlias(const std::string& alias) const
+bool CChainParams::IsAuthorizedValidatorAlias(const std::string& alias) const
 {
-    // In regtest mode, all masternodes are authorized for testing
+    // In regtest mode, all validators are authorized for testing
     if (strNetworkID == "regtest") {
         return true;
     }
 
-    for (const auto& mn : vAuthorizedMasternodes) {
-        if (mn.alias == alias) {
+    for (const auto& validator : vAuthorizedValidators) {
+        if (validator.alias == alias) {
             return true;
         }
     }
     return false;
 }
 
-std::string CChainParams::GetAuthorizedMasternodeAlias(const std::string& pubkeyAddress) const
+std::string CChainParams::GetAuthorizedValidatorAlias(const std::string& pubkeyAddress) const
 {
-    for (const auto& mn : vAuthorizedMasternodes) {
-        if (mn.pubkeyAddress == pubkeyAddress) {
-            return mn.alias;
+    for (const auto& validator : vAuthorizedValidators) {
+        if (validator.pubkeyAddress == pubkeyAddress) {
+            return validator.alias;
         }
     }
     return ""; // Not found

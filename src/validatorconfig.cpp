@@ -4,7 +4,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or https://www.opensource.org/licenses/mit-license.php.
 
-#include "masternodeconfig.h"
+#include "validatorconfig.h"
 
 #include "base58.h"
 #include "chainparams.h"
@@ -12,21 +12,21 @@
 #include "netbase.h"
 #include "util.h"
 
-CMasternodeConfig masternodeConfig;
+CValidatorConfig validatorConfig;
 
-CMasternodeConfig::CMasternodeEntry* CMasternodeConfig::add(std::string alias, std::string ip, std::string txHash, std::string outputIndex)
+CValidatorConfig::CValidatorEntry* CValidatorConfig::add(std::string alias, std::string ip, std::string txHash, std::string outputIndex)
 {
-    CMasternodeEntry cme(alias, ip, txHash, outputIndex);
+    CValidatorEntry cme(alias, ip, txHash, outputIndex);
     entries.push_back(cme);
     return &(entries[entries.size() - 1]);
 }
 
-void CMasternodeConfig::remove(std::string alias)
+void CValidatorConfig::remove(std::string alias)
 {
     LOCK(cs_entries);
     int pos = -1;
     for (int i = 0; i < ((int)entries.size()); ++i) {
-        CMasternodeEntry e = entries[i];
+        CValidatorEntry e = entries[i];
         if (e.getAlias() == alias) {
             pos = i;
             break;
@@ -37,17 +37,17 @@ void CMasternodeConfig::remove(std::string alias)
     }
 }
 
-bool CMasternodeConfig::read(std::string& strErr)
+bool CValidatorConfig::read(std::string& strErr)
 {
     LOCK(cs_entries);
     int linenumber = 1;
-    fs::path pathMasternodeConfigFile = GetMasternodeConfigFile();
-    fs::ifstream streamConfig(pathMasternodeConfigFile);
+    fs::path pathValidatorConfigFile = GetValidatorConfigFile();
+    fs::ifstream streamConfig(pathValidatorConfigFile);
 
     if (!streamConfig.good()) {
-        FILE* configFile = fopen(pathMasternodeConfigFile.string().c_str(), "a");
+        FILE* configFile = fopen(pathValidatorConfigFile.string().c_str(), "a");
         if (configFile != nullptr) {
-            std::string strHeader = "# Masternode config file\n"
+            std::string strHeader = "# Validator config file\n"
                                     "# Format: alias IP:port collateral_output_txid collateral_output_index\n"
                                     "# Example: mn1 127.0.0.2:51472 2bcd3c84c84f87eaa86e4e56834c92927a07f9e18718810b92e0d0324456a67c 0\n"
                                     "#\n";
@@ -73,7 +73,7 @@ bool CMasternodeConfig::read(std::string& strErr)
             iss.str(line);
             iss.clear();
             if (!(iss >> alias >> ip >> txHash >> outputIndex)) {
-                strErr = _("Could not parse masternode.conf") + "\n" +
+                strErr = _("Could not parse validator.conf") + "\n" +
                          strprintf(_("Line: %d"), linenumber) + "\n\"" + line + "\"";
                 streamConfig.close();
                 return false;
@@ -105,7 +105,7 @@ bool CMasternodeConfig::read(std::string& strErr)
         // For regtest, allow any port. For mainnet/testnet, validate port
         bool isRegtest = (GetParams().NetworkIDString() == "regtest");
         if (port != nDefaultPort && !isRegtest) {
-            strErr = strprintf(_("Invalid port %d detected in masternode.conf"), port) + "\n" +
+            strErr = strprintf(_("Invalid port %d detected in validator.conf"), port) + "\n" +
                      strprintf(_("Line: %d"), linenumber) + "\n\"" + ip + "\"" + "\n" +
                      strprintf(_("(must be %d for %s-net)"), nDefaultPort, GetParams().NetworkIDString());
             streamConfig.close();
@@ -119,7 +119,7 @@ bool CMasternodeConfig::read(std::string& strErr)
     return true;
 }
 
-bool CMasternodeConfig::CMasternodeEntry::castOutputIndex(int& n) const
+bool CValidatorConfig::CValidatorEntry::castOutputIndex(int& n) const
 {
     try {
         n = std::stoi(outputIndex);

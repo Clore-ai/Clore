@@ -4,12 +4,11 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "masternode-payments.h"
+#include "validator-payments.h"
 
-#include "activemasternode.h"
+#include "activevalidator.h"
 #include "chainparams.h"
 #include "consensus/validation.h"
-#include "masternodeman.h"
 #include "messagesigner.h"
 #include "net.h"
 #include "netmessagemaker.h"
@@ -19,36 +18,37 @@
 #include "util.h"
 #include "utilmoneystr.h"
 #include "validation.h"
+#include "validatorman.h"
 
 #include <boost/filesystem.hpp>
 
-// CLORE: Masternode payments are DISABLED by default
+// CLORE: Validator payments are DISABLED by default
 // This can be enabled in chainparams or via command line
-bool fMasternodePaymentsEnabled = false;
+bool fValidatorPaymentsEnabled = false;
 
-CMasternodePayments masternodePayments;
+CValidatorPayments validatorPayments;
 
 CCriticalSection cs_vecPayments;
-CCriticalSection cs_mapMasternodeBlocks;
-CCriticalSection cs_mapMasternodePayeeVotes;
+CCriticalSection cs_mapValidatorBlocks;
+CCriticalSection cs_mapValidatorPayeeVotes;
 
 //
-// CMasternodePaymentDB
+// CValidatorPaymentDB
 //
 
-CMasternodePaymentDB::CMasternodePaymentDB()
+CValidatorPaymentDB::CValidatorPaymentDB()
 {
     pathDB = GetDataDir() / "mnpayments.dat";
-    strMagicMessage = "MasternodePayments";
+    strMagicMessage = "ValidatorPayments";
 }
 
-bool CMasternodePaymentDB::Write(const CMasternodePayments& objToSave)
+bool CValidatorPaymentDB::Write(const CValidatorPayments& objToSave)
 {
     int64_t nStart = GetTimeMillis();
 
     // serialize, checksum data up to that point, then append checksum
     CDataStream ssObj(SER_DISK, CLIENT_VERSION);
-    ssObj << strMagicMessage;                   // masternode cache file specific magic message
+    ssObj << strMagicMessage;                   // validator cache file specific magic message
     ssObj << FLATDATA(Params().MessageStart()); // network specific magic number
     ssObj << objToSave;
     uint256 hash = Hash(ssObj.begin(), ssObj.end());
@@ -68,12 +68,12 @@ bool CMasternodePaymentDB::Write(const CMasternodePayments& objToSave)
     }
     fileout.fclose();
 
-    LogPrint(BCLog::MASTERNODE, "Written info to mnpayments.dat  %dms\n", GetTimeMillis() - nStart);
+    LogPrint(BCLog::VALIDATOR, "Written info to mnpayments.dat  %dms\n", GetTimeMillis() - nStart);
 
     return true;
 }
 
-CMasternodePaymentDB::ReadResult CMasternodePaymentDB::Read(CMasternodePayments& objToLoad)
+CValidatorPaymentDB::ReadResult CValidatorPaymentDB::Read(CValidatorPayments& objToLoad)
 {
     int64_t nStart = GetTimeMillis();
     // open input file, and associate with CAutoFile
@@ -116,12 +116,12 @@ CMasternodePaymentDB::ReadResult CMasternodePaymentDB::Read(CMasternodePayments&
     unsigned char pchMsgTmp[4];
     std::string strMagicMessageTmp;
     try {
-        // de-serialize file header (masternode cache file specific magic message) and ..
+        // de-serialize file header (validator cache file specific magic message) and ..
         ssObj >> strMagicMessageTmp;
 
         // ... verify the message matches predefined one
         if (strMagicMessage != strMagicMessageTmp) {
-            error("%s : Invalid masternode payement cache magic message", __func__);
+            error("%s : Invalid validator payement cache magic message", __func__);
             return IncorrectMagicMessage;
         }
 
@@ -134,7 +134,7 @@ CMasternodePaymentDB::ReadResult CMasternodePaymentDB::Read(CMasternodePayments&
             return IncorrectMagicNumber;
         }
 
-        // de-serialize data into CMasternodePayments object
+        // de-serialize data into CValidatorPayments object
         ssObj >> objToLoad;
     } catch (std::exception& e) {
         objToLoad.Clear();
@@ -142,67 +142,67 @@ CMasternodePaymentDB::ReadResult CMasternodePaymentDB::Read(CMasternodePayments&
         return IncorrectFormat;
     }
 
-    LogPrint(BCLog::MASTERNODE, "Loaded info from mnpayments.dat %dms\n", GetTimeMillis() - nStart);
-    LogPrint(BCLog::MASTERNODE, "  %s\n", objToLoad.ToString());
+    LogPrint(BCLog::VALIDATOR, "Loaded info from mnpayments.dat %dms\n", GetTimeMillis() - nStart);
+    LogPrint(BCLog::VALIDATOR, "  %s\n", objToLoad.ToString());
 
     return Ok;
 }
 
-uint256 CMasternodePaymentWinner::GetHash() const
+uint256 CValidatorPaymentWinner::GetHash() const
 {
     CHashWriter ss(SER_GETHASH, PROTOCOL_VERSION);
-    ss << vinMasternode;
+    ss << vinValidator;
     ss << nBlockHeight;
     ss << payee;
     return ss.GetHash();
 }
 
-std::string CMasternodePaymentWinner::GetStrMessage() const
+std::string CValidatorPaymentWinner::GetStrMessage() const
 {
-    return vinMasternode.prevout.ToStringShort() + std::to_string(nBlockHeight) + payee.ToString();
+    return vinValidator.prevout.ToStringShort() + std::to_string(nBlockHeight) + payee.ToString();
 }
 
-bool CMasternodePaymentWinner::IsValid(CNode* pnode, CValidationState& state, int chainHeight)
+bool CValidatorPaymentWinner::IsValid(CNode* pnode, CValidationState& state, int chainHeight)
 {
     // CLORE: If payments are disabled, reject all payment votes
-    if (!fMasternodePaymentsEnabled) {
-        return state.Error("Masternode payments are disabled");
+    if (!fValidatorPaymentsEnabled) {
+        return state.Error("Validator payments are disabled");
     }
 
-    CMasternode* pmn = mnodeman.Find(vinMasternode.prevout);
+    CValidator* pmn = mnodeman.Find(vinValidator.prevout);
     if (!pmn) {
-        return state.Error(strprintf("Unknown Masternode %s", vinMasternode.prevout.ToStringShort()));
+        return state.Error(strprintf("Unknown Validator %s", vinValidator.prevout.ToStringShort()));
     }
 
-    int n = mnodeman.GetMasternodeRank(vinMasternode, nBlockHeight - 100);
+    int n = mnodeman.GetValidatorRank(vinValidator, nBlockHeight - 100);
     if (n > MNPAYMENTS_SIGNATURES_TOTAL) {
-        return state.Error(strprintf("Masternode not in the top %d (%d)", MNPAYMENTS_SIGNATURES_TOTAL, n));
+        return state.Error(strprintf("Validator not in the top %d (%d)", MNPAYMENTS_SIGNATURES_TOTAL, n));
     }
 
     return true;
 }
 
-void CMasternodePaymentWinner::Relay()
+void CValidatorPaymentWinner::Relay()
 {
-    CInv inv(MSG_MASTERNODE_PAYMENT, GetHash());
+    CInv inv(MSG_VALIDATOR_PAYMENT, GetHash());
     g_connman->RelayInv(inv);
 }
 
-void DumpMasternodePayments()
+void DumpValidatorPayments()
 {
     int64_t nStart = GetTimeMillis();
 
-    CMasternodePaymentDB paymentdb;
-    LogPrint(BCLog::MASTERNODE, "Writing info to mnpayments.dat...\n");
-    paymentdb.Write(masternodePayments);
+    CValidatorPaymentDB paymentdb;
+    LogPrint(BCLog::VALIDATOR, "Writing info to mnpayments.dat...\n");
+    paymentdb.Write(validatorPayments);
 
-    LogPrint(BCLog::MASTERNODE, "Masternode payment dump finished  %dms\n", GetTimeMillis() - nStart);
+    LogPrint(BCLog::VALIDATOR, "Validator payment dump finished  %dms\n", GetTimeMillis() - nStart);
 }
 
 bool IsBlockValueValid(const CBlock& block, CAmount nExpectedValue, CAmount nMinted)
 {
-    // CLORE: If masternode payments are disabled, use standard validation
-    if (!fMasternodePaymentsEnabled) {
+    // CLORE: If validator payments are disabled, use standard validation
+    if (!fValidatorPaymentsEnabled) {
         return nMinted <= nExpectedValue;
     }
 
@@ -217,9 +217,9 @@ bool IsBlockValueValid(const CBlock& block, CAmount nExpectedValue, CAmount nMin
         return false;
     }
 
-    // Get expected masternode payment
-    CAmount nExpectedMasternodePayment = GetMasternodePayment(nHeight);
-    CAmount nMaxValue = nExpectedValue + nExpectedMasternodePayment;
+    // Get expected validator payment
+    CAmount nExpectedValidatorPayment = GetValidatorPayment(nHeight);
+    CAmount nMaxValue = nExpectedValue + nExpectedValidatorPayment;
 
     return nMinted <= nMaxValue;
 }
@@ -227,41 +227,41 @@ bool IsBlockValueValid(const CBlock& block, CAmount nExpectedValue, CAmount nMin
 bool IsBlockPayeeValid(const CTransaction& txNew, const CBlockIndex* pindexPrev)
 {
     // CLORE: If payments are disabled, any payee is valid
-    if (!fMasternodePaymentsEnabled) {
+    if (!fValidatorPaymentsEnabled) {
         return true;
     }
 
-    if (!masternodeSync.IsSynced()) {
+    if (!validatorSync.IsSynced()) {
         // There is no budget data to use to check anything, let's just accept the longest chain
-        LogPrint(BCLog::MASTERNODE, "Client not synced, skipping block payee checks\n");
+        LogPrint(BCLog::VALIDATOR, "Client not synced, skipping block payee checks\n");
         return true;
     }
 
-    // Check if masternode payment is valid
-    return masternodePayments.IsTransactionValid(txNew, pindexPrev);
+    // Check if validator payment is valid
+    return validatorPayments.IsTransactionValid(txNew, pindexPrev);
 }
 
 void FillBlockPayee(CMutableTransaction& txCoinbase, CMutableTransaction& txCoinstake, const CBlockIndex* pindexPrev, bool fProofOfStake)
 {
     // CLORE: If payments are disabled, don't modify the transactions
-    if (!fMasternodePaymentsEnabled) {
+    if (!fValidatorPaymentsEnabled) {
         return;
     }
 
-    masternodePayments.FillBlockPayee(txCoinbase, txCoinstake, pindexPrev, fProofOfStake);
+    validatorPayments.FillBlockPayee(txCoinbase, txCoinstake, pindexPrev, fProofOfStake);
 }
 
 std::string GetRequiredPaymentsString(int nBlockHeight)
 {
     // CLORE: If payments are disabled, return empty string
-    if (!fMasternodePaymentsEnabled) {
-        return "Masternode payments disabled";
+    if (!fValidatorPaymentsEnabled) {
+        return "Validator payments disabled";
     }
 
-    return masternodePayments.GetRequiredPaymentsString(nBlockHeight);
+    return validatorPayments.GetRequiredPaymentsString(nBlockHeight);
 }
 
-bool CMasternodeBlockPayees::IsTransactionValid(const CTransaction& txNew)
+bool CValidatorBlockPayees::IsTransactionValid(const CTransaction& txNew)
 {
     LOCK(cs_vecPayments);
 
@@ -271,14 +271,14 @@ bool CMasternodeBlockPayees::IsTransactionValid(const CTransaction& txNew)
     CAmount nReward = GetBlockSubsidy(nBlockHeight, Params().GetConsensus());
 
     // Require at least 6 signatures
-    for (CMasternodePayee& payee : vecPayments)
+    for (CValidatorPayee& payee : vecPayments)
         if (payee.nVotes >= nMaxSignatures && payee.nVotes >= MNPAYMENTS_SIGNATURES_REQUIRED)
             nMaxSignatures = payee.nVotes;
 
     // if we don't have at least 6 signatures on a payee, approve whichever is the longest chain
     if (nMaxSignatures < MNPAYMENTS_SIGNATURES_REQUIRED) return true;
 
-    for (CMasternodePayee& payee : vecPayments) {
+    for (CValidatorPayee& payee : vecPayments) {
         bool found = false;
         for (CTxOut out : txNew.vout) {
             if (payee.scriptPubKey == out.scriptPubKey) {
@@ -302,17 +302,17 @@ bool CMasternodeBlockPayees::IsTransactionValid(const CTransaction& txNew)
         }
     }
 
-    LogPrint(BCLog::MASTERNODE, "CMasternodeBlockPayees::IsTransactionValid - Missing required payment of %s to %s\n", FormatMoney(GetMasternodePayment(nBlockHeight)).c_str(), strPayeesPossible.c_str());
+    LogPrint(BCLog::VALIDATOR, "CValidatorBlockPayees::IsTransactionValid - Missing required payment of %s to %s\n", FormatMoney(GetValidatorPayment(nBlockHeight)).c_str(), strPayeesPossible.c_str());
     return false;
 }
 
-std::string CMasternodeBlockPayees::GetRequiredPaymentsString()
+std::string CValidatorBlockPayees::GetRequiredPaymentsString()
 {
     LOCK(cs_vecPayments);
 
     std::string ret = "Unknown";
 
-    for (CMasternodePayee& payee : vecPayments) {
+    for (CValidatorPayee& payee : vecPayments) {
         CTxDestination address1;
         ExtractDestination(payee.scriptPubKey, address1);
         CBitcoinAddress address2(address1);
@@ -327,47 +327,47 @@ std::string CMasternodeBlockPayees::GetRequiredPaymentsString()
     return ret;
 }
 
-bool CMasternodePayments::GetBlockPayee(int nBlockHeight, CScript& payee)
+bool CValidatorPayments::GetBlockPayee(int nBlockHeight, CScript& payee)
 {
     // CLORE: If payments are disabled, return false
-    if (!fMasternodePaymentsEnabled) {
+    if (!fValidatorPaymentsEnabled) {
         return false;
     }
 
-    if (mapMasternodeBlocks.count(nBlockHeight)) {
-        return mapMasternodeBlocks[nBlockHeight].GetPayee(payee);
+    if (mapValidatorBlocks.count(nBlockHeight)) {
+        return mapValidatorBlocks[nBlockHeight].GetPayee(payee);
     }
 
     return false;
 }
 
-bool CMasternodePayments::IsTransactionValid(const CTransaction& txNew, const CBlockIndex* pindexPrev)
+bool CValidatorPayments::IsTransactionValid(const CTransaction& txNew, const CBlockIndex* pindexPrev)
 {
     // CLORE: If payments are disabled, all transactions are valid
-    if (!fMasternodePaymentsEnabled) {
+    if (!fValidatorPaymentsEnabled) {
         return true;
     }
 
     int nBlockHeight = pindexPrev->nHeight + 1;
 
-    if (mapMasternodeBlocks.count(nBlockHeight)) {
-        return mapMasternodeBlocks[nBlockHeight].IsTransactionValid(txNew);
+    if (mapValidatorBlocks.count(nBlockHeight)) {
+        return mapValidatorBlocks[nBlockHeight].IsTransactionValid(txNew);
     }
 
     return true;
 }
 
-void CMasternodePayments::FillBlockPayee(CMutableTransaction& txCoinbase, CMutableTransaction& txCoinstake, const CBlockIndex* pindexPrev, bool fProofOfStake)
+void CValidatorPayments::FillBlockPayee(CMutableTransaction& txCoinbase, CMutableTransaction& txCoinstake, const CBlockIndex* pindexPrev, bool fProofOfStake)
 {
     // CLORE: If payments are disabled, don't modify transactions
-    if (!fMasternodePaymentsEnabled) {
+    if (!fValidatorPaymentsEnabled) {
         return;
     }
 
     int nBlockHeight = pindexPrev->nHeight + 1;
-    CAmount masternodePayment = GetMasternodePayment(nBlockHeight);
+    CAmount validatorPayment = GetValidatorPayment(nBlockHeight);
 
-    if (masternodePayment == 0) {
+    if (validatorPayment == 0) {
         return;
     }
 
@@ -375,46 +375,46 @@ void CMasternodePayments::FillBlockPayee(CMutableTransaction& txCoinbase, CMutab
 
     CScript payee;
     if (!GetBlockPayee(nBlockHeight, payee)) {
-        // No payee found, create a dummy payment to the first masternode
-        LogPrint(BCLog::MASTERNODE, "CMasternodePayments::FillBlockPayee - Failed to find masternode to pay\n");
+        // No payee found, create a dummy payment to the first validator
+        LogPrint(BCLog::VALIDATOR, "CValidatorPayments::FillBlockPayee - Failed to find validator to pay\n");
         return;
     }
 
-    // Add masternode payment to transaction
-    txToModify->vout.push_back(CTxOut(masternodePayment, payee));
+    // Add validator payment to transaction
+    txToModify->vout.push_back(CTxOut(validatorPayment, payee));
 
-    // Reduce staker reward by masternode payment amount
+    // Reduce staker reward by validator payment amount
     if (fProofOfStake && txCoinstake.vout.size() > 1) {
-        txCoinstake.vout[1].nValue -= masternodePayment;
+        txCoinstake.vout[1].nValue -= validatorPayment;
     } else if (!fProofOfStake && txCoinbase.vout.size() > 1) {
-        txCoinbase.vout[1].nValue -= masternodePayment;
+        txCoinbase.vout[1].nValue -= validatorPayment;
     }
 
-    LogPrint(BCLog::MASTERNODE, "CMasternodePayments::FillBlockPayee - Masternode payment %lld to %s\n", masternodePayment, payee.ToString());
+    LogPrint(BCLog::VALIDATOR, "CValidatorPayments::FillBlockPayee - Validator payment %lld to %s\n", validatorPayment, payee.ToString());
 }
 
-std::string CMasternodePayments::GetRequiredPaymentsString(int nBlockHeight)
+std::string CValidatorPayments::GetRequiredPaymentsString(int nBlockHeight)
 {
     // CLORE: If payments are disabled, return appropriate message
-    if (!fMasternodePaymentsEnabled) {
-        return "Masternode payments disabled";
+    if (!fValidatorPaymentsEnabled) {
+        return "Validator payments disabled";
     }
 
-    if (mapMasternodeBlocks.count(nBlockHeight)) {
-        return mapMasternodeBlocks[nBlockHeight].GetRequiredPaymentsString();
+    if (mapValidatorBlocks.count(nBlockHeight)) {
+        return mapValidatorBlocks[nBlockHeight].GetRequiredPaymentsString();
     }
 
     return "Unknown";
 }
 
-bool CMasternodePayments::IsScheduled(const CMasternode& mn, int nNotBlockHeight)
+bool CValidatorPayments::IsScheduled(const CValidator& validator, int nNotBlockHeight)
 {
-    // CLORE: If payments are disabled, no masternodes are scheduled
-    if (!fMasternodePaymentsEnabled) {
+    // CLORE: If payments are disabled, no validators are scheduled
+    if (!fValidatorPaymentsEnabled) {
         return false;
     }
 
-    LOCK(cs_mapMasternodeBlocks);
+    LOCK(cs_mapValidatorBlocks);
 
     int nHeight;
     {
@@ -424,12 +424,12 @@ bool CMasternodePayments::IsScheduled(const CMasternode& mn, int nNotBlockHeight
     }
 
     CScript mnpayee;
-    mnpayee = GetScriptForDestination(mn.pubKeyCollateralAddress.GetID());
+    mnpayee = GetScriptForDestination(validator.pubKeyCollateralAddress.GetID());
 
     for (int64_t h = nHeight; h <= nHeight + 8; h++) {
         if (h == nNotBlockHeight) continue;
-        if (mapMasternodeBlocks.count(h)) {
-            if (mapMasternodeBlocks[h].HasPayeeWithVotes(mnpayee, 2)) {
+        if (mapValidatorBlocks.count(h)) {
+            if (mapValidatorBlocks[h].HasPayeeWithVotes(mnpayee, 2)) {
                 return true;
             }
         }
@@ -438,25 +438,25 @@ bool CMasternodePayments::IsScheduled(const CMasternode& mn, int nNotBlockHeight
     return false;
 }
 
-CAmount CMasternodePayments::GetMasternodePayment(int nHeight)
+CAmount CValidatorPayments::GetValidatorPayment(int nHeight)
 {
     // CLORE: Return 0 if payments are disabled
-    if (!fMasternodePaymentsEnabled) {
+    if (!fValidatorPaymentsEnabled) {
         return 0;
     }
 
-    // Calculate masternode payment as a percentage of block reward
+    // Calculate validator payment as a percentage of block reward
     CAmount blockReward = CStakeReward::GetBlockReward(nHeight);
 
-    // For now, set masternode payment to 10% of block reward
+    // For now, set validator payment to 10% of block reward
     // This can be adjusted based on CLORE's tokenomics
     return blockReward / 10;
 }
 
-bool CMasternodePayments::AddWinningMasternode(CMasternodePaymentWinner& winner)
+bool CValidatorPayments::AddWinningValidator(CValidatorPaymentWinner& winner)
 {
     // CLORE: If payments are disabled, reject all winners
-    if (!fMasternodePaymentsEnabled) {
+    if (!fValidatorPaymentsEnabled) {
         return false;
     }
 
@@ -466,59 +466,59 @@ bool CMasternodePayments::AddWinningMasternode(CMasternodePaymentWinner& winner)
     }
 
     {
-        LOCK2(cs_mapMasternodeBlocks, cs_mapMasternodePayeeVotes);
+        LOCK2(cs_mapValidatorBlocks, cs_mapValidatorPayeeVotes);
 
-        if (mapMasternodePayeeVotes.count(winner.GetHash())) {
+        if (mapValidatorPayeeVotes.count(winner.GetHash())) {
             return false;
         }
 
-        mapMasternodePayeeVotes[winner.GetHash()] = winner;
+        mapValidatorPayeeVotes[winner.GetHash()] = winner;
 
-        if (!mapMasternodeBlocks.count(winner.nBlockHeight)) {
-            CMasternodeBlockPayees blockPayees(winner.nBlockHeight);
-            mapMasternodeBlocks[winner.nBlockHeight] = blockPayees;
+        if (!mapValidatorBlocks.count(winner.nBlockHeight)) {
+            CValidatorBlockPayees blockPayees(winner.nBlockHeight);
+            mapValidatorBlocks[winner.nBlockHeight] = blockPayees;
         }
     }
 
-    mapMasternodeBlocks[winner.nBlockHeight].AddPayee(winner.payee, 1);
+    mapValidatorBlocks[winner.nBlockHeight].AddPayee(winner.payee, 1);
 
     return true;
 }
 
-bool CMasternodePayments::ProcessBlock(int nBlockHeight)
+bool CValidatorPayments::ProcessBlock(int nBlockHeight)
 {
     // CLORE: If payments are disabled, always return true
-    if (!fMasternodePaymentsEnabled) {
+    if (!fValidatorPaymentsEnabled) {
         return true;
     }
 
     if (!fMasterNode) return false;
 
     // Reference node right now
-    int n = mnodeman.GetMasternodeRank(activeMasternode.vin, nBlockHeight - 100);
+    int n = mnodeman.GetValidatorRank(activeValidator.vin, nBlockHeight - 100);
 
     if (n == -1) {
-        LogPrint(BCLog::MASTERNODE, "CMasternodePayments::ProcessBlock - Unknown Masternode\n");
+        LogPrint(BCLog::VALIDATOR, "CValidatorPayments::ProcessBlock - Unknown Validator\n");
         return false;
     }
 
     if (n > MNPAYMENTS_SIGNATURES_TOTAL) {
-        LogPrint(BCLog::MASTERNODE, "CMasternodePayments::ProcessBlock - Masternode not in the top %d (%d)\n", MNPAYMENTS_SIGNATURES_TOTAL, n);
+        LogPrint(BCLog::VALIDATOR, "CValidatorPayments::ProcessBlock - Validator not in the top %d (%d)\n", MNPAYMENTS_SIGNATURES_TOTAL, n);
         return false;
     }
 
     if (nBlockHeight <= nLastBlockHeight) return false;
 
-    CMasternodePaymentWinner newWinner(activeMasternode.vin);
+    CValidatorPaymentWinner newWinner(activeValidator.vin);
 
-    LogPrint(BCLog::MASTERNODE, "CMasternodePayments::ProcessBlock() Start nHeight %d - vin %s. \n", nBlockHeight, activeMasternode.vin.prevout.hash.ToString());
+    LogPrint(BCLog::VALIDATOR, "CValidatorPayments::ProcessBlock() Start nHeight %d - vin %s. \n", nBlockHeight, activeValidator.vin.prevout.hash.ToString());
 
-    // Pay to the oldest MN that still had no payment but its input is old enough and it was active long enough
+    // Pay to the oldest Validator that still had no payment but its input is old enough and it was active long enough
     int nCount = 0;
-    CMasternode* pmn = mnodeman.GetNextMasternodeInQueueForPayment(nBlockHeight, true, nCount);
+    CValidator* pmn = mnodeman.GetNextValidatorInQueueForPayment(nBlockHeight, true, nCount);
 
     if (pmn != NULL) {
-        LogPrint(BCLog::MASTERNODE, "CMasternodePayments::ProcessBlock() Found by FindOldestNotInVec \n");
+        LogPrint(BCLog::VALIDATOR, "CValidatorPayments::ProcessBlock() Found by FindOldestNotInVec \n");
 
         newWinner.nBlockHeight = nBlockHeight;
 
@@ -530,11 +530,11 @@ bool CMasternodePayments::ProcessBlock(int nBlockHeight)
 
     // Sign message
     if (!newWinner.Sign()) {
-        LogPrint(BCLog::MASTERNODE, "CMasternodePayments::ProcessBlock - Failed to sign masternode winner\n");
+        LogPrint(BCLog::VALIDATOR, "CValidatorPayments::ProcessBlock - Failed to sign validator winner\n");
         return false;
     }
 
-    if (!AddWinningMasternode(newWinner)) {
+    if (!AddWinningValidator(newWinner)) {
         return false;
     }
 
@@ -543,14 +543,14 @@ bool CMasternodePayments::ProcessBlock(int nBlockHeight)
     return true;
 }
 
-void CMasternodePayments::Sync(CNode* node, int nCountNeeded)
+void CValidatorPayments::Sync(CNode* node, int nCountNeeded)
 {
     // CLORE: If payments are disabled, don't sync
-    if (!fMasternodePaymentsEnabled) {
+    if (!fValidatorPaymentsEnabled) {
         return;
     }
 
-    LOCK(cs_mapMasternodePayeeVotes);
+    LOCK(cs_mapValidatorPayeeVotes);
 
     int nHeight;
     {
@@ -563,32 +563,32 @@ void CMasternodePayments::Sync(CNode* node, int nCountNeeded)
     if (nCountNeeded > nCount) nCountNeeded = nCount;
 
     int nInvCount = 0;
-    std::map<uint256, CMasternodePaymentWinner>::iterator it = mapMasternodePayeeVotes.begin();
-    while (it != mapMasternodePayeeVotes.end()) {
-        CMasternodePaymentWinner winner = (*it).second;
+    std::map<uint256, CValidatorPaymentWinner>::iterator it = mapValidatorPayeeVotes.begin();
+    while (it != mapValidatorPayeeVotes.end()) {
+        CValidatorPaymentWinner winner = (*it).second;
         if (winner.nBlockHeight >= nHeight - nCountNeeded && winner.nBlockHeight <= nHeight + 20) {
-            node->PushInventory(CInv(MSG_MASTERNODE_PAYMENT, winner.GetHash()));
+            node->PushInventory(CInv(MSG_VALIDATOR_PAYMENT, winner.GetHash()));
             nInvCount++;
         }
         ++it;
     }
-    g_connman->PushMessage(node, CNetMsgMaker(node->GetSendVersion()).Make("ssc", MASTERNODE_SYNC_MNW, nInvCount));
+    g_connman->PushMessage(node, CNetMsgMaker(node->GetSendVersion()).Make("ssc", VALIDATOR_SYNC_MNW, nInvCount));
 }
 
-std::string CMasternodePayments::ToString() const
+std::string CValidatorPayments::ToString() const
 {
     std::ostringstream info;
 
-    info << "Votes: " << (int)mapMasternodePayeeVotes.size() << ", Blocks: " << (int)mapMasternodeBlocks.size();
+    info << "Votes: " << (int)mapValidatorPayeeVotes.size() << ", Blocks: " << (int)mapValidatorBlocks.size();
 
     return info.str();
 }
 
 // Global functions
 
-CAmount GetMasternodePayment(int nHeight)
+CAmount GetValidatorPayment(int nHeight)
 {
-    return masternodePayments.GetMasternodePayment(nHeight);
+    return validatorPayments.GetValidatorPayment(nHeight);
 }
 
 bool IsSporkActive(int nSporkID)

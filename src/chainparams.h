@@ -137,21 +137,21 @@ public:
     int GetAssetActivationHeight() const { return nAssetActivationHeight; }
     /** CLORE End **/
 
-    /** MASTERNODE AUTHORIZATION Start **/
-    struct AuthorizedMasternode {
+    /** VALIDATOR AUTHORIZATION Start **/
+    struct AuthorizedValidator {
         std::string alias;
         std::string pubkeyAddress; // CLORE address for authorization (primary key)
         std::string description;   // Optional description/notes
 
-        AuthorizedMasternode(const std::string& _alias, const std::string& _pubkeyAddress, const std::string& _description = "")
+        AuthorizedValidator(const std::string& _alias, const std::string& _pubkeyAddress, const std::string& _description = "")
             : alias(_alias), pubkeyAddress(_pubkeyAddress), description(_description) {}
     };
 
-    const std::vector<AuthorizedMasternode>& GetAuthorizedMasternodes() const { return vAuthorizedMasternodes; }
-    bool IsAuthorizedMasternodeAddress(const std::string& pubkeyAddress) const;
-    bool IsAuthorizedMasternodeAlias(const std::string& alias) const;
-    std::string GetAuthorizedMasternodeAlias(const std::string& pubkeyAddress) const;
-    /** MASTERNODE AUTHORIZATION End **/
+    const std::vector<AuthorizedValidator>& GetAuthorizedValidators() const { return vAuthorizedValidators; }
+    bool IsAuthorizedValidatorAddress(const std::string& pubkeyAddress) const;
+    bool IsAuthorizedValidatorAlias(const std::string& alias) const;
+    std::string GetAuthorizedValidatorAlias(const std::string& pubkeyAddress) const;
+    /** VALIDATOR AUTHORIZATION End **/
 
 protected:
     CChainParams() {}
@@ -216,9 +216,9 @@ protected:
     uint32_t nKAAAWWWPOWActivationTime;
     /** CLORE End **/
 
-    /** MASTERNODE AUTHORIZATION Storage **/
-    std::vector<AuthorizedMasternode> vAuthorizedMasternodes;
-    /** MASTERNODE AUTHORIZATION End **/
+    /** VALIDATOR AUTHORIZATION Storage **/
+    std::vector<AuthorizedValidator> vAuthorizedValidators;
+    /** VALIDATOR AUTHORIZATION End **/
 };
 
 /**

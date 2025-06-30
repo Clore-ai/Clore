@@ -1,11 +1,11 @@
-# CLORE Masternode Quick Reference
+# CLORE Validator Quick Reference
 
 ## Prerequisites Checklist
 
 - [ ] 10,000 CLORE collateral ready
 - [ ] VPS with static IP (Ubuntu 20.04+ recommended)
 - [ ] Ports 8788/tcp and SSH open
-- [ ] Authorized masternode status confirmed
+- [ ] Authorized validator status confirmed
 
 ## Installation Commands
 
@@ -43,13 +43,13 @@ rpcpassword=$(openssl rand -hex 32)
 rpcallowip=127.0.0.1
 rpcport=8766
 port=8788
-masternode=1
+validator=1
 externalip=YOUR_SERVER_IP
 listen=1
 server=1
 daemon=1
 maxconnections=256
-debug=masternode
+debug=validator
 logips=1
 logtimestamps=1
 EOF
@@ -60,23 +60,23 @@ EOF
 ### Local Wallet Commands
 
 ```bash
-# Generate masternode private key
-createmasternodekey
+# Generate validator private key
+createvalidatorkey
 
 # Find collateral after sending 10,000 CLORE
-listmasternodeconf
+listvalidatorconf
 
 # Check authorization status
-listauthorizedmasternodes
+listauthorizedvalidators
 
-# Start masternode
-startmasternode alias false mn1
+# Start validator
+startvalidator alias false mn1
 ```
 
-### Masternode.conf Format
+### Validator.conf Format
 
 ```
-alias server_ip:8788 masternode_private_key collateral_txid output_index
+alias server_ip:8788 validator_private_key collateral_txid output_index
 ```
 
 ## Essential Monitoring Commands
@@ -89,9 +89,9 @@ systemctl status clored
 clore-cli getblockcount
 clore-cli getconnectioncount
 
-# Masternode status
-clore-cli getmasternodestatus
-clore-cli getmasternodeinfo
+# Validator status
+clore-cli getvalidatorstatus
+clore-cli getvalidatorinfo
 
 # Log monitoring
 tail -f ~/.clore/debug.log
@@ -107,7 +107,7 @@ journalctl -f -u clored
   "netaddr": "server_ip:8788",
   "addr": "collateral_address",
   "status": 4,
-  "message": "Masternode successfully started"
+  "message": "Validator successfully started"
 }
 ```
 
@@ -172,14 +172,14 @@ clore_blockchaind
 ### Log Analysis
 
 ```bash
-# Filter masternode messages
-grep -i masternode ~/.clore/debug.log | tail -20
+# Filter validator messages
+grep -i validator ~/.clore/debug.log | tail -20
 
 # Check for errors
 grep -i error ~/.clore/debug.log | tail -10
 
 # Monitor real-time
-tail -f ~/.clore/debug.log | grep -i masternode
+tail -f ~/.clore/debug.log | grep -i validator
 ```
 
 ## Status Codes
@@ -202,14 +202,14 @@ tail -f ~/.clore/debug.log | grep -i masternode
 
 ### Server Migration
 
-1. Stop old masternode: `clore-cli stop`
+1. Stop old validator: `clore-cli stop`
 2. Setup new server with same private key
-3. Update IP in local masternode.conf
-4. Start from local wallet: `startmasternode alias false mn1`
+3. Update IP in local validator.conf
+4. Start from local wallet: `startvalidator alias false mn1`
 
 ### Key Recovery
 
-- **Private Key**: From `masternode.conf` or backup
+- **Private Key**: From `validator.conf` or backup
 - **Collateral**: Never move the 10,000 CLORE transaction
 - **Configuration**: Backup `~/.clore/clore.conf` regularly
 
@@ -218,7 +218,7 @@ tail -f ~/.clore/debug.log | grep -i masternode
 ### Daily
 
 - Check daemon status and block height
-- Verify masternode status (status code 4)
+- Verify validator status (status code 4)
 - Monitor server resources
 
 ### Weekly
@@ -235,11 +235,11 @@ tail -f ~/.clore/debug.log | grep -i masternode
 
 ## Quick Links
 
-- **Status Check**: `clore-cli getmasternodestatus`
+- **Status Check**: `clore-cli getvalidatorstatus`
 - **Network Info**: `clore-cli getnetworkinfo`
 - **Block Height**: `clore-cli getblockcount`
-- **Authorization**: `clore-cli listauthorizedmasternodes`
-- **Start MN**: `startmasternode alias false mn1` (local wallet)
+- **Authorization**: `clore-cli listauthorizedvalidators`
+- **Start Validator**: `startvalidator alias false mn1` (local wallet)
 
 ---
 

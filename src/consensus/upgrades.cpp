@@ -39,28 +39,28 @@ const struct NetworkUpgradeInfo NetworkUpgradeInfo[] = {
         /*.strInfo =*/"Enables Time Protocol v2 with slot-based timestamps",
     },
     {
-        /*.strName =*/"Masternode Payments v2",
-        /*.strInfo =*/"Enables Masternode Payments v2",
+        /*.strName =*/"Validator Payments v2",
+        /*.strInfo =*/"Enables Validator Payments v2",
     },
     {
-        /*.strName =*/"Masternode Payments v3",
-        /*.strInfo =*/"Enables Masternode Payments v3",
+        /*.strName =*/"Validator Payments v3",
+        /*.strInfo =*/"Enables Validator Payments v3",
     },
     {
-        /*.strName =*/"Masternode Payments v4",
-        /*.strInfo =*/"Enables Masternode Payments v4",
+        /*.strName =*/"Validator Payments v4",
+        /*.strInfo =*/"Enables Validator Payments v4",
     },
     {
-        /*.strName =*/"Masternode Payments v5",
-        /*.strInfo =*/"Enables Masternode Payments v5",
+        /*.strName =*/"Validator Payments v5",
+        /*.strInfo =*/"Enables Validator Payments v5",
     },
     {
-        /*.strName =*/"Masternode Payments v6",
-        /*.strInfo =*/"Enables Masternode Payments v6",
+        /*.strName =*/"Validator Payments v6",
+        /*.strInfo =*/"Enables Validator Payments v6",
     },
     {
-        /*.strName =*/"Masternode Payments v7",
-        /*.strInfo =*/"Enables Masternode Payments v7",
+        /*.strName =*/"Validator Payments v7",
+        /*.strInfo =*/"Enables Validator Payments v7",
     },
     {
         /*.strName =*/"Test Dummy",

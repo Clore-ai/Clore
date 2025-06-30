@@ -63,7 +63,7 @@ consensus.vUpgrades[Consensus::ENABLE_POS_REWARDS] = {70002, 1000004319, {}};   
 ### vUpgrades for Actual PoS Activation
 
 - **Height-based upgrades** control the **actual PoS functionality**
-- `ENABLE_POS_VALIDATORS` (1000001439) = masternodes come online (+1440 after DEPLOYMENT_POS)
+- `ENABLE_POS_VALIDATORS` (1000001439) = validators come online (+1440 after DEPLOYMENT_POS)
 - `ENABLE_POS_STAKING` (1000002879) = staking logic activated (+1440 blocks)
 - `ENABLE_POS_REWARDS` (1000004319) = Clore PoS (PoW disabled) (+1440 blocks)
 - **Purpose**: Precise control over when PoS phases activate
@@ -76,7 +76,7 @@ consensus.vUpgrades[Consensus::ENABLE_POS_REWARDS] = {70002, 1000004319, {}};   
 // Check if miners have signaled PoS readiness (BIP9)
 bool posSignaled = VersionBitsState(pindex, params, DEPLOYMENT_POS) == THRESHOLD_ACTIVE;
 
-// Check if masternodes can come online (height-based)
+// Check if validators can come online (height-based)
 bool validatorsActive = NetworkUpgradeActive(height, params, ENABLE_POS_VALIDATORS);
 
 // Check if staking logic is active (height-based)
@@ -95,12 +95,12 @@ bool clorePosActive = NetworkUpgradeActive(height, params, ENABLE_POS_REWARDS);
 
 ### Transition Strategy: **PoW Security During Infrastructure Buildup**
 
-CLORE uses a **safety-first approach** where PoW mining continues to secure the network while PoS infrastructure builds up gradually. Only when both masternodes and staking are fully operational does the network transition to PoS-only consensus.
+CLORE uses a **safety-first approach** where PoW mining continues to secure the network while PoS infrastructure builds up gradually. Only when both validators and staking are fully operational does the network transition to PoS-only consensus.
 
 | Phase       | Upgrade                     | Height          | Mining Status  | Infrastructure Status | Purpose                           |
 | ----------- | --------------------------- | --------------- | -------------- | --------------------- | --------------------------------- |
 | **Phase 0** | _Before all upgrades_       | < 1,000,001,439 | **PoW Only**   | None                  | Traditional PoW mining            |
-| **Phase 1** | **`ENABLE_POS_VALIDATORS`** | 1,000,001,439   | **PoW Secure** | Masternodes Online    | Masternodes can be created        |
+| **Phase 1** | **`ENABLE_POS_VALIDATORS`** | 1,000,001,439   | **PoW Secure** | Validators Online     | Validators can be created         |
 | **Phase 2** | **`ENABLE_POS_STAKING`**    | 1,000,002,879   | **PoW Secure** | + Staking Active      | Staking enabled, PoW still secure |
 | **Phase 3** | **`ENABLE_POS_REWARDS`**    | 1,000,004,319   | **PoS Only**   | Full Infrastructure   | PoW disabled, PoS takes over      |
 
@@ -108,7 +108,7 @@ CLORE uses a **safety-first approach** where PoW mining continues to secure the 
 
 | Upgrade                     | Mainnet Height | Technical Changes                                                                                                                                                                                                      | Status      |
 | --------------------------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
-| **`ENABLE_POS_VALIDATORS`** | 1,000,001,439  | **• Masternodes can be created and come online**<br/>**• PoW mining continues for security**<br/>**• No consensus rule changes**<br/>**• Infrastructure phase begins**                                                 | **Pending** |
+| **`ENABLE_POS_VALIDATORS`** | 1,000,001,439  | **• Validators can be created and come online**<br/>**• PoW mining continues for security**<br/>**• No consensus rule changes**<br/>**• Infrastructure phase begins**                                                  | **Pending** |
 | **`ENABLE_POS_STAKING`**    | 1,000,002,879  | **• Staking logic activation (600 block depth)**<br/>**• 256-bit stake modifier activated**<br/>**• PoW mining continues for security**<br/>**• Both PoW and PoS blocks accepted**<br/>**• No consensus rule changes** | **Pending** |
 | **`ENABLE_POS_REWARDS`**    | 1,000,004,319  | **• PoW mining permanently disabled**<br/>**• PoW blocks rejected with "pow-disabled" error**<br/>**• PoS-only consensus enforced**<br/>**• ONLY phase with consensus rule changes**                                   | **Pending** |
 
@@ -123,10 +123,10 @@ CLORE uses a **safety-first approach** where PoW mining continues to secure the 
    - Threshold currently disabled until network coordination
    - No consensus rule changes - signaling only
 
-1. **`ENABLE_POS_VALIDATORS`** (1,000,001,439) - **Masternode Infrastructure** (+1440 blocks)
+1. **`ENABLE_POS_VALIDATORS`** (1,000,001,439) - **Validator Infrastructure** (+1440 blocks)
 
-   - Enables masternodes to come online and establish network
-   - Prepares masternode infrastructure before staking begins
+   - Enables validators to come online and establish network
+   - Prepares validator infrastructure before staking begins
    - No consensus rule changes - infrastructure only
 
 2. **`ENABLE_POS_STAKING`** (1,000,002,879) - **Staking Logic Activation** (+1440 blocks)

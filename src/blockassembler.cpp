@@ -9,8 +9,6 @@
 #include "consensus/validation.h"
 #include "hash.h"
 #include "kernel.h"
-#include "masternode-payments.h"
-#include "masternode-sync.h"
 #include "primitives/block.h"
 #include "primitives/transaction.h"
 #include "script/standard.h"
@@ -20,6 +18,8 @@
 #include "utilmoneystr.h"
 #include "validation.h"
 #include "validationinterface.h"
+#include "validator-payments.h"
+#include "validator-sync.h"
 #include "wallet/wallet.h"
 
 #include <boost/thread.hpp>

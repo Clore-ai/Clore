@@ -167,8 +167,8 @@ CLORE_CORE_H = \
   dbwrapper.h \
   limitedmap.h \
   memusage.h \
-  masternode.h \
-  masternodeconfig.h \
+  validator.h \
+  validatorconfig.h \
   merkleblock.h \
   miner.h \
   net.h \
@@ -293,9 +293,9 @@ libclore_server_a_SOURCES = \
   rpc/safemode.cpp \
   rpc/server.cpp \
   rpc/staking.cpp \
-  rpc/masternode.cpp \
-  masternode.cpp \
-  masternodeconfig.cpp \
+  rpc/validator.cpp \
+  validator.cpp \
+  validatorconfig.cpp \
   script/sigcache.cpp \
   script/ismine.cpp \
   timedata.cpp \

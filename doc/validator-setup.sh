@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# CLORE Masternode Automated Setup Script
+# CLORE Validator Automated Setup Script
 # Compatible with Ubuntu 20.04+ and Debian-based systems
 # Version: 1.0
 
@@ -17,8 +17,8 @@ NC='\033[0m' # No Color
 
 # Script information
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SETUP_LOG="$SCRIPT_DIR/masternode-setup.log"
-CONFIG_INFO="$SCRIPT_DIR/masternode-info.txt"
+SETUP_LOG="$SCRIPT_DIR/validator-setup.log"
+CONFIG_INFO="$SCRIPT_DIR/validator-info.txt"
 SERVICE_USER="clore"
 CLORE_DIR="/home/$SERVICE_USER/.clore"
 REPO_URL="https://github.com/CloreBlockchain/clore.git"
@@ -84,7 +84,7 @@ check_system() {
     TOTAL_RAM=$(free -m | awk 'NR==2{print $2}')
     print_status "Total RAM: ${TOTAL_RAM}MB"
     if [[ $TOTAL_RAM -lt 3500 ]]; then
-        print_warning "Less than 4GB RAM detected. Masternode may experience performance issues."
+        print_warning "Less than 4GB RAM detected. Validator may experience performance issues."
     fi
     
     # Check available disk space
@@ -233,7 +233,7 @@ build_clore() {
 
 # Function to generate configuration
 generate_config() {
-    print_header "GENERATING MASTERNODE CONFIGURATION"
+    print_header "GENERATING VALIDATOR CONFIGURATION"
     
     # Generate secure random credentials
     RPC_USER="rpcuser$(openssl rand -hex 4)"
@@ -258,7 +258,7 @@ generate_config() {
     print_status "Generating clore.conf..."
     
     cat << EOF | sudo -u "$SERVICE_USER" tee "$CLORE_DIR/clore.conf" > /dev/null
-# CLORE Masternode Configuration
+# CLORE Validator Configuration
 # Generated on $(date)
 
 # RPC Configuration
@@ -274,12 +274,12 @@ server=1
 daemon=1
 maxconnections=256
 
-# Masternode Configuration
-masternode=1
+# Validator Configuration
+validator=1
 externalip=$EXTERNAL_IP
 
 # Logging Configuration
-debug=masternode
+debug=validator
 logips=1
 logtimestamps=1
 shrinkdebugfile=1
@@ -353,7 +353,7 @@ save_setup_info() {
     print_header "SAVING SETUP INFORMATION"
     
     cat << EOF > "$CONFIG_INFO"
-# CLORE Masternode Setup Information
+# CLORE Validator Setup Information
 # Generated on $(date)
 # Host: $(hostname)
 # External IP: $EXTERNAL_IP
@@ -373,36 +373,36 @@ P2P Port: 8788
 RPC Port: 8766 (localhost only)
 
 ## NEXT STEPS REQUIRED:
-1. Get your masternode private key from your LOCAL wallet:
+1. Get your validator private key from your LOCAL wallet:
    - Open CLORE wallet console
-   - Run: createmasternodekey
+   - Run: createvalidatorkey
    - Copy the generated key
 
 2. Edit the configuration file:
    sudo nano $CLORE_DIR/clore.conf
-   - Replace "REPLACE_WITH_YOUR_MASTERNODE_PRIVATE_KEY" with your actual key
+   - Replace "REPLACE_WITH_YOUR_VALIDATOR_PRIVATE_KEY" with your actual key
 
 3. Prepare collateral (on your LOCAL wallet):
    - Send exactly 10,000 CLORE to a new address
    - Wait for 15 confirmations
-   - Run: listmasternodeconf
+   - Run: listvalidatorconf
    - Note transaction ID and output index
 
-4. Add masternode entry to your LOCAL masternode.conf:
-   mn1 $EXTERNAL_IP:8788 YOUR_MASTERNODE_PRIVATE_KEY TX_ID OUTPUT_INDEX
+4. Add validator entry to your LOCAL validator.conf:
+   mn1 $EXTERNAL_IP:8788 YOUR_VALIDATOR_PRIVATE_KEY TX_ID OUTPUT_INDEX
 
-5. Start the masternode:
+5. Start the validator:
    - Start daemon: sudo systemctl start clored
    - Wait for sync: clore-cli getblockcount
-   - Start from local wallet: startmasternode alias false mn1
-   - Check status: clore-cli getmasternodestatus
+   - Start from local wallet: startvalidator alias false mn1
+   - Check status: clore-cli getvalidatorstatus
 
 ## USEFUL COMMANDS
 Check service status: sudo systemctl status clored
 View logs: sudo journalctl -f -u clored
 Check block height: clore-cli getblockcount
 Check connections: clore-cli getconnectioncount
-Check masternode status: clore-cli getmasternodestatus
+Check validator status: clore-cli getvalidatorstatus
 
 ## FIREWALL STATUS
 $(sudo ufw status numbered)
@@ -425,7 +425,7 @@ display_summary() {
     print_header "SETUP COMPLETE!"
     
     echo -e "${GREEN}"
-    echo "🎉 CLORE Masternode setup completed successfully!"
+    echo "🎉 CLORE Validator setup completed successfully!"
     echo -e "${NC}"
     
     echo -e "${CYAN}📋 SUMMARY:${NC}"
@@ -437,9 +437,9 @@ display_summary() {
     
     echo -e "${YELLOW}"
     echo "⚠️  IMPORTANT NEXT STEPS:"
-    echo "1. Get masternode private key from your LOCAL wallet"
+    echo "1. Get validator private key from your LOCAL wallet"
     echo "2. Edit config: sudo nano $CLORE_DIR/clore.conf"
-    echo "3. Replace the masternode private key placeholder"
+    echo "3. Replace the validator private key placeholder"
     echo "4. Prepare 10,000 CLORE collateral"
     echo "5. Start the service: sudo systemctl start clored"
     echo -e "${NC}"
@@ -454,11 +454,11 @@ display_summary() {
     echo "• Check status: sudo systemctl status clored"
     echo "• View logs: sudo journalctl -f -u clored"
     echo "• Check sync: clore-cli getblockcount"
-    echo "• MN status: clore-cli getmasternodestatus"
+    echo "• Validator status: clore-cli getvalidatorstatus"
     
     echo -e "${GREEN}"
-    echo "📖 Full documentation available in: $SCRIPT_DIR/masternode-simple.md"
-    echo "💬 Support: CLORE Discord #masternode-support"
+    echo "📖 Full documentation available in: $SCRIPT_DIR/validator-simple.md"
+    echo "💬 Support: CLORE Discord #validator-support"
     echo -e "${NC}"
 }
 
@@ -477,10 +477,10 @@ main() {
     trap cleanup SIGINT SIGTERM
     
     # Initialize log file
-    echo "CLORE Masternode Setup Log - $(date)" > "$SETUP_LOG"
+    echo "CLORE Validator Setup Log - $(date)" > "$SETUP_LOG"
     
-    print_header "CLORE MASTERNODE AUTOMATED SETUP"
-    print_status "Starting automated masternode setup..."
+    print_header "CLORE VALIDATOR AUTOMATED SETUP"
+    print_status "Starting automated validator setup..."
     print_status "Script directory: $SCRIPT_DIR"
     print_status "Log file: $SETUP_LOG"
     

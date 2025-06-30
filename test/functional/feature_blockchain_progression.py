@@ -9,14 +9,14 @@ PoS activation and DGW activation, ensuring that critical segmentation fault
 fixes in proof-of-work algorithms work correctly.
 
 The test includes BIP9 PoS deployment testing with early activation and
-comprehensive masternode functionality testing.
+comprehensive validator functionality testing.
 
 Test Coverage:
 - Genesis block creation and initial state
 - Block generation from 1 to 99 (pre-PoS, pre-DGW)
 - BIP9 PoS deployment tracking and signaling
 - PoS activation monitoring at block 150 target
-- Masternode functionality testing with proper node connectivity
+- Validator functionality testing with proper node connectivity
 - DGW activation at block 200 (regtest configuration)
 - Critical bug fixes validation (no segmentation faults)
 - Algorithm transitions (BTC → DGW)
@@ -26,7 +26,7 @@ Key Achievements Tested:
 - Fixed null pointer segmentation faults in GetNextWorkRequiredBTC and DarkGravityWave
 - Successful BTC difficulty algorithm operation (blocks 1-199)
 - BIP9 PoS deployment parameter configuration and tracking
-- Masternode setup and functionality validation with proper networking
+- Validator setup and functionality validation with proper networking
 - Successful DGW activation and operation (blocks 200+)
 - Comprehensive end-to-end blockchain functionality
 """
@@ -40,16 +40,16 @@ from decimal import Decimal
 class BlockchainProgressionTest(CloreTestFramework):
     def set_test_params(self):
         self.setup_clean_chain = True
-        self.num_nodes = 2  # Enable 2 nodes for full masternode testing
+        self.num_nodes = 2  # Enable 2 nodes for full validator testing
 
         # Configure BIP9 PoS deployment parameters from start
         current_time = int(time.time())
         future_timeout = current_time + 3600  # 1 hour from now
 
-        # Node 0: Regular node, Node 1: Masternode
+        # Node 0: Regular node, Node 1: Validator
         self.extra_args = [
             ["-debug=all", "-printtoconsole=0"],  # Regular node
-            ["-debug=all", "-printtoconsole=0"],  # Masternode
+            ["-debug=all", "-printtoconsole=0"],  # Validator
         ]
 
     def skip_test_if_missing_module(self):
@@ -59,8 +59,8 @@ class BlockchainProgressionTest(CloreTestFramework):
         """Setup network with robust 2-node connectivity"""
         self.setup_nodes()
 
-        # Connect nodes explicitly for masternode testing
-        self.log.info("Setting up robust 2-node connectivity for masternode testing...")
+        # Connect nodes explicitly for validator testing
+        self.log.info("Setting up robust 2-node connectivity for validator testing...")
 
         try:
             # Use the test framework's built-in connection method
@@ -128,7 +128,7 @@ class BlockchainProgressionTest(CloreTestFramework):
     def run_test(self):
         """Execute comprehensive blockchain progression testing"""
         self.log.info(
-            "Starting comprehensive blockchain progression test with BIP9 PoS upgrade and masternode functionality..."
+            "Starting comprehensive blockchain progression test with BIP9 PoS upgrade and validator functionality..."
         )
 
         # Phase 1: Early blockchain progression and BIP9 PoS tracking
@@ -137,8 +137,8 @@ class BlockchainProgressionTest(CloreTestFramework):
         # Phase 2: PoS activation monitoring around block 150
         self.test_pos_activation_monitoring()
 
-        # Phase 3: Masternode setup and testing (with proper node connectivity)
-        self.test_masternode_functionality()
+        # Phase 3: Validator setup and testing (with proper node connectivity)
+        self.test_validator_functionality()
 
         # Phase 4: DGW activation milestone
         self.test_dgw_activation_phase()
@@ -147,7 +147,7 @@ class BlockchainProgressionTest(CloreTestFramework):
         self.test_segmentation_fault_fixes()
 
         self.log.info(
-            "✅ All blockchain progression tests with BIP9 PoS upgrade and masternode functionality completed successfully!"
+            "✅ All blockchain progression tests with BIP9 PoS upgrade and validator functionality completed successfully!"
         )
 
     def robust_sync_all(self, timeout=30):
@@ -329,12 +329,12 @@ class BlockchainProgressionTest(CloreTestFramework):
 
         self.log.info("✅ PoS activation monitoring completed")
 
-    def test_masternode_functionality(self):
-        """Test comprehensive masternode setup and functionality with 2-node connectivity"""
-        self.log.info("Phase 3: Testing comprehensive masternode functionality...")
+    def test_validator_functionality(self):
+        """Test comprehensive validator setup and functionality with 2-node connectivity"""
+        self.log.info("Phase 3: Testing comprehensive validator functionality...")
 
         node0 = self.nodes[0]  # Regular node
-        node1 = self.nodes[1]  # Masternode
+        node1 = self.nodes[1]  # Validator
 
         # Check node connectivity and sync status
         try:
@@ -366,36 +366,36 @@ class BlockchainProgressionTest(CloreTestFramework):
 
         except Exception as e:
             self.log.warning(f"Node connectivity check failed: {e}")
-            self.log.info("Continuing with single-node masternode testing...")
+            self.log.info("Continuing with single-node validator testing...")
 
-        # Test basic masternode RPC functionality on both nodes
+        # Test basic validator RPC functionality on both nodes
         for i, node in enumerate(self.nodes):
             try:
-                self.log.info(f"Testing masternode RPC commands on Node {i}...")
+                self.log.info(f"Testing validator RPC commands on Node {i}...")
 
-                # Test masternode list and count
-                mn_list = node.masternode("list")
-                mn_count = node.masternode("count")
+                # Test validator list and count
+                mn_list = node.validator("list")
+                mn_count = node.validator("count")
 
-                self.log.info(f"Node {i} masternode list: {len(mn_list)} masternodes")
-                self.log.info(f"Node {i} masternode count: {mn_count}")
+                self.log.info(f"Node {i} validator list: {len(mn_list)} validators")
+                self.log.info(f"Node {i} validator count: {mn_count}")
 
-                # Test masternode key generation
-                mn_privkey = node.masternode("genkey")
+                # Test validator key generation
+                mn_privkey = node.validator("genkey")
                 self.log.info(
-                    f"Node {i} generated masternode private key: {mn_privkey[:20]}..."
+                    f"Node {i} generated validator private key: {mn_privkey[:20]}..."
                 )
 
-                # Test masternode status
-                mn_status = node.masternode("status")
-                self.log.info(f"Node {i} masternode status: {mn_status}")
+                # Test validator status
+                mn_status = node.validator("status")
+                self.log.info(f"Node {i} validator status: {mn_status}")
 
-                self.log.info(f"✅ Node {i} masternode RPC commands working")
+                self.log.info(f"✅ Node {i} validator RPC commands working")
 
             except Exception as e:
-                self.log.warning(f"Node {i} masternode RPC test failed: {e}")
+                self.log.warning(f"Node {i} validator RPC test failed: {e}")
 
-        # Test masternode wallet functionality and collateral
+        # Test validator wallet functionality and collateral
         try:
             # Check wallet balances
             wallet_info_0 = node0.getwalletinfo()
@@ -404,22 +404,22 @@ class BlockchainProgressionTest(CloreTestFramework):
             self.log.info(f"Node 0 balance: {wallet_info_0['balance']} CLORE")
             self.log.info(f"Node 1 balance: {wallet_info_1['balance']} CLORE")
 
-            # Generate masternode addresses on both nodes
+            # Generate validator addresses on both nodes
             mn_address_0 = node0.getnewaddress()
             mn_address_1 = node1.getnewaddress()
 
-            self.log.info(f"Node 0 masternode address: {mn_address_0}")
-            self.log.info(f"Node 1 masternode address: {mn_address_1}")
+            self.log.info(f"Node 0 validator address: {mn_address_0}")
+            self.log.info(f"Node 1 validator address: {mn_address_1}")
 
             # Test sending collateral between nodes if we have sufficient funds
             if wallet_info_0["balance"] >= 1000:
                 self.log.info(
-                    "Testing masternode collateral transaction between nodes..."
+                    "Testing validator collateral transaction between nodes..."
                 )
                 try:
                     # Send collateral from node 0 to node 1
                     txid = node0.sendtoaddress(mn_address_1, 1000)
-                    self.log.info(f"Masternode collateral transaction: {txid}")
+                    self.log.info(f"Validator collateral transaction: {txid}")
 
                     # Generate a block on node 0 to confirm
                     coinbase_address = node0.getnewaddress()
@@ -459,27 +459,27 @@ class BlockchainProgressionTest(CloreTestFramework):
                         self.log.warning(f"Transaction verification failed: {e}")
 
                     self.log.info(
-                        "✅ Masternode collateral transaction testing completed"
+                        "✅ Validator collateral transaction testing completed"
                     )
 
                 except Exception as e:
-                    self.log.warning(f"Masternode collateral test failed: {e}")
+                    self.log.warning(f"Validator collateral test failed: {e}")
             else:
                 self.log.info("ℹ️ Insufficient balance for collateral transaction test")
 
-            # Test masternode configuration on node 1 (designated masternode)
+            # Test validator configuration on node 1 (designated validator)
             try:
-                self.log.info("Testing advanced masternode configuration on Node 1...")
+                self.log.info("Testing advanced validator configuration on Node 1...")
 
-                # Generate masternode private key for node 1
-                mn_privkey = node1.masternode("genkey")
-                self.log.info(f"Node 1 masternode private key: {mn_privkey[:20]}...")
+                # Generate validator private key for node 1
+                mn_privkey = node1.validator("genkey")
+                self.log.info(f"Node 1 validator private key: {mn_privkey[:20]}...")
 
-                # Test masternode status
-                mn_status = node1.masternode("status")
-                self.log.info(f"Node 1 masternode status: {mn_status}")
+                # Test validator status
+                mn_status = node1.validator("status")
+                self.log.info(f"Node 1 validator status: {mn_status}")
 
-                # Test masternode network connectivity
+                # Test validator network connectivity
                 try:
                     peer_info_1 = node1.getpeerinfo()
                     connection_count_1 = node1.getconnectioncount()
@@ -488,47 +488,47 @@ class BlockchainProgressionTest(CloreTestFramework):
                     self.log.info(f"Node 1 peer details: {len(peer_info_1)} peers")
 
                     if connection_count_1 > 0:
-                        self.log.info("✅ Masternode has network connectivity")
+                        self.log.info("✅ Validator has network connectivity")
                     else:
-                        self.log.warning("⚠️ Masternode has no network connections")
+                        self.log.warning("⚠️ Validator has no network connections")
 
                 except Exception as e:
-                    self.log.warning(f"Masternode network check failed: {e}")
+                    self.log.warning(f"Validator network check failed: {e}")
 
-                self.log.info("✅ Advanced masternode configuration testing completed")
+                self.log.info("✅ Advanced validator configuration testing completed")
 
             except Exception as e:
-                self.log.warning(f"Advanced masternode configuration test failed: {e}")
+                self.log.warning(f"Advanced validator configuration test failed: {e}")
 
         except Exception as e:
-            self.log.warning(f"Masternode wallet functionality test failed: {e}")
+            self.log.warning(f"Validator wallet functionality test failed: {e}")
 
-        # Test masternode synchronization between nodes
+        # Test validator synchronization between nodes
         try:
-            self.log.info("Testing masternode synchronization between nodes...")
+            self.log.info("Testing validator synchronization between nodes...")
 
-            # Get masternode lists from both nodes
-            mn_list_0 = node0.masternode("list")
-            mn_list_1 = node1.masternode("list")
+            # Get validator lists from both nodes
+            mn_list_0 = node0.validator("list")
+            mn_list_1 = node1.validator("list")
 
-            self.log.info(f"Node 0 sees {len(mn_list_0)} masternodes")
-            self.log.info(f"Node 1 sees {len(mn_list_1)} masternodes")
+            self.log.info(f"Node 0 sees {len(mn_list_0)} validators")
+            self.log.info(f"Node 1 sees {len(mn_list_1)} validators")
 
-            # Compare masternode counts
+            # Compare validator counts
             if len(mn_list_0) == len(mn_list_1):
-                self.log.info("✅ Masternode lists synchronized between nodes")
+                self.log.info("✅ Validator lists synchronized between nodes")
             else:
                 self.log.warning(
-                    f"⚠️ Masternode list mismatch: Node 0 has {len(mn_list_0)}, Node 1 has {len(mn_list_1)}"
+                    f"⚠️ Validator list mismatch: Node 0 has {len(mn_list_0)}, Node 1 has {len(mn_list_1)}"
                 )
                 self.log.info(
-                    "This may be normal for a test environment without active masternodes"
+                    "This may be normal for a test environment without active validators"
                 )
 
         except Exception as e:
-            self.log.warning(f"Masternode synchronization test failed: {e}")
+            self.log.warning(f"Validator synchronization test failed: {e}")
 
-        self.log.info("✅ Comprehensive masternode functionality testing completed")
+        self.log.info("✅ Comprehensive validator functionality testing completed")
 
     def test_dgw_activation_phase(self):
         """Test DGW activation at block 200"""
@@ -728,7 +728,7 @@ class BlockchainProgressionTest(CloreTestFramework):
 
                 self.log.info(f"Node {i} final connectivity: {peer_count} connections")
 
-                # Log detailed peer information for masternode analysis
+                # Log detailed peer information for validator analysis
                 for j, peer in enumerate(peer_info):
                     addr = peer.get("addr", "unknown")
                     version = peer.get("version", "unknown")
@@ -738,7 +738,7 @@ class BlockchainProgressionTest(CloreTestFramework):
                 self.log.warning(f"Node {i} connectivity check failed: {e}")
 
         self.log.info("✅ All segmentation fault fixes validated successfully!")
-        self.log.info("✅ 2-node masternode infrastructure confirmed operational!")
+        self.log.info("✅ 2-node validator infrastructure confirmed operational!")
 
 
 if __name__ == "__main__":
