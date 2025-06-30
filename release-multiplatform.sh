@@ -24,11 +24,11 @@
 #
 # =============================================================================
 
-BUILD_LINUX_X64=false      # Build for Linux x86_64 (Intel/AMD servers) - Cross-arch builds are slow/unreliable
+BUILD_LINUX_X64=false      # Build for Linux x86_64 (Intel/AMD servers) - Set to true for Ubuntu 22.04
 BUILD_LINUX_ARM64=true     # Build for Linux ARM64 (AWS Graviton, Apple Silicon containers)
 BUILD_MACOS_X64=false      # Build for Intel Macs (cross-compilation issues)
-BUILD_MACOS_ARM64=true     # Build for Apple Silicon Macs (M1/M2/M3) - native build
-BUILD_WINDOWS_X64=false    # Build for Windows x86_64 - Cross-arch MinGW is problematic
+BUILD_MACOS_ARM64=true     # Build for Apple Silicon Macs (M1/M2/M3) - only on macOS hosts
+BUILD_WINDOWS_X64=false    # Build for Windows x64 - Set to true for Ubuntu with MinGW
 
 # =============================================================================
 
@@ -400,24 +400,19 @@ RUN mkdir -p /build/db4 && \\
     rm -f db-4.8.30.NC.tar.gz && \\
     rm -rf db-4.8.30.NC
 
-# Build depends and project using the working configuration
-RUN cd depends && \\
-    make HOST=x86_64-pc-linux-gnu -j\$(nproc) && \\
-    cd .. && \\
-    export BDB_PREFIX="/build/db4" && \\
+# Build project using the original working configuration (simplified)
+RUN export BDB_PREFIX="/build/db4" && \\
     ./autogen.sh && \\
-    CONFIG_SITE=\$PWD/depends/x86_64-pc-linux-gnu/share/config.site \\
     ./configure \\
-      --prefix=\$PWD/depends/x86_64-pc-linux-gnu \\
       --enable-cxx \\
       --disable-shared \\
       --disable-tests \\
       --without-bench \\
       --with-tx \\
+      --enable-wallet \\
       LDFLAGS="-L\${BDB_PREFIX}/lib/" \\
       CPPFLAGS="-I\${BDB_PREFIX}/include/" && \\
-    make -j\$(nproc) && \\
-    make deploy
+    make -j\$(nproc)
 
 # Copy binaries to output directory
 RUN mkdir -p /output && \\
@@ -604,31 +599,27 @@ configure_build() {
         "linux-x64")
             # Handle different host architectures
             if [[ "$ARCH_TYPE" == "x86_64" && "$OS_TYPE" == "Linux" ]]; then
-                # Native x64 Linux build using original working configuration
-                build_log "Building Linux x64 natively using depends system..."
+                # Native x64 Linux build using original working configuration (simplified)
+                build_log "Building Linux x64 natively using original working method..."
                 
-                # Build depends first (this creates the config.site)
-                build_log "Building depends for x86_64-pc-linux-gnu..."
-                cd "$SCRIPT_DIR/depends"
-                make HOST=x86_64-pc-linux-gnu -j$(nproc) || error "Failed to build depends"
-                cd "$SCRIPT_DIR"
-                
-                # Build Berkeley DB 4.8 in CLORE_ROOT
+                # Build Berkeley DB 4.8 directly (like original instructions)
                 build_log "Building Berkeley DB 4.8..."
                 bdb_prefix="$SCRIPT_DIR/db4"
                 if [[ ! -f "$bdb_prefix/lib/libdb_cxx-4.8.a" ]]; then
                     mkdir -p "$bdb_prefix"
                     
-                    # Download and build Berkeley DB 4.8
+                    # Download and build Berkeley DB 4.8 (original method)
                     wget -c 'http://download.oracle.com/berkeley-db/db-4.8.30.NC.tar.gz' || error "Failed to download Berkeley DB"
                     echo '12edc0df75bf9abd7f82f821795bcee50f42cb2e5f76a6a281b85732798364ef  db-4.8.30.NC.tar.gz' | sha256sum -c || error "Berkeley DB checksum verification failed"
                     tar -xzvf db-4.8.30.NC.tar.gz || error "Failed to extract Berkeley DB"
                     
-                    # Apply patch
-                    chmod a+w ./db-4.8.30.NC/dbinc/atomic.h
-                    cp ./depends/patches/atomic.h db-4.8.30.NC/dbinc/ || error "Failed to apply atomic.h patch"
+                    # Apply patch if it exists
+                    if [[ -f "./depends/patches/atomic.h" ]]; then
+                        chmod a+w ./db-4.8.30.NC/dbinc/atomic.h
+                        cp ./depends/patches/atomic.h db-4.8.30.NC/dbinc/ || warning "Failed to apply atomic.h patch"
+                    fi
                     
-                    # Build Berkeley DB
+                    # Build Berkeley DB (original method)
                     cd db-4.8.30.NC/build_unix/
                     ../dist/configure --enable-cxx --disable-shared --with-pic --prefix="$bdb_prefix" || error "Berkeley DB configure failed"
                     make -j$(nproc) || error "Berkeley DB build failed"
@@ -640,14 +631,13 @@ configure_build() {
                     rm -rf db-4.8.30.NC
                 fi
                 
-                # Use the original working configuration exactly
-                export CONFIG_SITE="$PWD/depends/x86_64-pc-linux-gnu/share/config.site"
-                configure_args="--prefix=$PWD/depends/x86_64-pc-linux-gnu"
-                configure_args="$configure_args --enable-cxx"
+                # Use the original working configuration (no complex depends system)
+                configure_args="--enable-cxx"
                 configure_args="$configure_args --disable-shared"
                 configure_args="$configure_args --disable-tests"
                 configure_args="$configure_args --without-bench"
                 configure_args="$configure_args --with-tx"
+                configure_args="$configure_args --enable-wallet"
                 configure_args="$configure_args LDFLAGS=\"-L${bdb_prefix}/lib/\""
                 configure_args="$configure_args CPPFLAGS=\"-I${bdb_prefix}/include/\""
             else
@@ -848,11 +838,6 @@ build_target() {
     
     # Build
     make -j$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4) || error "Build failed for $target"
-    
-    # Run make deploy for Linux builds (like original instructions)
-    if [[ $target == linux-* ]]; then
-        make deploy || error "Deploy failed for $target"
-    fi
     
     # Create target directory and copy binaries
     mkdir -p "$target_dir/bin"
