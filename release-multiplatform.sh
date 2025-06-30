@@ -24,11 +24,11 @@
 #
 # =============================================================================
 
-BUILD_LINUX_X64=true      # Build for Linux x86_64 (Intel/AMD servers)
-BUILD_LINUX_ARM64=true    # Build for Linux ARM64 (AWS Graviton, Apple Silicon containers)
-BUILD_MACOS_X64=true      # Build for Intel Macs (also works on Apple Silicon via Rosetta)
-BUILD_MACOS_ARM64=true    # Build for Apple Silicon Macs (M1/M2/M3)
-BUILD_WINDOWS_X64=true    # Build for Windows x86_64
+BUILD_LINUX_X64=true       # Build for Linux x86_64 (Intel/AMD servers)
+BUILD_LINUX_ARM64=false    # Build for Linux ARM64 (AWS Graviton, Apple Silicon containers)
+BUILD_MACOS_X64=true       # Build for Intel Macs (also works on Apple Silicon via Rosetta)
+BUILD_MACOS_ARM64=false    # Build for Apple Silicon Macs (M1/M2/M3)
+BUILD_WINDOWS_X64=true     # Build for Windows x86_64
 
 # =============================================================================
 
