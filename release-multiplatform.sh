@@ -400,16 +400,21 @@ RUN mkdir -p /build/db4 && \\
     rm -f db-4.8.30.NC.tar.gz && \\
     rm -rf db-4.8.30.NC
 
-# Build project using the original working configuration (simplified)
-RUN export BDB_PREFIX="/build/db4" && \\
+# Build project using the original working configuration
+RUN cd depends && \\
+    make HOST=x86_64-pc-linux-gnu -j\$(nproc) && \\
+    cd .. && \\
+    export BDB_PREFIX="/build/db4" && \\
     ./autogen.sh && \\
+    CONFIG_SITE=\$PWD/depends/x86_64-pc-linux-gnu/share/config.site \\
     ./configure \\
+      --prefix=\$PWD/depends/x86_64-pc-linux-gnu \\
       --enable-cxx \\
       --disable-shared \\
       --disable-tests \\
+      --with-pic \\
       --without-bench \\
       --with-tx \\
-      --enable-wallet \\
       LDFLAGS="-L\${BDB_PREFIX}/lib/" \\
       CPPFLAGS="-I\${BDB_PREFIX}/include/" && \\
     make -j\$(nproc)
@@ -599,8 +604,14 @@ configure_build() {
         "linux-x64")
             # Handle different host architectures
             if [[ "$ARCH_TYPE" == "x86_64" && "$OS_TYPE" == "Linux" ]]; then
-                # Native x64 Linux build using original working configuration (simplified)
+                # Native x64 Linux build using original working configuration
                 build_log "Building Linux x64 natively using original working method..."
+                
+                # Build depends first (this creates the config.site)
+                build_log "Building depends for x86_64-pc-linux-gnu..."
+                cd "$SCRIPT_DIR/depends"
+                make HOST=x86_64-pc-linux-gnu -j$(nproc) || error "Failed to build depends"
+                cd "$SCRIPT_DIR"
                 
                 # Build Berkeley DB 4.8 directly (like original instructions)
                 build_log "Building Berkeley DB 4.8..."
@@ -631,13 +642,15 @@ configure_build() {
                     rm -rf db-4.8.30.NC
                 fi
                 
-                # Use the original working configuration (no complex depends system)
-                configure_args="--enable-cxx"
+                # Use the original working configuration exactly as provided by user
+                export CONFIG_SITE="$PWD/depends/x86_64-pc-linux-gnu/share/config.site"
+                configure_args="--prefix=$PWD/depends/x86_64-pc-linux-gnu"
+                configure_args="$configure_args --enable-cxx"
                 configure_args="$configure_args --disable-shared"
                 configure_args="$configure_args --disable-tests"
+                configure_args="$configure_args --with-pic"
                 configure_args="$configure_args --without-bench"
                 configure_args="$configure_args --with-tx"
-                configure_args="$configure_args --enable-wallet"
                 configure_args="$configure_args LDFLAGS=\"-L${bdb_prefix}/lib/\""
                 configure_args="$configure_args CPPFLAGS=\"-I${bdb_prefix}/include/\""
             else
@@ -650,12 +663,55 @@ configure_build() {
         "linux-arm64")
             # Handle different host architectures
             if [[ ("$ARCH_TYPE" == "aarch64" || "$ARCH_TYPE" == "arm64") && "$OS_TYPE" == "Linux" ]]; then
-                # Native ARM64 Linux build
-                build_log "Building Linux ARM64 natively..."
-                build_bdb4 "$target_dir"
-                bdb_prefix="$target_dir/db4"
-                configure_args="--disable-tests --disable-bench --enable-static --disable-shared --without-gui --enable-wallet"
-                configure_args="$configure_args BDB_LIBS=\"-L${bdb_prefix}/lib -ldb_cxx-4.8\" BDB_CFLAGS=\"-I${bdb_prefix}/include\""
+                # Native ARM64 Linux build using original working configuration
+                build_log "Building Linux ARM64 natively using original working method..."
+                
+                # Build depends first (this creates the config.site)
+                build_log "Building depends for aarch64-linux-gnu..."
+                cd "$SCRIPT_DIR/depends"
+                make HOST=aarch64-linux-gnu -j$(nproc) || error "Failed to build depends"
+                cd "$SCRIPT_DIR"
+                
+                # Build Berkeley DB 4.8 directly (like original instructions)
+                build_log "Building Berkeley DB 4.8..."
+                bdb_prefix="$SCRIPT_DIR/db4"
+                if [[ ! -f "$bdb_prefix/lib/libdb_cxx-4.8.a" ]]; then
+                    mkdir -p "$bdb_prefix"
+                    
+                    # Download and build Berkeley DB 4.8 (original method)
+                    wget -c 'http://download.oracle.com/berkeley-db/db-4.8.30.NC.tar.gz' || error "Failed to download Berkeley DB"
+                    echo '12edc0df75bf9abd7f82f821795bcee50f42cb2e5f76a6a281b85732798364ef  db-4.8.30.NC.tar.gz' | sha256sum -c || error "Berkeley DB checksum verification failed"
+                    tar -xzvf db-4.8.30.NC.tar.gz || error "Failed to extract Berkeley DB"
+                    
+                    # Apply patch if it exists
+                    if [[ -f "./depends/patches/atomic.h" ]]; then
+                        chmod a+w ./db-4.8.30.NC/dbinc/atomic.h
+                        cp ./depends/patches/atomic.h db-4.8.30.NC/dbinc/ || warning "Failed to apply atomic.h patch"
+                    fi
+                    
+                    # Build Berkeley DB (original method)
+                    cd db-4.8.30.NC/build_unix/
+                    ../dist/configure --enable-cxx --disable-shared --with-pic --prefix="$bdb_prefix" || error "Berkeley DB configure failed"
+                    make -j$(nproc) || error "Berkeley DB build failed"
+                    make install || error "Berkeley DB install failed"
+                    cd "$SCRIPT_DIR"
+                    
+                    # Cleanup
+                    rm -f db-4.8.30.NC.tar.gz
+                    rm -rf db-4.8.30.NC
+                fi
+                
+                # Use the original working configuration exactly as provided by user
+                export CONFIG_SITE="$PWD/depends/aarch64-linux-gnu/share/config.site"
+                configure_args="--prefix=$PWD/depends/aarch64-linux-gnu"
+                configure_args="$configure_args --enable-cxx"
+                configure_args="$configure_args --disable-shared"
+                configure_args="$configure_args --disable-tests"
+                configure_args="$configure_args --with-pic"
+                configure_args="$configure_args --without-bench"
+                configure_args="$configure_args --with-tx"
+                configure_args="$configure_args LDFLAGS=\"-L${bdb_prefix}/lib/\""
+                configure_args="$configure_args CPPFLAGS=\"-I${bdb_prefix}/include/\""
             else
                 # Cross-platform build via Docker
                 echo -e "${YELLOW}Using Docker for Linux ARM64 build (cross-platform)...${NC}"
@@ -673,8 +729,16 @@ configure_build() {
             # Use Homebrew Berkeley DB instead of building from source on macOS
             bdb_prefix="/opt/homebrew/opt/berkeley-db@4"
             build_log "Using Homebrew Berkeley DB at $bdb_prefix"
-            configure_args="--disable-tests --disable-bench --without-gui --enable-wallet"
-            configure_args="$configure_args BDB_LIBS=\"-L${bdb_prefix}/lib -ldb_cxx-4.8\" BDB_CFLAGS=\"-I${bdb_prefix}/include\""
+            
+            # Use similar configuration structure as Linux builds
+            configure_args="--enable-cxx"
+            configure_args="$configure_args --disable-shared"
+            configure_args="$configure_args --disable-tests"
+            configure_args="$configure_args --with-pic"
+            configure_args="$configure_args --without-bench"
+            configure_args="$configure_args --with-tx"
+            configure_args="$configure_args LDFLAGS=\"-L${bdb_prefix}/lib/\""
+            configure_args="$configure_args CPPFLAGS=\"-I${bdb_prefix}/include/\""
             
             # Detect host architecture and set up cross-compilation if needed
             if [[ "$ARCH_TYPE" == "arm64" ]]; then
@@ -739,8 +803,16 @@ configure_build() {
             # Use Homebrew Berkeley DB instead of building from source on macOS
             bdb_prefix="/opt/homebrew/opt/berkeley-db@4"
             build_log "Using Homebrew Berkeley DB at $bdb_prefix"
-            configure_args="--disable-tests --disable-bench --without-gui --enable-wallet"
-            configure_args="$configure_args BDB_LIBS=\"-L${bdb_prefix}/lib -ldb_cxx-4.8\" BDB_CFLAGS=\"-I${bdb_prefix}/include\""
+            
+            # Use similar configuration structure as Linux builds
+            configure_args="--enable-cxx"
+            configure_args="$configure_args --disable-shared"
+            configure_args="$configure_args --disable-tests"
+            configure_args="$configure_args --with-pic"
+            configure_args="$configure_args --without-bench"
+            configure_args="$configure_args --with-tx"
+            configure_args="$configure_args LDFLAGS=\"-L${bdb_prefix}/lib/\""
+            configure_args="$configure_args CPPFLAGS=\"-I${bdb_prefix}/include/\""
             
             # Detect host architecture and set up cross-compilation if needed
             if [[ "$ARCH_TYPE" == "x86_64" ]]; then
@@ -778,11 +850,47 @@ configure_build() {
             configure_args="$configure_args --enable-reduce-exports"
             ;;
         "windows-x64")
-            build_log "Configuring Windows x64 cross-compilation..."
-            build_bdb4 "$target_dir"
-            bdb_prefix="$target_dir/db4"
-            configure_args="--disable-tests --disable-bench --enable-static --disable-shared --without-gui --enable-wallet"
-            configure_args="$configure_args BDB_LIBS=\"-L${bdb_prefix}/lib -ldb_cxx-4.8\" BDB_CFLAGS=\"-I${bdb_prefix}/include\""
+            build_log "Configuring Windows x64 cross-compilation using original working method..."
+            
+            # Build Berkeley DB 4.8 for Windows cross-compilation
+            build_log "Building Berkeley DB 4.8 for Windows..."
+            bdb_prefix="$SCRIPT_DIR/db4"
+            if [[ ! -f "$bdb_prefix/lib/libdb_cxx-4.8.a" ]]; then
+                mkdir -p "$bdb_prefix"
+                
+                # Download and build Berkeley DB 4.8 (original method)
+                wget -c 'http://download.oracle.com/berkeley-db/db-4.8.30.NC.tar.gz' || error "Failed to download Berkeley DB"
+                echo '12edc0df75bf9abd7f82f821795bcee50f42cb2e5f76a6a281b85732798364ef  db-4.8.30.NC.tar.gz' | sha256sum -c || error "Berkeley DB checksum verification failed"
+                tar -xzvf db-4.8.30.NC.tar.gz || error "Failed to extract Berkeley DB"
+                
+                # Apply patch if it exists
+                if [[ -f "./depends/patches/atomic.h" ]]; then
+                    chmod a+w ./db-4.8.30.NC/dbinc/atomic.h
+                    cp ./depends/patches/atomic.h db-4.8.30.NC/dbinc/ || warning "Failed to apply atomic.h patch"
+                fi
+                
+                # Build Berkeley DB for Windows cross-compilation
+                cd db-4.8.30.NC/build_unix/
+                CC=x86_64-w64-mingw32-gcc CXX=x86_64-w64-mingw32-g++ \
+                ../dist/configure --enable-cxx --disable-shared --with-pic --prefix="$bdb_prefix" --host=x86_64-w64-mingw32 || error "Berkeley DB configure failed"
+                make -j$(nproc) || error "Berkeley DB build failed"
+                make install || error "Berkeley DB install failed"
+                cd "$SCRIPT_DIR"
+                
+                # Cleanup
+                rm -f db-4.8.30.NC.tar.gz
+                rm -rf db-4.8.30.NC
+            fi
+            
+            # Use similar configuration structure as Linux builds
+            configure_args="--enable-cxx"
+            configure_args="$configure_args --disable-shared"
+            configure_args="$configure_args --disable-tests"
+            configure_args="$configure_args --with-pic"
+            configure_args="$configure_args --without-bench"
+            configure_args="$configure_args --with-tx"
+            configure_args="$configure_args LDFLAGS=\"-L${bdb_prefix}/lib/\""
+            configure_args="$configure_args CPPFLAGS=\"-I${bdb_prefix}/include/\""
             host_flag="--host=x86_64-w64-mingw32"
             export CC="x86_64-w64-mingw32-gcc"
             export CXX="x86_64-w64-mingw32-g++"
