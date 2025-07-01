@@ -231,14 +231,45 @@ check_macos_dependencies() {
     # Check for Xcode command line tools
     xcode-select -p >/dev/null 2>&1 || error "Xcode command line tools required. Install with: xcode-select --install"
     
-    # Check for Homebrew (recommended for cross-compilation tools)
+    # Check for required system dependencies
+    local missing_deps=()
+    
+    # Check for essential libraries that should be available on macOS
+    if ! command -v pkg-config >/dev/null 2>&1; then
+        missing_deps+=("pkg-config")
+    fi
+    
+    # Check for Homebrew (recommended for dependencies)
     if command -v brew >/dev/null 2>&1; then
-        build_log "Homebrew detected - checking for cross-compilation tools..."
+        build_log "Homebrew detected - checking for system dependencies..."
         
-        # MinGW-w64 validation is now done in strict validation section above
+        # Check for boost libraries
+        if ! brew list boost >/dev/null 2>&1; then
+            warning "Boost not found via Homebrew. Install with: brew install boost"
+            missing_deps+=("boost")
+        fi
+        
+        # Check for openssl
+        if ! brew list openssl@3 >/dev/null 2>&1 && ! brew list openssl@1.1 >/dev/null 2>&1; then
+            warning "OpenSSL not found via Homebrew. Install with: brew install openssl"
+            missing_deps+=("openssl")
+        fi
+        
+        # Check for libevent
+        if ! brew list libevent >/dev/null 2>&1; then
+            warning "libevent not found via Homebrew. Install with: brew install libevent"
+            missing_deps+=("libevent")
+        fi
+        
     else
         warning "Homebrew not found. Install from https://brew.sh for easier dependency management."
-        # Note: MinGW-w64 validation is done in strict validation section above
+        warning "Required dependencies: boost, openssl, libevent, pkg-config"
+    fi
+    
+    if [[ ${#missing_deps[@]} -gt 0 ]]; then
+        warning "Missing dependencies: ${missing_deps[*]}"
+        warning "Install with: brew install ${missing_deps[*]}"
+        warning "Build may fail without these dependencies"
     fi
 }
 
@@ -686,8 +717,8 @@ configure_build() {
                 return 1
             fi
             
-            # Use the proper approach: contrib/install_db4.sh + depends system (user's method)
-            build_log "Building macOS x64 using contrib/install_db4.sh + depends system..."
+            # Use Berkeley DB + native dependencies (no depends system needed)
+            build_log "Building macOS x64 with native dependencies..."
             
             # Install Berkeley DB 4.8 using contrib script
             export CFLAGS="-Wno-error=implicit-function-declaration"
@@ -695,26 +726,40 @@ configure_build() {
             
             export BDB_PREFIX="${SCRIPT_DIR}/db4"
             
-            # Build depends system for boost and other dependencies
-            build_log "Building depends for x86_64-apple-darwin14..."
-            cd "$SCRIPT_DIR/depends"
-            make HOST=x86_64-apple-darwin14 -j$(sysctl -n hw.ncpu) || error "Failed to build depends"
-            cd "$SCRIPT_DIR"
-            
-            # Configure using the user's original working method
-            build_log "Configuring with BDB flags and depends system..."
+            # Configure using native system dependencies
+            build_log "Configuring with Berkeley DB and system dependencies..."
             ./autogen.sh || error "autogen.sh failed"
             
-            export CONFIG_SITE="$PWD/depends/x86_64-apple-darwin14/share/config.site"
-            configure_args="--prefix=$PWD/depends/x86_64-apple-darwin14"
-            configure_args="$configure_args BDB_LIBS=\"-L${BDB_PREFIX}/lib -ldb_cxx-4.8\""
-            configure_args="$configure_args BDB_CFLAGS=\"-I${BDB_PREFIX}/include\""
-            configure_args="$configure_args LDFLAGS=\"-L${BDB_PREFIX}/lib/\""
-            configure_args="$configure_args CPPFLAGS=\"-I${BDB_PREFIX}/include/\""
-            configure_args="$configure_args --enable-cxx"
+            # Set up library paths for Homebrew dependencies
+            local brew_prefix="/opt/homebrew"  # Apple Silicon default
+            if [[ ! -d "$brew_prefix" ]]; then
+                brew_prefix="/usr/local"  # Intel Mac fallback
+            fi
+            
+            # Use system dependencies (available via Homebrew/macOS) + Berkeley DB
+            configure_args="--enable-cxx"
             configure_args="$configure_args --disable-shared"
             configure_args="$configure_args --disable-tests"
             configure_args="$configure_args --disable-gui-tests"
+            configure_args="$configure_args --with-pic"
+            configure_args="$configure_args --without-bench"
+            configure_args="$configure_args --without-miniupnpc"
+            
+            # Berkeley DB paths (points to /db4 as user mentioned)
+            configure_args="$configure_args BDB_LIBS=\"-L${BDB_PREFIX}/lib -ldb_cxx-4.8\""
+            configure_args="$configure_args BDB_CFLAGS=\"-I${BDB_PREFIX}/include\""
+            
+            # System library paths for boost, openssl, libevent via Homebrew
+            configure_args="$configure_args LDFLAGS=\"-L${BDB_PREFIX}/lib -L${brew_prefix}/lib\""
+            configure_args="$configure_args CPPFLAGS=\"-I${BDB_PREFIX}/include -I${brew_prefix}/include\""
+            configure_args="$configure_args PKG_CONFIG_PATH=\"${brew_prefix}/lib/pkgconfig\""
+            
+            # Boost-specific library paths
+            configure_args="$configure_args --with-boost=${brew_prefix}"
+            configure_args="$configure_args --with-boost-libdir=${brew_prefix}/lib"
+            
+            # Ensure we target x86_64 specifically
+            host_flag="--host=x86_64-apple-darwin"
             ;;
         "macos-arm64")
             # macOS builds can only be done on macOS hosts
@@ -723,8 +768,8 @@ configure_build() {
                 return 1
             fi
             
-            # Use the proper approach: contrib/install_db4.sh + depends system (user's method)
-            build_log "Building macOS ARM64 using contrib/install_db4.sh + depends system..."
+            # Use Berkeley DB + native dependencies (no depends system needed)
+            build_log "Building macOS ARM64 with native dependencies..."
             
             # Install Berkeley DB 4.8 using contrib script
             export CFLAGS="-Wno-error=implicit-function-declaration"
@@ -732,26 +777,40 @@ configure_build() {
             
             export BDB_PREFIX="${SCRIPT_DIR}/db4"
             
-            # Build depends system for boost and other dependencies
-            build_log "Building depends for aarch64-apple-darwin14..."
-            cd "$SCRIPT_DIR/depends"
-            make HOST=aarch64-apple-darwin14 -j$(sysctl -n hw.ncpu) || error "Failed to build depends"
-            cd "$SCRIPT_DIR"
-            
-            # Configure using the user's original working method
-            build_log "Configuring with BDB flags and depends system..."
+            # Configure using native system dependencies
+            build_log "Configuring with Berkeley DB and system dependencies..."
             ./autogen.sh || error "autogen.sh failed"
             
-            export CONFIG_SITE="$PWD/depends/aarch64-apple-darwin14/share/config.site"
-            configure_args="--prefix=$PWD/depends/aarch64-apple-darwin14"
-            configure_args="$configure_args BDB_LIBS=\"-L${BDB_PREFIX}/lib -ldb_cxx-4.8\""
-            configure_args="$configure_args BDB_CFLAGS=\"-I${BDB_PREFIX}/include\""
-            configure_args="$configure_args LDFLAGS=\"-L${BDB_PREFIX}/lib/\""
-            configure_args="$configure_args CPPFLAGS=\"-I${BDB_PREFIX}/include/\""
-            configure_args="$configure_args --enable-cxx"
+            # Set up library paths for Homebrew dependencies
+            local brew_prefix="/opt/homebrew"  # Apple Silicon default
+            if [[ ! -d "$brew_prefix" ]]; then
+                brew_prefix="/usr/local"  # Intel Mac fallback
+            fi
+            
+            # Use system dependencies (available via Homebrew/macOS) + Berkeley DB
+            configure_args="--enable-cxx"
             configure_args="$configure_args --disable-shared"
             configure_args="$configure_args --disable-tests"
             configure_args="$configure_args --disable-gui-tests"
+            configure_args="$configure_args --with-pic"
+            configure_args="$configure_args --without-bench"
+            configure_args="$configure_args --without-miniupnpc"
+            
+            # Berkeley DB paths (points to /db4 as user mentioned)
+            configure_args="$configure_args BDB_LIBS=\"-L${BDB_PREFIX}/lib -ldb_cxx-4.8\""
+            configure_args="$configure_args BDB_CFLAGS=\"-I${BDB_PREFIX}/include\""
+            
+            # System library paths for boost, openssl, libevent via Homebrew
+            configure_args="$configure_args LDFLAGS=\"-L${BDB_PREFIX}/lib -L${brew_prefix}/lib\""
+            configure_args="$configure_args CPPFLAGS=\"-I${BDB_PREFIX}/include -I${brew_prefix}/include\""
+            configure_args="$configure_args PKG_CONFIG_PATH=\"${brew_prefix}/lib/pkgconfig\""
+            
+            # Boost-specific library paths
+            configure_args="$configure_args --with-boost=${brew_prefix}"
+            configure_args="$configure_args --with-boost-libdir=${brew_prefix}/lib"
+            
+            # Native ARM64 build (no cross-compilation needed)
+            host_flag=""
             ;;
         "windows-x64")
             build_log "Configuring Windows x64 cross-compilation using depends system (original working method)..."
@@ -802,9 +861,8 @@ build_target() {
     # Build
     make -j$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4) || error "Build failed for $target"
     
-    # Deploy (required after make)
-    build_log "Running make deploy for $target..."
-    make deploy || error "Deploy failed for $target"
+    # Deploy step not needed for this project
+    build_log "Build completed successfully for $target"
     
     # Create target directory and copy binaries
     mkdir -p "$target_dir/bin"
@@ -977,47 +1035,6 @@ create_macos_packages() {
     
     # Create simple archive for CLI tools
     create_tarball "$target" "$package_dir"
-}
-
-# Create macOS App Bundle
-create_macos_app_bundle() {
-    local target=$1
-    local package_dir=$2
-    local target_dir="$BUILD_DIR/$target"
-    
-    local app_name="CLORE-Coin.app"
-    local app_dir="$package_dir/$app_name"
-    
-    mkdir -p "$app_dir/Contents/MacOS"
-    mkdir -p "$app_dir/Contents/Resources"
-    
-    # Note: No GUI binary - server-only build
-    
-    # Create Info.plist
-    cat > "$app_dir/Contents/Info.plist" << EOF
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>CFBundleExecutable</key>
-    <string>clore_blockchaind</string>
-    <key>CFBundleIdentifier</key>
-    <string>ai.clore.wallet</string>
-    <key>CFBundleName</key>
-    <string>CLORE</string>
-    <key>CFBundleVersion</key>
-    <string>$VERSION</string>
-    <key>CFBundleShortVersionString</key>
-    <string>$VERSION</string>
-    <key>CFBundlePackageType</key>
-    <string>APPL</string>
-    <key>LSMinimumSystemVersion</key>
-    <string>10.12</string>
-</dict>
-</plist>
-EOF
-    
-    build_log "Created macOS App Bundle: $app_name"
 }
 
 # Create Windows packages

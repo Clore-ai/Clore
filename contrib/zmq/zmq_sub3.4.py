@@ -24,8 +24,6 @@
     was introduced in python 3.4 and has been deprecated in favor of the `async`
     and `await` keywords respectively.
 
-    A blocking example using python 2.7 can be obtained from the git history:
-    https://gitlab.com/cloreai-public/blockchain/blob/37a7fe9e440b83e2364d5498931253937abe9294/contrib/zmq/zmq_sub.py
 """
 
 import binascii
@@ -42,7 +40,8 @@ if not (sys.version_info.major >= 3 and sys.version_info.minor >= 4):
 
 port = 28766
 
-class ZMQHandler():
+
+class ZMQHandler:
     def __init__(self):
         self.loop = zmq.asyncio.install()
         self.zmqContext = zmq.asyncio.Context()
@@ -55,25 +54,25 @@ class ZMQHandler():
         self.zmqSubSocket.connect("tcp://127.0.0.1:%i" % port)
 
     @asyncio.coroutine
-    def handle(self) :
+    def handle(self):
         msg = yield from self.zmqSubSocket.recv_multipart()
         topic = msg[0]
         body = msg[1]
         sequence = "Unknown"
         if len(msg[-1]) == 4:
-          msgSequence = struct.unpack('<I', msg[-1])[-1]
-          sequence = str(msgSequence)
+            msgSequence = struct.unpack("<I", msg[-1])[-1]
+            sequence = str(msgSequence)
         if topic == b"hashblock":
-            print('- HASH BLOCK ('+sequence+') -')
+            print("- HASH BLOCK (" + sequence + ") -")
             print(binascii.hexlify(body))
         elif topic == b"hashtx":
-            print('- HASH TX  ('+sequence+') -')
+            print("- HASH TX  (" + sequence + ") -")
             print(binascii.hexlify(body))
         elif topic == b"rawblock":
-            print('- RAW BLOCK HEADER ('+sequence+') -')
+            print("- RAW BLOCK HEADER (" + sequence + ") -")
             print(binascii.hexlify(body[:80]))
         elif topic == b"rawtx":
-            print('- RAW TX ('+sequence+') -')
+            print("- RAW TX (" + sequence + ") -")
             print(binascii.hexlify(body))
         # schedule ourselves to receive the next message
         asyncio.ensure_future(self.handle())
@@ -86,6 +85,7 @@ class ZMQHandler():
     def stop(self):
         self.loop.stop()
         self.zmqContext.destroy()
+
 
 daemon = ZMQHandler()
 daemon.start()
