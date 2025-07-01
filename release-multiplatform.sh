@@ -714,8 +714,8 @@ configure_build() {
         "linux-x64")
             # Handle different host architectures
             if [[ "$ARCH_TYPE" == "x86_64" && "$OS_TYPE" == "Linux" ]]; then
-                # Native x64 Linux build using contrib + system dependencies
-                build_log "Building Linux x64 using contrib/install_db4.sh + native dependencies..."
+                # Native x64 Linux build using contrib script
+                build_log "Building Linux x64 with native dependencies..."
                 
                 # Install Berkeley DB 4.8 using contrib script
                 export CFLAGS="-Wno-error=implicit-function-declaration"
@@ -723,11 +723,16 @@ configure_build() {
                 
                 export BDB_PREFIX="${SCRIPT_DIR}/db4"
                 
-                # Configure using native system dependencies (no depends system needed)
+                # Configure using native system dependencies
                 build_log "Configuring with Berkeley DB and system dependencies..."
                 ./autogen.sh || error "autogen.sh failed"
                 
-                # Use system dependencies (available via apt-get) + Berkeley DB
+                # Set up library paths for system dependencies
+                export PKG_CONFIG_PATH="/usr/lib/pkgconfig:$PKG_CONFIG_PATH"
+                export LDFLAGS="-L${BDB_PREFIX}/lib -L/usr/lib/x86_64-linux-gnu"
+                export CPPFLAGS="-I${BDB_PREFIX}/include"
+                
+                # Use system dependencies + Berkeley DB
                 configure_args="--enable-cxx"
                 configure_args="$configure_args --disable-shared"
                 configure_args="$configure_args --disable-tests"
@@ -737,12 +742,16 @@ configure_build() {
                 configure_args="$configure_args --without-miniupnpc"
                 configure_args="$configure_args --enable-zmq"
                 configure_args="$configure_args --enable-wallet"
+                
+                # Berkeley DB paths
                 configure_args="$configure_args BDB_LIBS=\"-L${BDB_PREFIX}/lib -ldb_cxx-4.8\""
                 configure_args="$configure_args BDB_CFLAGS=\"-I${BDB_PREFIX}/include\""
-                configure_args="$configure_args LDFLAGS=\"-L${BDB_PREFIX}/lib -L/usr/lib\""
-                configure_args="$configure_args CPPFLAGS=\"-I${BDB_PREFIX}/include\""
-                configure_args="$configure_args CXXFLAGS=\"-fPIC -I${BDB_PREFIX}/include -DBOOST_SPIRIT_THREADSAFE -DHAVE_BUILD_INFO -D__STDC_FORMAT_MACROS\""
-                configure_args="$configure_args LIBS=\"-ldb_cxx-4.8 -lboost_system -lzmq\""
+                
+                # Clore library linking order
+                configure_args="$configure_args LDADD=\"\$(LIBCLORE_SERVER) \$(LIBCLORE_WALLET) \$(LIBCLORE_COMMON) \$(LIBCLORE_UTIL) \$(LIBCLORE_CRYPTO) \$(LIBUNIVALUE) \$(LIBLEVELDB) \$(LIBLEVELDB_SSE42) \$(LIBMEMENV) \$(BOOST_LIBS) \$(BDB_LIBS) \$(EVENT_PTHREADS_LIBS) \$(EVENT_LIBS) \$(ZMQ_LIBS)\""
+                
+                # No host flag needed for native build
+                host_flag=""
             else
                 # Cross-platform build via Docker
                 echo -e "${YELLOW}Using Docker for Linux x64 build (cross-platform)...${NC}"
@@ -932,18 +941,13 @@ build_target() {
     
     build_log "Building $target..."
     
-    # Configure for this target
+    # Configure and build for this target
     configure_build "$target"
     
-    # Check if configure_build already completed the build (e.g., via Docker)
-    if [[ -f "$target_dir/bin/clore_blockchaind" ]]; then
-        build_log "Build already completed for $target (via Docker)"
-        return 0
+    # Check if build completed successfully
+    if [[ ! -f "src/clore_blockchaind" && ! -f "src/clore_blockchaind.exe" ]]; then
+        error "Build failed - daemon binary not found"
     fi
-    
-    # Build the project
-    build_log "Building project..."
-    make -j$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4) || error "Build failed for $target"
     
     # Create target directory and copy binaries
     mkdir -p "$target_dir/bin"
