@@ -21,7 +21,7 @@
 /** Maximum number of block hashes to cache */
 static const unsigned int CACHED_BLOCK_HASHES = 200;
 
-// TODO: Add PIVX validator manager class forward declarations
+// TODO: Add Clore validator manager class forward declarations
 /*
 class CValidatorMan;
 class CActiveValidator;
@@ -34,23 +34,23 @@ void DumpValidators();
 
 /** Access to the Validator database (mncache.dat)
  */
-// TODO: Add PIVX CValidatorDB class
+// TODO: Add Clore CValidatorDB class
 /*
 class CValidatorDB
 {
-    // ... PIVX implementation ...
+    // ... Clore implementation ...
 };
 */
 
-// TODO: Add PIVX CValidatorMan class
+// TODO: Add Clore CValidatorMan class
 /*
 class CValidatorMan
 {
-    // ... PIVX implementation ...
+    // ... Clore implementation ...
 };
 */
 
-// TODO: Add PIVX validator check thread function
+// TODO: Add Clore validator check thread function
 /*
 void ThreadCheckValidators();
 */
