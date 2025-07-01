@@ -277,30 +277,105 @@ check_macos_dependencies() {
 check_linux_dependencies() {
     build_log "Checking Linux dependencies..."
     
-    # Check for build-essential
-    if ! dpkg -l | grep -q build-essential 2>/dev/null; then
-        warning "build-essential not found. Install with: sudo apt-get install build-essential"
+    # Check if we can use sudo
+    local can_sudo=false
+    if command -v sudo >/dev/null 2>&1; then
+        if sudo -n true 2>/dev/null; then
+            can_sudo=true
+        else
+            warning "Some commands may require sudo privileges. You may be prompted for your password."
+            if sudo -v; then
+                can_sudo=true
+            fi
+        fi
+    fi
+
+    # Update package lists if we have sudo
+    if [[ "$can_sudo" == "true" ]]; then
+        build_log "Updating package lists..."
+        sudo apt-get update
     fi
     
-    # Check for additional build dependencies
-    local missing_deps=()
-    local required_packages=("libtool" "pkg-config" "libssl-dev" "libevent-dev" "libboost-all-dev" "wget" "patch")
-    
+    # Essential build tools
+    local essential_packages=(
+        "build-essential"
+        "libtool"
+        "autotools-dev"
+        "automake"
+        "pkg-config"
+        "libssl-dev"
+        "libevent-dev"
+        "bsdmainutils"
+        "python3"
+        "libboost-system-dev"
+        "libboost-filesystem-dev"
+        "libboost-chrono-dev"
+        "libboost-program-options-dev"
+        "libboost-test-dev"
+        "libboost-thread-dev"
+        "libzmq3-dev"
+        "wget"
+        "patch"
+        "git"
+    )
+
+    # Package creation tools
+    local packaging_packages=(
+        "dpkg-dev"
+        "rpm"
+    )
+
+    # Windows cross-compilation tools (only if Windows build is enabled)
+    local windows_packages=()
+    if [[ "$BUILD_WINDOWS_X64" == "true" ]]; then
+        windows_packages+=(
+            "gcc-mingw-w64-x86-64"
+            "g++-mingw-w64-x86-64"
+        )
+    fi
+
+    # Combine all required packages
+    local required_packages=("${essential_packages[@]}")
+    required_packages+=("${packaging_packages[@]}")
+    required_packages+=("${windows_packages[@]}")
+
+    # Check for missing packages
+    local missing_packages=()
     for package in "${required_packages[@]}"; do
         if ! dpkg -l | grep -q "^ii.*$package" 2>/dev/null; then
-            missing_deps+=("$package")
+            missing_packages+=("$package")
         fi
-    done
-    
-    if [[ ${#missing_deps[@]} -gt 0 ]]; then
-        warning "Missing dependencies: ${missing_deps[*]}"
-        warning "Install with: sudo apt-get install ${missing_deps[*]}"
     fi
-    
-    # MinGW-w64 validation is now done in strict validation section above
-    if command -v x86_64-w64-mingw32-gcc >/dev/null 2>&1; then
-        build_log "MinGW-w64 detected - Windows cross-compilation available"
+
+    # Install missing packages if we have sudo
+    if [[ ${#missing_packages[@]} -gt 0 ]]; then
+        echo -e "${YELLOW}Missing required packages: ${missing_packages[*]}${NC}"
+        
+        if [[ "$can_sudo" == "true" ]]; then
+            build_log "Installing missing packages..."
+            if ! sudo apt-get install -y "${missing_packages[@]}"; then
+                error "Failed to install some packages. Please install them manually: ${missing_packages[*]}"
+            fi
+        else
+            warning "Cannot automatically install missing packages without sudo privileges"
+            warning "Please run: sudo apt-get install ${missing_packages[*]}"
+            warning "Then run this script again"
+            exit 1
+        fi
     fi
+
+    # Verify MinGW installation if Windows build is enabled
+    if [[ "$BUILD_WINDOWS_X64" == "true" ]]; then
+        if ! command -v x86_64-w64-mingw32-gcc >/dev/null 2>&1; then
+            error "MinGW-w64 installation failed or not properly configured"
+            error "Please install manually: sudo apt-get install gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64"
+            exit 1
+        else
+            build_log "MinGW-w64 detected - Windows cross-compilation available"
+        fi
+    fi
+
+    build_log "Linux dependency check completed"
 }
 
 # Check Docker availability for containerized builds
@@ -447,8 +522,11 @@ RUN export BDB_PREFIX="/build/db4" && \\
       --enable-wallet \\
       BDB_LIBS="-L\${BDB_PREFIX}/lib -ldb_cxx-4.8" \\
       BDB_CFLAGS="-I\${BDB_PREFIX}/include" \\
-      LDFLAGS="-L\${BDB_PREFIX}/lib" \\
-      CPPFLAGS="-I\${BDB_PREFIX}/include" && \\
+      LDFLAGS="-L\${BDB_PREFIX}/lib -L/usr/lib" \\
+      CPPFLAGS="-I\${BDB_PREFIX}/include" \\
+      CXXFLAGS="-fPIC -I\${BDB_PREFIX}/include -DBOOST_SPIRIT_THREADSAFE -DHAVE_BUILD_INFO -D__STDC_FORMAT_MACROS" \\
+      LIBS="-ldb_cxx-4.8 -lboost_system -lzmq" && \\
+    make -C src/wallet -j\$(nproc) && \\
     make -j\$(nproc)
 
 # Copy binaries to output directory
@@ -733,6 +811,11 @@ configure_build() {
                 brew_prefix="/usr/local"  # Intel Mac fallback
             fi
             
+            # Set environment variables for library detection
+            export PKG_CONFIG_PATH="${brew_prefix}/lib/pkgconfig:$PKG_CONFIG_PATH"
+            export LDFLAGS="-L${BDB_PREFIX}/lib -L${brew_prefix}/lib"
+            export CPPFLAGS="-I${BDB_PREFIX}/include -I${brew_prefix}/include"
+            
             # Use system dependencies (available via Homebrew/macOS) + Berkeley DB
             configure_args="--enable-cxx"
             configure_args="$configure_args --disable-shared"
@@ -747,11 +830,6 @@ configure_build() {
             # Berkeley DB paths (points to /db4 as user mentioned)
             configure_args="$configure_args BDB_LIBS=\"-L${BDB_PREFIX}/lib -ldb_cxx-4.8\""
             configure_args="$configure_args BDB_CFLAGS=\"-I${BDB_PREFIX}/include\""
-            
-            # System library paths for boost, openssl, libevent via Homebrew
-            configure_args="$configure_args LDFLAGS=\"-L${BDB_PREFIX}/lib -L${brew_prefix}/lib\""
-            configure_args="$configure_args CPPFLAGS=\"-I${BDB_PREFIX}/include -I${brew_prefix}/include\""
-            configure_args="$configure_args PKG_CONFIG_PATH=\"${brew_prefix}/lib/pkgconfig\""
             
             # Boost-specific library paths
             configure_args="$configure_args --with-boost=${brew_prefix}"
@@ -786,6 +864,11 @@ configure_build() {
                 brew_prefix="/usr/local"  # Intel Mac fallback
             fi
             
+            # Set environment variables for library detection
+            export PKG_CONFIG_PATH="${brew_prefix}/lib/pkgconfig:$PKG_CONFIG_PATH"
+            export LDFLAGS="-L${BDB_PREFIX}/lib -L${brew_prefix}/lib"
+            export CPPFLAGS="-I${BDB_PREFIX}/include -I${brew_prefix}/include"
+            
             # Use system dependencies (available via Homebrew/macOS) + Berkeley DB
             configure_args="--enable-cxx"
             configure_args="$configure_args --disable-shared"
@@ -800,11 +883,6 @@ configure_build() {
             # Berkeley DB paths (points to /db4 as user mentioned)
             configure_args="$configure_args BDB_LIBS=\"-L${BDB_PREFIX}/lib -ldb_cxx-4.8\""
             configure_args="$configure_args BDB_CFLAGS=\"-I${BDB_PREFIX}/include\""
-            
-            # System library paths for boost, openssl, libevent via Homebrew
-            configure_args="$configure_args LDFLAGS=\"-L${BDB_PREFIX}/lib -L${brew_prefix}/lib\""
-            configure_args="$configure_args CPPFLAGS=\"-I${BDB_PREFIX}/include -I${brew_prefix}/include\""
-            configure_args="$configure_args PKG_CONFIG_PATH=\"${brew_prefix}/lib/pkgconfig\""
             
             # Boost-specific library paths
             configure_args="$configure_args --with-boost=${brew_prefix}"
@@ -861,7 +939,8 @@ build_target() {
         return 0
     fi
     
-    # Build
+    # Build wallet first, then server
+    make -C src/wallet -j$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4) || error "Wallet build failed for $target"
     make -j$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4) || error "Build failed for $target"
     
     # Deploy step not needed for this project
