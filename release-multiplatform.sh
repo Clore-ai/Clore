@@ -402,6 +402,7 @@ RUN apt-get update && apt-get install -y \\
     libboost-program-options-dev \\
     libboost-test-dev \\
     libboost-thread-dev \\
+    libzmq3-dev \\
     wget \\
     patch \\
     git \\
@@ -442,6 +443,8 @@ RUN export BDB_PREFIX="/build/db4" && \\
       --with-pic \\
       --without-bench \\
       --without-miniupnpc \\
+      --enable-zmq \\
+      --enable-wallet \\
       BDB_LIBS="-L\${BDB_PREFIX}/lib -ldb_cxx-4.8" \\
       BDB_CFLAGS="-I\${BDB_PREFIX}/include" \\
       LDFLAGS="-L\${BDB_PREFIX}/lib" \\
@@ -654,6 +657,8 @@ configure_build() {
                 configure_args="$configure_args --with-pic"
                 configure_args="$configure_args --without-bench"
                 configure_args="$configure_args --without-miniupnpc"
+                configure_args="$configure_args --enable-zmq"
+                configure_args="$configure_args --enable-wallet"
                 configure_args="$configure_args BDB_LIBS=\"-L${BDB_PREFIX}/lib -ldb_cxx-4.8\""
                 configure_args="$configure_args BDB_CFLAGS=\"-I${BDB_PREFIX}/include\""
                 configure_args="$configure_args LDFLAGS=\"-L${BDB_PREFIX}/lib\""
@@ -689,6 +694,8 @@ configure_build() {
                 configure_args="$configure_args --with-pic"
                 configure_args="$configure_args --without-bench"
                 configure_args="$configure_args --without-miniupnpc"
+                configure_args="$configure_args --enable-zmq"
+                configure_args="$configure_args --enable-wallet"
                 configure_args="$configure_args BDB_LIBS=\"-L${BDB_PREFIX}/lib -ldb_cxx-4.8\""
                 configure_args="$configure_args BDB_CFLAGS=\"-I${BDB_PREFIX}/include\""
                 configure_args="$configure_args LDFLAGS=\"-L${BDB_PREFIX}/lib\""
@@ -734,6 +741,8 @@ configure_build() {
             configure_args="$configure_args --with-pic"
             configure_args="$configure_args --without-bench"
             configure_args="$configure_args --without-miniupnpc"
+            configure_args="$configure_args --enable-zmq"
+            configure_args="$configure_args --enable-wallet"
             
             # Berkeley DB paths (points to /db4 as user mentioned)
             configure_args="$configure_args BDB_LIBS=\"-L${BDB_PREFIX}/lib -ldb_cxx-4.8\""
@@ -785,6 +794,8 @@ configure_build() {
             configure_args="$configure_args --with-pic"
             configure_args="$configure_args --without-bench"
             configure_args="$configure_args --without-miniupnpc"
+            configure_args="$configure_args --enable-zmq"
+            configure_args="$configure_args --enable-wallet"
             
             # Berkeley DB paths (points to /db4 as user mentioned)
             configure_args="$configure_args BDB_LIBS=\"-L${BDB_PREFIX}/lib -ldb_cxx-4.8\""
@@ -819,6 +830,8 @@ configure_build() {
             configure_args="$configure_args --disable-tests"
             configure_args="$configure_args --with-pic"
             configure_args="$configure_args --without-bench"
+            configure_args="$configure_args --enable-zmq"
+            configure_args="$configure_args --enable-wallet"
             configure_args="$configure_args --with-tx"
             host_flag="--host=x86_64-w64-mingw32"
             ;;
