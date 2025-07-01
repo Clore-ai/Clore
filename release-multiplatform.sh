@@ -431,23 +431,21 @@ RUN mkdir -p /build/db4 && \\
     rm -f db-4.8.30.NC.tar.gz && \\
     rm -rf db-4.8.30.NC
 
-# Build project using the original working configuration
-RUN cd depends && \\
-    make HOST=x86_64-pc-linux-gnu -j\$(nproc) && \\
-    cd .. && \\
-    export BDB_PREFIX="/build/db4" && \\
+# Build project using native system dependencies (no depends system needed)
+RUN export BDB_PREFIX="/build/db4" && \\
     ./autogen.sh && \\
-    CONFIG_SITE=\$PWD/depends/x86_64-pc-linux-gnu/share/config.site \\
     ./configure \\
-      --prefix=\$PWD/depends/x86_64-pc-linux-gnu \\
       --enable-cxx \\
       --disable-shared \\
       --disable-tests \\
+      --disable-gui-tests \\
       --with-pic \\
       --without-bench \\
-      --with-tx \\
-      LDFLAGS="-L\${BDB_PREFIX}/lib/" \\
-      CPPFLAGS="-I\${BDB_PREFIX}/include/" && \\
+      --without-miniupnpc \\
+      BDB_LIBS="-L\${BDB_PREFIX}/lib -ldb_cxx-4.8" \\
+      BDB_CFLAGS="-I\${BDB_PREFIX}/include" \\
+      LDFLAGS="-L\${BDB_PREFIX}/lib" \\
+      CPPFLAGS="-I\${BDB_PREFIX}/include" && \\
     make -j\$(nproc)
 
 # Copy binaries to output directory
