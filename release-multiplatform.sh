@@ -345,7 +345,7 @@ check_linux_dependencies() {
         if ! dpkg -l | grep -q "^ii.*$package" 2>/dev/null; then
             missing_packages+=("$package")
         fi
-    fi
+    done
 
     # Install missing packages if we have sudo
     if [[ ${#missing_packages[@]} -gt 0 ]]; then
