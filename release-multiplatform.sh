@@ -633,8 +633,8 @@ configure_build() {
         "linux-x64")
             # Handle different host architectures
             if [[ "$ARCH_TYPE" == "x86_64" && "$OS_TYPE" == "Linux" ]]; then
-                # Native x64 Linux build using contrib + depends approach
-                build_log "Building Linux x64 using contrib/install_db4.sh + depends system..."
+                # Native x64 Linux build using contrib + system dependencies
+                build_log "Building Linux x64 using contrib/install_db4.sh + native dependencies..."
                 
                 # Install Berkeley DB 4.8 using contrib script
                 export CFLAGS="-Wno-error=implicit-function-declaration"
@@ -642,26 +642,22 @@ configure_build() {
                 
                 export BDB_PREFIX="${SCRIPT_DIR}/db4"
                 
-                # Build depends system for boost and other dependencies
-                build_log "Building depends for x86_64-pc-linux-gnu..."
-                cd "$SCRIPT_DIR/depends"
-                make HOST=x86_64-pc-linux-gnu -j$(nproc) || error "Failed to build depends"
-                cd "$SCRIPT_DIR"
-                
-                # Configure using the user's original working method
-                build_log "Configuring with BDB flags and depends system..."
+                # Configure using native system dependencies (no depends system needed)
+                build_log "Configuring with Berkeley DB and system dependencies..."
                 ./autogen.sh || error "autogen.sh failed"
                 
-                export CONFIG_SITE="$PWD/depends/x86_64-pc-linux-gnu/share/config.site"
-                configure_args="--prefix=$PWD/depends/x86_64-pc-linux-gnu"
-                configure_args="$configure_args BDB_LIBS=\"-L${BDB_PREFIX}/lib -ldb_cxx-4.8\""
-                configure_args="$configure_args BDB_CFLAGS=\"-I${BDB_PREFIX}/include\""
-                configure_args="$configure_args LDFLAGS=\"-L${BDB_PREFIX}/lib/\""
-                configure_args="$configure_args CPPFLAGS=\"-I${BDB_PREFIX}/include/\""
-                configure_args="$configure_args --enable-cxx"
+                # Use system dependencies (available via apt-get) + Berkeley DB
+                configure_args="--enable-cxx"
                 configure_args="$configure_args --disable-shared"
                 configure_args="$configure_args --disable-tests"
                 configure_args="$configure_args --disable-gui-tests"
+                configure_args="$configure_args --with-pic"
+                configure_args="$configure_args --without-bench"
+                configure_args="$configure_args --without-miniupnpc"
+                configure_args="$configure_args BDB_LIBS=\"-L${BDB_PREFIX}/lib -ldb_cxx-4.8\""
+                configure_args="$configure_args BDB_CFLAGS=\"-I${BDB_PREFIX}/include\""
+                configure_args="$configure_args LDFLAGS=\"-L${BDB_PREFIX}/lib\""
+                configure_args="$configure_args CPPFLAGS=\"-I${BDB_PREFIX}/include\""
             else
                 # Cross-platform build via Docker
                 echo -e "${YELLOW}Using Docker for Linux x64 build (cross-platform)...${NC}"
@@ -672,8 +668,8 @@ configure_build() {
         "linux-arm64")
             # Handle different host architectures
             if [[ ("$ARCH_TYPE" == "aarch64" || "$ARCH_TYPE" == "arm64") && "$OS_TYPE" == "Linux" ]]; then
-                # Native ARM64 Linux build using contrib + depends approach
-                build_log "Building Linux ARM64 using contrib/install_db4.sh + depends system..."
+                # Native ARM64 Linux build using contrib + system dependencies
+                build_log "Building Linux ARM64 using contrib/install_db4.sh + native dependencies..."
                 
                 # Install Berkeley DB 4.8 using contrib script
                 export CFLAGS="-Wno-error=implicit-function-declaration"
@@ -681,26 +677,22 @@ configure_build() {
                 
                 export BDB_PREFIX="${SCRIPT_DIR}/db4"
                 
-                # Build depends system for boost and other dependencies
-                build_log "Building depends for aarch64-linux-gnu..."
-                cd "$SCRIPT_DIR/depends"
-                make HOST=aarch64-linux-gnu -j$(nproc) || error "Failed to build depends"
-                cd "$SCRIPT_DIR"
-                
-                # Configure using the user's original working method
-                build_log "Configuring with BDB flags and depends system..."
+                # Configure using native system dependencies (no depends system needed)
+                build_log "Configuring with Berkeley DB and system dependencies..."
                 ./autogen.sh || error "autogen.sh failed"
                 
-                export CONFIG_SITE="$PWD/depends/aarch64-linux-gnu/share/config.site"
-                configure_args="--prefix=$PWD/depends/aarch64-linux-gnu"
-                configure_args="$configure_args BDB_LIBS=\"-L${BDB_PREFIX}/lib -ldb_cxx-4.8\""
-                configure_args="$configure_args BDB_CFLAGS=\"-I${BDB_PREFIX}/include\""
-                configure_args="$configure_args LDFLAGS=\"-L${BDB_PREFIX}/lib/\""
-                configure_args="$configure_args CPPFLAGS=\"-I${BDB_PREFIX}/include/\""
-                configure_args="$configure_args --enable-cxx"
+                # Use system dependencies (available via apt-get) + Berkeley DB
+                configure_args="--enable-cxx"
                 configure_args="$configure_args --disable-shared"
                 configure_args="$configure_args --disable-tests"
                 configure_args="$configure_args --disable-gui-tests"
+                configure_args="$configure_args --with-pic"
+                configure_args="$configure_args --without-bench"
+                configure_args="$configure_args --without-miniupnpc"
+                configure_args="$configure_args BDB_LIBS=\"-L${BDB_PREFIX}/lib -ldb_cxx-4.8\""
+                configure_args="$configure_args BDB_CFLAGS=\"-I${BDB_PREFIX}/include\""
+                configure_args="$configure_args LDFLAGS=\"-L${BDB_PREFIX}/lib\""
+                configure_args="$configure_args CPPFLAGS=\"-I${BDB_PREFIX}/include\""
             else
                 # Cross-platform build via Docker
                 echo -e "${YELLOW}Using Docker for Linux ARM64 build (cross-platform)...${NC}"
