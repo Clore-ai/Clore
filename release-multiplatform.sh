@@ -739,8 +739,10 @@ configure_build() {
                 configure_args="$configure_args --enable-wallet"
                 configure_args="$configure_args BDB_LIBS=\"-L${BDB_PREFIX}/lib -ldb_cxx-4.8\""
                 configure_args="$configure_args BDB_CFLAGS=\"-I${BDB_PREFIX}/include\""
-                configure_args="$configure_args LDFLAGS=\"-L${BDB_PREFIX}/lib\""
+                configure_args="$configure_args LDFLAGS=\"-L${BDB_PREFIX}/lib -L/usr/lib\""
                 configure_args="$configure_args CPPFLAGS=\"-I${BDB_PREFIX}/include\""
+                configure_args="$configure_args CXXFLAGS=\"-fPIC -I${BDB_PREFIX}/include -DBOOST_SPIRIT_THREADSAFE -DHAVE_BUILD_INFO -D__STDC_FORMAT_MACROS\""
+                configure_args="$configure_args LIBS=\"-ldb_cxx-4.8 -lboost_system -lzmq\""
             else
                 # Cross-platform build via Docker
                 echo -e "${YELLOW}Using Docker for Linux x64 build (cross-platform)...${NC}"
@@ -939,12 +941,9 @@ build_target() {
         return 0
     fi
     
-    # Build wallet first, then server
-    make -C src/wallet -j$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4) || error "Wallet build failed for $target"
+    # Build the project
+    build_log "Building project..."
     make -j$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4) || error "Build failed for $target"
-    
-    # Deploy step not needed for this project
-    build_log "Build completed successfully for $target"
     
     # Create target directory and copy binaries
     mkdir -p "$target_dir/bin"
