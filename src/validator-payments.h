@@ -23,8 +23,9 @@ extern bool fValidatorPaymentsEnabled;
 static const int MNPAYMENTS_SIGNATURES_REQUIRED = 6;
 static const int MNPAYMENTS_SIGNATURES_TOTAL = 10;
 
-// Minimum protocol version for validator payments
-static const int MIN_VALIDATOR_PAYMENT_PROTO_VERSION = 70922;
+// Minimum protocol version for validator payments - SET TO IMPOSSIBLY HIGH VALUE TO DISABLE
+// CLORE: Validator payments are permanently disabled - this prevents accidental activation
+static const int MIN_VALIDATOR_PAYMENT_PROTO_VERSION = 999999999;
 
 //! minimum peer version accepted by DarkSendPool
 static const int MIN_POOL_PEER_PROTO_VERSION = 70103;
