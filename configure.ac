@@ -408,15 +408,15 @@ case $host in
          dnl the user (--without-wallet or --without-gui for example).
 
          openssl_prefix=`$BREW --prefix openssl 2>/dev/null`
-         bdb_prefix=`$BREW --prefix berkeley-db 2>/dev/null`
+         # bdb_prefix=`$BREW --prefix berkeley-db 2>/dev/null`  # DISABLED: Use local BDB_PREFIX instead
          if test x$openssl_prefix != x; then
            PKG_CONFIG_PATH="$openssl_prefix/lib/pkgconfig:$PKG_CONFIG_PATH"
            export PKG_CONFIG_PATH
          fi
-         if test x$bdb_prefix != x; then
-           CPPFLAGS="$CPPFLAGS -I$bdb_prefix/include"
-           LIBS="$LIBS -L$bdb_prefix/lib"
-         fi
+         # if test x$bdb_prefix != x; then
+         #   CPPFLAGS="$CPPFLAGS -I$bdb_prefix/include"
+         #   LIBS="$LIBS -L$bdb_prefix/lib"
+         # fi
        fi
      else
        case $build_os in

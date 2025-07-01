@@ -24,10 +24,10 @@
 #
 # =============================================================================
 
-BUILD_LINUX_X64=false      # Build for Linux x86_64 (Intel/AMD servers) - Set to true for Ubuntu 22.04
+BUILD_LINUX_X64=false     # Build for Linux x86_64 (Intel/AMD servers) - Set to true for Ubuntu 22.04
 BUILD_LINUX_ARM64=false    # Build for Linux ARM64 (AWS Graviton, Apple Silicon containers)
-BUILD_MACOS_X64=false      # Build for Intel Macs (cross-compilation issues)
-BUILD_MACOS_ARM64=true     # Build for Apple Silicon Macs (M1/M2/M3) - only on macOS hosts
+BUILD_MACOS_X64=true      # Build for Intel Macs (cross-compilation issues)
+BUILD_MACOS_ARM64=false    # Build for Apple Silicon Macs (M1/M2/M3) - only on macOS hosts
 BUILD_WINDOWS_X64=false    # Build for Windows x64 - Set to true for Ubuntu with MinGW
 
 # =============================================================================
@@ -717,9 +717,14 @@ configure_build() {
                 # Native x64 Linux build using contrib script
                 build_log "Building Linux x64 with native dependencies..."
                 
-                # Install Berkeley DB 4.8 using contrib script
+                # Install Berkeley DB 4.8 using contrib script (skip if exists)
                 export CFLAGS="-Wno-error=implicit-function-declaration"
-                ./contrib/install_db4.sh . || error "Failed to install BDB4"
+                if [[ ! -d "${SCRIPT_DIR}/db4" ]]; then
+                    build_log "Installing Berkeley DB 4.8..."
+                    ./contrib/install_db4.sh . || error "Failed to install BDB4"
+                else
+                    build_log "Using existing Berkeley DB 4.8 installation in db4/"
+                fi
                 
                 export BDB_PREFIX="${SCRIPT_DIR}/db4"
                 
@@ -765,9 +770,14 @@ configure_build() {
                 # Native ARM64 Linux build using contrib + system dependencies
                 build_log "Building Linux ARM64 using contrib/install_db4.sh + native dependencies..."
                 
-                # Install Berkeley DB 4.8 using contrib script
+                # Install Berkeley DB 4.8 using contrib script (skip if exists)
                 export CFLAGS="-Wno-error=implicit-function-declaration"
-                ./contrib/install_db4.sh . || error "Failed to install BDB4"
+                if [[ ! -d "${SCRIPT_DIR}/db4" ]]; then
+                    build_log "Installing Berkeley DB 4.8..."
+                    ./contrib/install_db4.sh . || error "Failed to install BDB4"
+                else
+                    build_log "Using existing Berkeley DB 4.8 installation in db4/"
+                fi
                 
                 export BDB_PREFIX="${SCRIPT_DIR}/db4"
                 
@@ -806,9 +816,14 @@ configure_build() {
             # Use Berkeley DB + native dependencies (no depends system needed)
             build_log "Building macOS x64 with native dependencies..."
             
-            # Install Berkeley DB 4.8 using contrib script
+            # Install Berkeley DB 4.8 using contrib script (skip if exists)
             export CFLAGS="-Wno-error=implicit-function-declaration"
-            ./contrib/install_db4.sh . || error "Failed to install BDB4"
+            if [[ ! -d "${SCRIPT_DIR}/db4" ]]; then
+                build_log "Installing Berkeley DB 4.8..."
+                ./contrib/install_db4.sh . || error "Failed to install BDB4"
+            else
+                build_log "Using existing Berkeley DB 4.8 installation in db4/"
+            fi
             
             export BDB_PREFIX="${SCRIPT_DIR}/db4"
             
@@ -826,6 +841,11 @@ configure_build() {
             export PKG_CONFIG_PATH="${brew_prefix}/lib/pkgconfig:$PKG_CONFIG_PATH"
             export LDFLAGS="-L${BDB_PREFIX}/lib -L${brew_prefix}/lib"
             export CPPFLAGS="-I${BDB_PREFIX}/include -I${brew_prefix}/include"
+
+            # Override any Homebrew Berkeley DB detection to force use of local BDB_PREFIX
+            export BERKELEY_DB_PREFIX="${BDB_PREFIX}"
+            export BERKELEY_DB_LIBS="-L${BDB_PREFIX}/lib -ldb_cxx-4.8"
+            export BERKELEY_DB_CFLAGS="-I${BDB_PREFIX}/include"
             
             # Use system dependencies (available via Homebrew/macOS) + Berkeley DB
             configure_args="--enable-cxx"
@@ -859,9 +879,14 @@ configure_build() {
             # Use Berkeley DB + native dependencies (no depends system needed)
             build_log "Building macOS ARM64 with native dependencies..."
             
-            # Install Berkeley DB 4.8 using contrib script
+            # Install Berkeley DB 4.8 using contrib script (skip if exists)
             export CFLAGS="-Wno-error=implicit-function-declaration"
-            ./contrib/install_db4.sh . || error "Failed to install BDB4"
+            if [[ ! -d "${SCRIPT_DIR}/db4" ]]; then
+                build_log "Installing Berkeley DB 4.8..."
+                ./contrib/install_db4.sh . || error "Failed to install BDB4"
+            else
+                build_log "Using existing Berkeley DB 4.8 installation in db4/"
+            fi
             
             export BDB_PREFIX="${SCRIPT_DIR}/db4"
             
@@ -879,6 +904,11 @@ configure_build() {
             export PKG_CONFIG_PATH="${brew_prefix}/lib/pkgconfig:$PKG_CONFIG_PATH"
             export LDFLAGS="-L${BDB_PREFIX}/lib -L${brew_prefix}/lib"
             export CPPFLAGS="-I${BDB_PREFIX}/include -I${brew_prefix}/include"
+
+            # Override any Homebrew Berkeley DB detection to force use of local BDB_PREFIX
+            export BERKELEY_DB_PREFIX="${BDB_PREFIX}"
+            export BERKELEY_DB_LIBS="-L${BDB_PREFIX}/lib -ldb_cxx-4.8"
+            export BERKELEY_DB_CFLAGS="-I${BDB_PREFIX}/include"
             
             # Use system dependencies (available via Homebrew/macOS) + Berkeley DB
             configure_args="--enable-cxx"
