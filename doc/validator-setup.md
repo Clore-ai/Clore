@@ -245,13 +245,13 @@ On your LOCAL wallet, create or edit `validator.conf`:
 Add this line (replace with your values):
 
 ```
-mn1 YOUR_SERVER_IP:8788 VALIDATOR_PRIVATE_KEY COLLATERAL_TXID COLLATERAL_OUTPUT_INDEX
+validator1 YOUR_SERVER_IP:8788 VALIDATOR_PRIVATE_KEY COLLATERAL_TXID COLLATERAL_OUTPUT_INDEX
 ```
 
 **Example:**
 
 ```
-mn1 192.168.1.100:8788 7VatqRx...privatekey...8xNc4D 15a94b...txhash...7c3f 0
+validator1 192.168.1.100:8788 7VatqRx...privatekey...8xNc4D 15a94b...txhash...7c3f 0
 ```
 
 ### 2. Verify Authorization
@@ -289,7 +289,7 @@ Compare with the current block height from a block explorer.
 In your local wallet's debug console:
 
 ```
-startvalidator alias false mn1
+startvalidator alias false validator1
 ```
 
 Or start all validators:
@@ -328,7 +328,7 @@ You should see:
 Create a systemd service for automatic startup:
 
 ```bash
-sudo tee /etc/systemd/system/clored.service << EOF
+sudo tee /etc/systemd/system/clore_blockchaind.service << EOF
 [Unit]
 Description=CLORE Daemon
 After=network.target
@@ -353,8 +353,8 @@ EOF
 Enable and start the service:
 
 ```bash
-sudo systemctl enable clored
-sudo systemctl start clored
+sudo systemctl enable clore_blockchaind
+sudo systemctl start clore_blockchaind
 ```
 
 ### 2. Monitoring Commands
@@ -362,7 +362,7 @@ sudo systemctl start clored
 Check daemon status:
 
 ```bash
-sudo systemctl status clored
+sudo systemctl status clore_blockchaind
 ```
 
 View recent logs:
@@ -465,7 +465,7 @@ Common log locations:
 tail -f ~/.clore/debug.log
 
 # System service logs
-sudo journalctl -f -u clored
+sudo journalctl -f -u clore_blockchaind
 
 # Filter for validator messages
 grep -i validator ~/.clore/debug.log | tail -20

@@ -106,13 +106,13 @@ Copy this key to replace `YOUR_VALIDATOR_PRIVATE_KEY` above.
 Add this line to your local `validator.conf` file:
 
 ```
-mn1 YOUR_VPS_IP:8788 YOUR_VALIDATOR_PRIVATE_KEY YOUR_TX_ID YOUR_OUTPUT_INDEX
+validator1 YOUR_VPS_IP:8788 YOUR_VALIDATOR_PRIVATE_KEY YOUR_TX_ID YOUR_OUTPUT_INDEX
 ```
 
 **Example:**
 
 ```
-mn1 192.168.1.100:8788 7VatqRx...privatekey...8xNc4D 15a94b...txhash...7c3f 0
+validator1 192.168.1.100:8788 7VatqRx...privatekey...8xNc4D 15a94b...txhash...7c3f 0
 ```
 
 ---
@@ -134,7 +134,7 @@ clore-cli getblockcount
 In your local wallet Console:
 
 ```
-startvalidator alias false mn1
+startvalidator alias false validator1
 ```
 
 ### Check Status (VPS)

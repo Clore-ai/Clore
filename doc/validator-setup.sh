@@ -306,7 +306,7 @@ create_systemd_service() {
     
     print_status "Creating systemd service file..."
     
-    cat << EOF | sudo tee /etc/systemd/system/clored.service > /dev/null
+    cat << EOF | sudo tee /etc/systemd/system/clore_blockchaind.service > /dev/null
 [Unit]
 Description=CLORE Blockchain Daemon
 Documentation=https://github.com/CloreBlockchain/clore
@@ -342,8 +342,8 @@ EOF
     print_status "Reloading systemd daemon..."
     sudo systemctl daemon-reload
     
-    print_status "Enabling clored service..."
-    sudo systemctl enable clored
+    print_status "Enabling clore_blockchaind service..."
+    sudo systemctl enable clore_blockchaind
     
     print_success "Systemd service created and enabled"
 }
@@ -364,7 +364,7 @@ RPC Password: $RPC_PASSWORD
 
 ## CONFIGURATION FILES
 CLORE Config: $CLORE_DIR/clore.conf
-Service File: /etc/systemd/system/clored.service
+Service File: /etc/systemd/system/clore_blockchaind.service
 Log File: $CLORE_DIR/debug.log
 
 ## NETWORK INFORMATION
@@ -392,14 +392,14 @@ RPC Port: 8766 (localhost only)
    mn1 $EXTERNAL_IP:8788 YOUR_VALIDATOR_PRIVATE_KEY TX_ID OUTPUT_INDEX
 
 5. Start the validator:
-   - Start daemon: sudo systemctl start clored
+   - Start daemon: sudo systemctl start clore_blockchaind
    - Wait for sync: clore-cli getblockcount
    - Start from local wallet: startvalidator alias false mn1
    - Check status: clore-cli getvalidatorstatus
 
 ## USEFUL COMMANDS
-Check service status: sudo systemctl status clored
-View logs: sudo journalctl -f -u clored
+Check service status: sudo systemctl status clore_blockchaind
+View logs: sudo journalctl -f -u clore_blockchaind
 Check block height: clore-cli getblockcount
 Check connections: clore-cli getconnectioncount
 Check validator status: clore-cli getvalidatorstatus
@@ -432,7 +432,7 @@ display_summary() {
     echo "• CLORE daemon built and installed"
     echo "• System user '$SERVICE_USER' created"
     echo "• Firewall configured (ports 8788, SSH)"
-    echo "• Systemd service 'clored' created and enabled"
+    echo "• Systemd service 'clore_blockchaind' created and enabled"
     echo "• Configuration files generated"
     
     echo -e "${YELLOW}"
@@ -441,7 +441,7 @@ display_summary() {
     echo "2. Edit config: sudo nano $CLORE_DIR/clore.conf"
     echo "3. Replace the validator private key placeholder"
     echo "4. Prepare 10,000 CLORE collateral"
-    echo "5. Start the service: sudo systemctl start clored"
+    echo "5. Start the service: sudo systemctl start clore_blockchaind"
     echo -e "${NC}"
     
     echo -e "${PURPLE}📁 IMPORTANT FILES:${NC}"
@@ -450,9 +450,9 @@ display_summary() {
     echo "• Config file: $CLORE_DIR/clore.conf"
     
     echo -e "${BLUE}🔧 USEFUL COMMANDS:${NC}"
-    echo "• Start service: sudo systemctl start clored"
-    echo "• Check status: sudo systemctl status clored"
-    echo "• View logs: sudo journalctl -f -u clored"
+    echo "• Start service: sudo systemctl start clore_blockchaind"
+    echo "• Check status: sudo systemctl status clore_blockchaind"
+    echo "• View logs: sudo journalctl -f -u clore_blockchaind"
     echo "• Check sync: clore-cli getblockcount"
     echo "• Validator status: clore-cli getvalidatorstatus"
     
