@@ -20,8 +20,8 @@ class CValidatorBlockPayees;
 // Set to true in chainparams to enable validator payments
 extern bool fValidatorPaymentsEnabled;
 
-static const int MNPAYMENTS_SIGNATURES_REQUIRED = 6;
-static const int MNPAYMENTS_SIGNATURES_TOTAL = 10;
+static const int VALIDATOR_PAYMENTS_SIGNATURES_REQUIRED = 6;
+static const int VALIDATOR_PAYMENTS_SIGNATURES_TOTAL = 10;
 
 // Minimum protocol version for validator payments - SET TO IMPOSSIBLY HIGH VALUE TO DISABLE
 // CLORE: Validator payments are permanently disabled - this prevents accidental activation
@@ -220,7 +220,7 @@ public:
     bool ProcessBlock(int nBlockHeight);
 
     void Sync(CNode* node, int nCountNeeded);
-    void CleanPaymentList(int mnCount, int nHeight);
+    void CleanPaymentList(int validatorCount, int nHeight);
     int LastCleanPaymentBlock();
 
     bool GetBlockPayee(int nBlockHeight, CScript& payee);

@@ -1,9 +1,22 @@
 // Copyright (c) 2012-2015 The Bitcoin Core developers
 // Copyright (c) 2017-2019 The Raven Core developers
 // Copyright (c) 2020-2021 The Neoxa Core developers
-// Copyright (c) 2022-2022 The CLORE.AI
+// Copyright (c) 2022-2024 The CLORE.AI Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+/**
+ * CLORE Script Number Tests - EXTREMELY CRITICAL
+ * 
+ * Tests numeric operations within script execution including arithmetic, comparisons, and serialization across all edge cases.
+ * Essential for consensus-critical numeric operations in scripts, multi-signature thresholds, locktime conditions, and overflow prevention.
+ * 
+ * IMPACT SUMMARY:
+ * - Security: Validates script numeric operations preventing overflow attacks and consensus failures that could fork the network
+ * - Performance: Ensures efficient numeric serialization and operations for fast script execution and validation
+ * - Users: Enables time-locked transactions, multi-signature configurations, and complex script conditions requiring arithmetic
+ * - Business: Critical for validator operations, exchange time-locked deposits, and any service using numeric script operations
+ */
 
 #include "scriptnum10.h"
 #include "script/script.h"

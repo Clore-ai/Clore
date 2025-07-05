@@ -1,9 +1,22 @@
 // Copyright (c) 2012-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2019 The Raven Core developers
 // Copyright (c) 2020-2021 The Neoxa Core developers
-// Copyright (c) 2022-2022 The CLORE.AI
+// Copyright (c) 2022-2024 The CLORE.AI Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+/**
+ * CLORE Signature Operation Count Tests - EXTREMELY CRITICAL
+ * 
+ * Tests signature operation counting algorithms preventing DoS attacks and enforcing consensus rules for block and transaction validation.
+ * Essential for network security ensuring computational limits are properly enforced across all script types and validation scenarios.
+ * 
+ * IMPACT SUMMARY:
+ * - Security: Validates sigop counting preventing DoS attacks and enforcing consensus rules that could cause network forks if incorrect
+ * - Performance: Ensures efficient sigop counting for fast block validation while maintaining proper computational limits
+ * - Users: Enables complex transactions including multi-signature and witness scripts while preventing network abuse
+ * - Business: Critical for validator operations, exchange transaction processing, and maintaining network stability under load
+ */
 
 #include "consensus/tx_verify.h"
 #include "consensus/validation.h"

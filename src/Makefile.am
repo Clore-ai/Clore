@@ -61,7 +61,7 @@ lib_LTLIBRARIES = $(LIBCLORECONSENSUS)
 
 bin_PROGRAMS =
 noinst_PROGRAMS =
-TESTS =
+TESTS = test/test_clore
 BENCHMARKS =
 
 if BUILD_CLORE_BLOCKCHAIND
@@ -250,6 +250,7 @@ libclore_util_a-clientversion.$(OBJEXT): obj/build.h
 libclore_server_a_CPPFLAGS = $(AM_CPPFLAGS) $(CLORE_INCLUDES) $(MINIUPNPC_CPPFLAGS) $(EVENT_CFLAGS) $(EVENT_PTHREADS_CFLAGS)
 libclore_server_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 libclore_server_a_SOURCES = \
+  activevalidator.cpp \
   addrdb.cpp \
   addrman.cpp \
   bloom.cpp \
@@ -556,7 +557,12 @@ clore_tx_LDADD += $(BOOST_LIBS) $(CRYPTO_LIBS)
 # cloreconsensus library #
 if BUILD_CLORE_LIBS
 include_HEADERS = script/cloreconsensus.h
-libcloreconsensus_la_SOURCES = $(crypto_libclore_crypto_a_SOURCES) $(libclore_consensus_a_SOURCES)
+libcloreconsensus_la_SOURCES = $(crypto_libclore_crypto_a_SOURCES) $(libclore_consensus_a_SOURCES) \
+  sync.cpp \
+  sync.h \
+  threadinterrupt.cpp \
+  threadinterrupt.h \
+  consensusutils.cpp
 
 if GLIBC_BACK_COMPAT
   libcloreconsensus_la_SOURCES += compat/glibc_compat.cpp

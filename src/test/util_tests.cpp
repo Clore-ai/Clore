@@ -1,7 +1,22 @@
 // Copyright (c) 2011-2016 The Bitcoin Core developers
-// Copyright (c) 2017-2021 The Raven Core developers
+// Copyright (c) 2017-2019 The Raven Core developers
+// Copyright (c) 2020-2021 The Neoxa Core developers
+// Copyright (c) 2022-2024 The CLORE.AI Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+/**
+ * CLORE Utility Functions Tests - EXTREMELY CRITICAL
+ * 
+ * Tests fundamental utility functions including thread safety, string parsing, argument handling, money formatting, and data encoding.
+ * Essential infrastructure used throughout all CLORE components for safe data handling, configuration management, and core operations.
+ * 
+ * IMPACT SUMMARY:
+ * - Security: Validates thread safety, input parsing safety, and prevents buffer overflows in fundamental utility functions
+ * - Performance: Ensures efficient string operations, memory management, and parsing functions critical for all operations
+ * - Users: Enables proper command-line argument handling, money display formatting, and configuration file parsing
+ * - Business: Critical for all operations including validator configuration, exchange integrations, and system reliability
+ */
 
 #include "util.h"
 

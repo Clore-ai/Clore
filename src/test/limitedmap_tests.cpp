@@ -1,9 +1,22 @@
 // Copyright (c) 2012-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2019 The Raven Core developers
 // Copyright (c) 2020-2021 The Neoxa Core developers
-// Copyright (c) 2022-2022 The CLORE.AI
+// Copyright (c) 2022-2024 The CLORE.AI Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+/**
+ * CLORE Limited Map Data Structure Tests - HIGHLY RELEVANT
+ * 
+ * Tests size-bounded map container that automatically evicts oldest entries when capacity is exceeded.
+ * Used for memory-efficient caching in mempool, peer management, and DoS protection systems.
+ * 
+ * IMPACT SUMMARY:
+ * - Security: Prevents memory exhaustion attacks by enforcing strict memory limits on cached data
+ * - Performance: Enables efficient caching with O(1) access and automatic memory management
+ * - Users: Improves node stability and prevents out-of-memory crashes during high transaction volume
+ * - Business: Supports stable validator operations and reliable network infrastructure for services
+ */
 
 #include "limitedmap.h"
 

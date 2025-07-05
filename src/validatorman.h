@@ -32,7 +32,7 @@ extern CActiveValidator activeValidator;
 void DumpValidators();
 */
 
-/** Access to the Validator database (mncache.dat)
+/** Access to the Validator database (validatorcache.dat)
  */
 // TODO: Add Clore CValidatorDB class
 /*

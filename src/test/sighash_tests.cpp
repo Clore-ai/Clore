@@ -1,9 +1,22 @@
 // Copyright (c) 2013-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2019 The Raven Core developers
 // Copyright (c) 2020-2021 The Neoxa Core developers
-// Copyright (c) 2022-2022 The CLORE.AI
+// Copyright (c) 2022-2024 The CLORE.AI Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+/**
+ * CLORE Signature Hash Tests - EXTREMELY CRITICAL
+ * 
+ * Tests signature hash generation and validation ensuring cryptographic integrity for all transaction signatures across different hash types.
+ * Essential for transaction security preventing signature forgery and enabling secure multi-signature operations critical for validator consensus.
+ * 
+ * IMPACT SUMMARY:
+ * - Security: Validates signature hash algorithms preventing transaction forgery and signature malleability attacks
+ * - Performance: Ensures efficient signature hash computation for fast transaction validation and block processing
+ * - Users: Enables secure transactions, multi-signature wallets, and all cryptographic operations requiring digital signatures
+ * - Business: Critical for exchange security, validator operations, institutional multi-sig, and all transaction-based services
+ */
 
 #include "consensus/tx_verify.h"
 #include "consensus/validation.h"

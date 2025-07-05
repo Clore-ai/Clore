@@ -1,9 +1,22 @@
 // Copyright (c) 2015-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2019 The Raven Core developers
 // Copyright (c) 2020-2021 The Neoxa Core developers
-// Copyright (c) 2022-2022 The CLORE.AI
+// Copyright (c) 2022-2024 The CLORE.AI Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+/**
+ * CLORE Merkle Tree Tests - EXTREMELY CRITICAL
+ * 
+ * Tests Merkle tree construction, root calculation, and branch computation that ensure blockchain data integrity and enable SPV functionality.
+ * Fundamental cryptographic structure that allows efficient verification of transaction inclusion in blocks.
+ * 
+ * IMPACT SUMMARY:
+ * - Security: Validates block integrity mechanisms and prevents merkle tree manipulation attacks
+ * - Performance: Enables efficient SPV proofs and light client transaction verification without full blockchain
+ * - Users: Supports mobile wallets, hardware wallets, and fast transaction confirmation for lightweight clients
+ * - Business: Required for exchange SPV implementations, blockchain explorers, and all consensus-critical operations
+ */
 
 #include "consensus/merkle.h"
 #include "test/test_clore.h"

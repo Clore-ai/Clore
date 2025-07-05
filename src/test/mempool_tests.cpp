@@ -1,9 +1,22 @@
 // Copyright (c) 2011-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2019 The Raven Core developers
 // Copyright (c) 2020-2021 The Neoxa Core developers
-// Copyright (c) 2022-2022 The CLORE.AI
+// Copyright (c) 2022-2024 The CLORE.AI Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+/**
+ * CLORE Transaction Mempool Tests - EXTREMELY CRITICAL
+ * 
+ * Tests transaction memory pool functionality including fee-based ordering, size limits, ancestor/descendant tracking, and DoS protection.
+ * Core component for transaction selection, block construction, and network synchronization in both mining and validator phases.
+ * 
+ * IMPACT SUMMARY:
+ * - Security: Prevents mempool DoS attacks and ensures proper transaction ordering for consensus integrity
+ * - Performance: Optimizes transaction selection for mining and validator block construction efficiency
+ * - Users: Affects transaction confirmation times, fee calculations, and child-pays-for-parent functionality
+ * - Business: Critical for mining profitability, validator operations, and exchange transaction processing
+ */
 
 #include "policy/policy.h"
 #include "txmempool.h"

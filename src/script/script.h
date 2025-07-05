@@ -188,6 +188,7 @@ enum opcodetype
 
     /** CLORE START */
     OP_CLORE_ASSET = 0xc0,
+    OP_CHECKCOLDSTAKEVERIFY = 0xd2,  // Cold staking verification opcode
     /** CLORE END */
 
 
@@ -678,6 +679,9 @@ public:
     bool IsNullAssetTxDataScript() const;
     bool IsNullAssetVerifierTxDataScript() const;
     bool IsNullGlobalRestrictionAssetTxDataScript() const;
+    /** CLORE Cold Staking START */
+    bool IsPayToColdStaking() const;
+    /** CLORE Cold Staking END */
     /** CLORE END */
 
     /** Used for obsolete pay-to-pubkey addresses indexing. */

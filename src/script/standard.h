@@ -11,6 +11,9 @@
 
 #include "script/interpreter.h"
 #include "uint256.h"
+#include "amount.h"
+#include "pubkey.h"
+#include "hash.h"
 
 #include <boost/variant.hpp>
 
@@ -31,7 +34,7 @@ public:
 };
 
 /**
- * Default setting for nMaxDatacarrierBytes. 80 bytes of data, +1 for OP_RETURN,
+ * Default setting for nMaxDatacrierBytes. 80 bytes of data, +1 for OP_RETURN,
  * +2 for the pushdata opcodes.
  */
 static const unsigned int MAX_OP_RETURN_RELAY = 83;
@@ -72,6 +75,7 @@ enum txnouttype
     TX_REISSUE_ASSET = 9,
     TX_TRANSFER_ASSET = 10,
     TX_RESTRICTED_ASSET_DATA = 11, //!< unspendable OP_CLORE_ASSET script that carries data
+    TX_COLDSTAKE = 12, //!< cold staking delegation script
     /** CLORE END */
 };
 
@@ -149,5 +153,19 @@ CScript GetScriptForNullAssetDataDestination(const CTxDestination &dest);
  * P2WSH script.
  */
 CScript GetScriptForWitness(const CScript& redeemscript);
+
+/** CLORE Cold Staking START */
+/** Generate a cold staking script for the given staking and spending keys. */
+CScript GetScriptForColdStaking(const CKeyID& stakingKey, const CKeyID& spendingKey);
+
+/** Check if script is a cold staking script and extract keys if so. */
+bool ExtractColdStakeAddresses(const CScript& script, CKeyID& stakingKey, CKeyID& spendingKey);
+
+/** Check if script is a cold staking script. */
+bool IsColdStakeScript(const CScript& script);
+
+/** Minimum amount required for cold staking delegation. */
+static const CAmount MIN_COLDSTAKING_AMOUNT = COIN; // 1 CLORE minimum
+/** CLORE Cold Staking END */
 
 #endif // CLORE_SCRIPT_STANDARD_H

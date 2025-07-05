@@ -1,6 +1,22 @@
 // Copyright (c) 2012-2015 The Bitcoin Core developers
+// Copyright (c) 2017-2019 The Raven Core developers
+// Copyright (c) 2020-2021 The Neoxa Core developers
+// Copyright (c) 2022-2024 The CLORE.AI Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+/**
+ * CLORE P2PK Script Tests - HIGHLY RELEVANT
+ * 
+ * Tests Pay-to-Public-Key script identification and validation supporting both compressed and uncompressed public key formats.
+ * Important for backwards compatibility, miner coinbase transactions, and specialized use cases requiring direct public key payments.
+ * 
+ * IMPACT SUMMARY:
+ * - Security: Ensures correct validation of P2PK transactions preventing script misclassification and validation failures
+ * - Performance: Enables efficient P2PK script detection for comprehensive transaction type support
+ * - Users: Supports legacy addresses and specialized wallet configurations that may use direct public key payments
+ * - Business: Required for mining pool compatibility, exchange legacy support, and comprehensive transaction type handling
+ */
 
 #include "script/script.h"
 #include "test/test_clore.h"

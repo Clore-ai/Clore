@@ -10,6 +10,7 @@
 
 #include "amount.h"
 #include "uint256.h"
+#include "util.h"
 #include <boost/optional.hpp>
 #include <map>
 #include <string>
@@ -40,14 +41,11 @@ enum DeploymentPos {
  * several functions depend on the enum being sorted.
  */
 enum UpgradeIndex : uint32_t {
-    BASE_NETWORK,
-    ENABLE_POS_STAKING,       // Proof of Stake preparation phase (hybrid PoW/PoS)
-    UPGRADE_POS_V2,           // Proof of Stake v2 (improved stake modifier)
-    ENABLE_POS_REWARDS,       // Proof of Stake completion phase (PoW disabled completely)
-    UPGRADE_BIP65,            // BIP65 CLTV activation
-    ENABLE_POS_VALIDATORS,    // Stake modifier v2
-    ENABLE_POS_TIME_PROTO_v2, // Time protocol v2
-    UPGRADE_TESTDUMMY,        // Test dummy upgrade
+    BASE_NETWORK,                     // 0: Base network rules (always active - height 0)
+    ENABLE_POS_VALIDATORS,           // 1: Validator activation (height 1000001439)
+    ENABLE_POS_STAKING,              // 2: PoS preparation phase (height 1000002879)
+    ENABLE_POS_REWARDS,              // 3: PoS completion phase - PoW disabled (height 1000004319)
+    UPGRADE_TESTDUMMY,               // 4: Test dummy upgrade (never activates)
     // NOTE: Also add new upgrades to NetworkUpgradeInfo in upgrades.cpp
     MAX_NETWORK_UPGRADES
 };
@@ -145,12 +143,9 @@ struct Params {
     int nStakeTimestampMask; // Mask for stake timestamps
 
     // Validator parameters
-    int nBudgetCycleBlocks;
-    int nBudgetFeeConfirmations;
     int nCoinbaseMaturity;
     CAmount nMaxMoneyOut;
-    int64_t nProposalEstablishmentTime;
-    int nMaxProposalPayments;
+    CAmount nValidatorCollateralAmt;
 
     // spork keys
     std::string strSporkPubKey;
@@ -171,33 +166,13 @@ struct Params {
     int64_t TargetTimespan(const bool fV2 = true) const { return fV2 ? nTargetTimespanV2 : nTargetTimespan; }
     uint256 ProofOfStakeLimit(const bool fV2) const { return fV2 ? posLimitV2 : posLimitV1; }
     bool MoneyRange(const CAmount& nValue) const { return (nValue >= 0 && nValue <= nMaxMoneyOut); }
-    bool IsTimeProtocolV2(const int nHeight) const { return NetworkUpgradeActive(nHeight, ENABLE_POS_TIME_PROTO_v2); }
     bool IsPurePosActive(const int nHeight) const { return NetworkUpgradeActive(nHeight, ENABLE_POS_REWARDS); }
 
-    int FutureBlockTimeDrift(const int nHeight) const
-    {
-        // PoS (TimeV2): 14 seconds
-        if (IsTimeProtocolV2(nHeight)) return nTimeSlotLength - 1;
-        // PoS (TimeV1): 3 minutes - PoW: 2 hours
-        return (NetworkUpgradeActive(nHeight, ENABLE_POS_STAKING) ? nFutureTimeDriftPoS : nFutureTimeDriftPoW);
-    }
+    bool HasStakeMinAgeOrDepth(const int contextHeight, const uint32_t contextTime, const int utxoFromBlockHeight, const uint32_t utxoFromBlockTime) const;
 
-    bool IsValidBlockTimeStamp(const int64_t nTime, const int nHeight) const
-    {
-        // Before time protocol V2, blocks can have arbitrary timestamps
-        if (!IsTimeProtocolV2(nHeight)) return true;
-        // Time protocol v2 requires time in slots
-        return (nTime % nTimeSlotLength) == 0;
-    }
-
-    bool HasStakeMinAgeOrDepth(const int contextHeight, const uint32_t contextTime, const int utxoFromBlockHeight, const uint32_t utxoFromBlockTime) const
-    {
-        // before stake modifier V2, we require the utxo to be nStakeMinAge old
-        if (!NetworkUpgradeActive(contextHeight, Consensus::ENABLE_POS_VALIDATORS))
-            return (utxoFromBlockTime + nStakeMinAge <= contextTime);
-        // with stake modifier V2+, we require the utxo to be nStakeMinDepth deep in the chain
-        return (contextHeight - utxoFromBlockHeight >= nStakeMinDepth);
-    }
+    // Validator time validation methods
+    int64_t FutureBlockTimeDrift(const int nHeight) const;
+    bool IsValidBlockTimeStamp(const int64_t nTime, const int nHeight) const;
 
     bool NetworkUpgradeActive(int nHeight, Consensus::UpgradeIndex idx) const;
 };

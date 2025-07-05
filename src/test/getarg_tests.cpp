@@ -1,9 +1,22 @@
 // Copyright (c) 2012-2015 The Bitcoin Core developers
 // Copyright (c) 2017-2019 The Raven Core developers
 // Copyright (c) 2020-2021 The Neoxa Core developers
-// Copyright (c) 2022-2022 The CLORE.AI
+// Copyright (c) 2022-2024 The CLORE.AI Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+/**
+ * CLORE Command-Line Argument Tests - HIGHLY RELEVANT
+ * 
+ * Tests command-line argument parsing which controls all CLORE node configuration.
+ * Critical for validator operations, security settings, and network connectivity.
+ * 
+ * IMPACT SUMMARY:
+ * - Security: Validates parsing of security-critical flags (RPC, wallet encryption)
+ * - Performance: Ensures validator configuration options work correctly  
+ * - Users: Command-line errors could prevent node startup or cause misconfigurations
+ * - Business: Exchanges rely on correct argument parsing for secure operations
+ */
 
 #include "util.h"
 #include "test/test_clore.h"

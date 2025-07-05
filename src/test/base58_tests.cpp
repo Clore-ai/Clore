@@ -1,9 +1,22 @@
 // Copyright (c) 2011-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2019 The Raven Core developers
 // Copyright (c) 2020-2021 The Neoxa Core developers
-// Copyright (c) 2022-2022 The CLORE.AI
+// Copyright (c) 2022-2024 The CLORE.AI Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+/**
+ * CLORE Base58 Encoding Tests - EXTREMELY CRITICAL
+ * 
+ * Tests Base58 encoding/decoding for CLORE addresses and private key format.
+ * Every user-facing address and wallet operation depends on Base58 functionality.
+ * 
+ * IMPACT SUMMARY:
+ * - Security: Prevents fund loss through address validation and private key corruption protection
+ * - Performance: Enables reliable wallet import/export and address validation
+ * - Users: All CLORE addresses, QR codes, and private key backup/restore use Base58
+ * - Business: Essential for exchange integration and cross-wallet compatibility
+ */
 
 #include "base58.h"
 

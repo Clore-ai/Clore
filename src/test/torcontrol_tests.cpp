@@ -1,7 +1,23 @@
 // Copyright (c) 2017 The Zcash developers
+// Copyright (c) 2017-2019 The Raven Core developers
+// Copyright (c) 2020-2021 The Neoxa Core developers
+// Copyright (c) 2022-2024 The CLORE.AI Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
-//
+
+/**
+ * CLORE Tor Control Tests - MODERATE
+ * 
+ * Tests Tor control protocol functionality enabling anonymous network connections and privacy protection for CLORE users.
+ * Supports user privacy by allowing connections through the Tor network, protecting IP addresses and network-level anonymity.
+ * 
+ * IMPACT SUMMARY:
+ * - Security: Enables anonymous network connections protecting user privacy and preventing IP-based surveillance
+ * - Performance: Validates efficient Tor protocol handling for stable anonymous connections without network disruption
+ * - Users: Provides privacy protection for wallet operations, mining, and transaction broadcasting through Tor network
+ * - Business: Supports privacy-conscious validator operators, exchanges in restrictive jurisdictions, and user anonymity requirements
+ */
+
 #include "test/test_clore.h"
 #include "torcontrol.cpp"
 

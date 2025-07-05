@@ -1,9 +1,22 @@
 // Copyright (c) 2012-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2019 The Raven Core developers
 // Copyright (c) 2020-2021 The Neoxa Core developers
-// Copyright (c) 2022-2022 The CLORE.AI
+// Copyright (c) 2022-2024 The CLORE.AI Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+/**
+ * CLORE Database Wrapper Tests - EXTREMELY CRITICAL
+ * 
+ * Tests core database layer for blockchain storage, UTXO management, and data integrity.
+ * Database I/O is critical bottleneck for all validator operations and blockchain persistence.
+ * 
+ * IMPACT SUMMARY:
+ * - Security: Prevents data corruption and ensures atomic blockchain state updates
+ * - Performance: Database speed directly affects block validation and sync times
+ * - Users: Database reliability affects transaction history and wallet functionality
+ * - Business: Exchange operations and service uptime depend on database stability
+ */
 
 #include "dbwrapper.h"
 #include "uint256.h"

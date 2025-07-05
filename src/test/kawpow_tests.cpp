@@ -1,7 +1,20 @@
 // Copyright (c) 2019 Veil developers
+// Copyright (c) 2022-2024 The CLORE.AI Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+/**
+ * CLORE KawPow Mining Algorithm Tests - EXTREMELY CRITICAL
+ * 
+ * Tests KawPow (GPU-optimized mining algorithm) functionality including hash generation, verification, and mining search.
+ * Core algorithm that secures CLORE network during proof-of-work phase before validator upgrade.
+ * 
+ * IMPACT SUMMARY:
+ * - Security: Validates mining algorithm integrity preventing consensus failures and network attacks
+ * - Performance: Ensures efficient GPU mining operations and optimal hash rate utilization
+ * - Users: Enables profitable mining operations and network participation through mining pools
+ * - Business: Supports mining infrastructure, pool operations, and exchange integration during PoW phase
+ */
 
 #include <test/test_clore.h>
 

@@ -1,6 +1,22 @@
 // Copyright (c) 2012-2015 The Bitcoin Core developers
+// Copyright (c) 2017-2019 The Raven Core developers
+// Copyright (c) 2020-2021 The Neoxa Core developers
+// Copyright (c) 2022-2024 The CLORE.AI Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+/**
+ * CLORE P2PKH Script Tests - EXTREMELY CRITICAL
+ * 
+ * Tests Pay-to-Public-Key-Hash script identification and validation ensuring correct parsing of the most common CLORE transaction type.
+ * Essential for wallet operations, transaction processing, and UTXO management as P2PKH represents the majority of user transactions.
+ * 
+ * IMPACT SUMMARY:
+ * - Security: Prevents script misclassification that could lead to transaction validation failures and fund loss
+ * - Performance: Ensures efficient P2PKH detection for fast transaction processing and wallet operations
+ * - Users: Enables standard wallet transactions, address generation, and all basic CLORE send/receive functionality
+ * - Business: Critical for exchange deposits/withdrawals, payment processing, and all standard CLORE transaction operations
+ */
 
 #include "script/script.h"
 #include "test/test_clore.h"

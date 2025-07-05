@@ -1,9 +1,22 @@
 // Copyright (c) 2014-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2019 The Raven Core developers
 // Copyright (c) 2020-2021 The Neoxa Core developers
-// Copyright (c) 2022-2022 The CLORE.AI
+// Copyright (c) 2022-2024 The CLORE.AI Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+/**
+ * CLORE Core Blockchain Logic Tests - EXTREMELY CRITICAL
+ * 
+ * Tests fundamental blockchain mechanics including block rewards, halving schedules, supply limits, and consensus signaling.
+ * Controls the economic model and monetary policy that determines CLORE's inflation rate and total supply.
+ * 
+ * IMPACT SUMMARY:
+ * - Security: Validates consensus mechanisms and prevents monetary policy exploits that could inflate supply
+ * - Performance: Ensures efficient reward calculations and consensus signaling for network operations
+ * - Users: Determines mining profitability, token inflation rate, and long-term economic value preservation
+ * - Business: Affects exchange listings, market cap calculations, and economic modeling for all CLORE services
+ */
 
 #include "chainparams.h"
 #include "validation.h"

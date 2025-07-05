@@ -99,7 +99,11 @@ CLORE_TESTS =\
   test/versionbits_tests.cpp \
   test/uint256_tests.cpp \
   test/univalue_tests.cpp \
-  test/util_tests.cpp
+  test/util_tests.cpp \
+  test/validator_authorization_tests.cpp \
+  test/validator_comprehensive_tests.cpp \
+  test/validator_pos_upgrade_tests.cpp \
+  test/validator_integration_tests.cpp
 
 if ENABLE_WALLET
 CLORE_TESTS += \

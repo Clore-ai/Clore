@@ -6,6 +6,9 @@
 
 #include "consensus.h"
 #include <validation.h>
+#include "params.h"
+#include "util.h"
+#include "timedata.h"
 
 unsigned int GetMaxBlockWeight()
 {
@@ -28,3 +31,32 @@ unsigned int GetMaxBlockSerializedSize()
     // Old block serialized size for when assets weren't activated
 //    return MAX_BLOCK_SERIALIZED_SIZE;
 }
+
+namespace Consensus {
+
+bool Params::HasStakeMinAgeOrDepth(const int contextHeight, const uint32_t contextTime, const int utxoFromBlockHeight, const uint32_t utxoFromBlockTime) const
+{
+    // before stake modifier V2, we require the utxo to be nStakeMinAge old
+    if (!NetworkUpgradeActive(contextHeight, Consensus::ENABLE_POS_VALIDATORS))
+        return (utxoFromBlockTime + nStakeMinAge <= contextTime);
+    // with stake modifier V2+, we require the utxo to be nStakeMinDepth deep in the chain
+    return (contextHeight - utxoFromBlockHeight >= nStakeMinDepth);
+}
+
+int64_t Params::FutureBlockTimeDrift(const int nHeight) const
+{
+    // Return appropriate time drift based on PoS activation status
+    if (NetworkUpgradeActive(nHeight, Consensus::ENABLE_POS_STAKING)) {
+        return nFutureTimeDriftPoS;
+    }
+    return nFutureTimeDriftPoW;
+}
+
+bool Params::IsValidBlockTimeStamp(const int64_t nTime, const int nHeight) const
+{
+    // Validate timestamp is not too far in the future
+    int64_t maxFutureTime = GetAdjustedTime() + FutureBlockTimeDrift(nHeight);
+    return nTime <= maxFutureTime;
+}
+
+} // namespace Consensus

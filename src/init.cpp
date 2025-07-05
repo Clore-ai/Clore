@@ -10,11 +10,13 @@
 
 #include "init.h"
 
+#include "activevalidator.h"
 #include "addrman.h"
 #include "amount.h"
 #include "assets/assetdb.h"
 #include "assets/assets.h"
 #include "assets/snapshotrequestdb.h"
+#include "base58.h"
 #include "chain.h"
 #include "chainparams.h"
 #include "checkpoints.h"
@@ -80,6 +82,7 @@ bool fFeeEstimatesInitialized = false;
 static const bool DEFAULT_PROXYRANDOMIZE = true;
 static const bool DEFAULT_REST_ENABLE = false;
 static const bool DEFAULT_STOPAFTERBLOCKIMPORT = false;
+static const bool DEFAULT_VALIDATOR = false;
 
 std::unique_ptr<CConnman> g_connman;
 std::unique_ptr<PeerLogicValidation> peerLogic;
@@ -573,6 +576,11 @@ std::string HelpMessage(HelpMessageMode mode)
         strUsage += HelpMessageOpt("-printpriority", strprintf("Log transaction fee per kB when mining blocks (default: %u)", DEFAULT_PRINTPRIORITY));
     }
     strUsage += HelpMessageOpt("-shrinkdebugfile", _("Shrink debug.log file on client startup (default: 1 when no -debug)"));
+
+    strUsage += HelpMessageGroup(_("Validator options:"));
+    strUsage += HelpMessageOpt("-validator=<n>", strprintf("Enable the client to act as a validator (0-1, default: %u)", DEFAULT_VALIDATOR));
+    strUsage += HelpMessageOpt("-validatorprivkey=<key>", "Set the validator private key for operational signing");
+    strUsage += HelpMessageOpt("-validatoraddr=<addr>", "Set external address:port to get to this validator (example: 192.168.1.100:8501)");
 
     AppendParamsHelpMessages(strUsage, showDebug);
 
@@ -1949,10 +1957,94 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
     }
 #endif
 
-    // ********************************************************* Step 13: finished
+    // ********************************************************* Step 13: Enable active validator
+    if (!InitActiveValidator()) return false;
+
+    // ********************************************************* Step 14: finished
     uiInterface.InitMessage(_("Done Loading"));
 
     return !fRequestShutdown;
 }
 
 // GenerateClores function moved to miner.cpp to avoid duplicate definition
+
+// Helper function to get keys from secret string (replaces CMessageSigner::GetKeysFromSecret)
+bool GetKeysFromSecret(const std::string& strSecret, CKey& keyRet, CPubKey& pubkeyRet)
+{
+    CCloreSecret vchSecret;
+    if (!vchSecret.SetString(strSecret)) {
+        return false;
+    }
+    keyRet = vchSecret.GetKey();
+    if (!keyRet.IsValid()) {
+        return false;
+    }
+    pubkeyRet = keyRet.GetPubKey();
+    return true;
+}
+
+bool InitActiveValidator()
+{
+    fValidatorMode = gArgs.GetBoolArg("-validator", DEFAULT_VALIDATOR);
+
+    if (fValidatorMode) {
+        // Validator must be able to handle connections
+        if (gArgs.IsArgSet("-connect") && gArgs.GetArgs("-connect").size() > 0) {
+            return InitError(_("Cannot be a validator and only connect to specific nodes"));
+        }
+
+        if (gArgs.GetArg("-maxconnections", DEFAULT_MAX_PEER_CONNECTIONS) < DEFAULT_MAX_PEER_CONNECTIONS) {
+            return InitError(strprintf(_("Validator must be able to handle at least %d connections, set %s=%d"),
+                                     DEFAULT_MAX_PEER_CONNECTIONS, "-maxconnections", DEFAULT_MAX_PEER_CONNECTIONS));
+        }
+
+        const std::string& validatorPrivKeyStr = gArgs.GetArg("-validatorprivkey", "");
+        const std::string& validatorAddrStr = gArgs.GetArg("-validatoraddr", "");
+
+        if (validatorPrivKeyStr.empty()) {
+            return InitError("ERROR: Validator private key cannot be empty. Set -validatorprivkey=<key>");
+        }
+
+        if (validatorAddrStr.empty()) {
+            return InitError("ERROR: Validator address cannot be empty. Set -validatoraddr=<addr>");
+        }
+
+        // Parse validator address
+        const CChainParams& params = GetParams();
+        int nPort = 0;
+        int nDefaultPort = params.GetDefaultPort();
+        std::string strHost;
+        SplitHostPort(validatorAddrStr, nPort, strHost);
+
+        // Allow port to be omitted and use default
+        if (nPort == 0) nPort = nDefaultPort;
+        // Check if regtest (use NetworkIDString comparison instead of IsRegTestNet)
+        bool isRegTest = (params.NetworkIDString() == CBaseChainParams::REGTEST);
+        if (nPort != nDefaultPort && !isRegTest) {
+            return InitError(strprintf(_("Invalid -validatoraddr port %d, only %d is supported on %s-net."),
+                                       nPort, nDefaultPort, params.NetworkIDString()));
+        }
+
+        CService addrTest(LookupNumeric(strHost.c_str(), nPort));
+        if (!addrTest.IsValid()) {
+            return InitError(strprintf(_("Invalid -validatoraddr address: %s"), validatorAddrStr));
+        }
+
+        // Validate private key
+        CKey validatorKey;
+        CPubKey validatorPubKey;
+        if (!GetKeysFromSecret(validatorPrivKeyStr, validatorKey, validatorPubKey)) {
+            return InitError(_("Invalid validatorprivkey. Please see the documentation."));
+        }
+
+        // Store validator configuration
+        activeValidator.validatorPrivKey = validatorKey;
+        activeValidator.pubKeyValidator = validatorPubKey;
+        activeValidator.service = addrTest;
+        
+        LogPrintf("Validator initialized successfully with pubkey: %s\n", 
+                  validatorPubKey.GetID().ToString());
+    }
+
+    return true;
+}

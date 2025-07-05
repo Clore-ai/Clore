@@ -1,9 +1,22 @@
 // Copyright (c) 2011-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2019 The Raven Core developers
 // Copyright (c) 2020-2021 The Neoxa Core developers
-// Copyright (c) 2022-2022 The CLORE.AI
+// Copyright (c) 2022-2024 The CLORE.AI Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+/**
+ * CLORE Policy Fee Estimator Tests - EXTREMELY CRITICAL
+ * 
+ * Tests dynamic fee estimation algorithms that predict optimal transaction fees based on network congestion and confirmation target blocks.
+ * Essential for user experience enabling accurate fee predictions, preventing overpayment/underpayment, and ensuring reliable transaction confirmation.
+ * 
+ * IMPACT SUMMARY:
+ * - Security: Prevents fee-related DoS attacks and ensures transactions are confirmed within expected timeframes
+ * - Performance: Optimizes network efficiency by balancing fee market dynamics and reducing mempool congestion
+ * - Users: Provides accurate fee estimates for wallets, prevents transaction delays, and reduces unnecessary transaction costs
+ * - Business: Critical for exchange operations, automated systems, and any service requiring predictable transaction confirmation times
+ */
 
 #include "policy/policy.h"
 #include "policy/fees.h"

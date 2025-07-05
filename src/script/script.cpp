@@ -147,6 +147,7 @@ const char* GetOpName(opcodetype opcode)
 
     /** CLORE START */
     case OP_CLORE_ASSET              : return "OP_CLORE_ASSET";
+    case OP_CHECKCOLDSTAKEVERIFY     : return "OP_CHECKCOLDSTAKEVERIFY";
     /** CLORE END */
 
     case OP_INVALIDOPCODE          : return "OP_INVALIDOPCODE";
@@ -595,5 +596,27 @@ bool AmountFromReissueScript(const CScript& scriptPubKey, CAmount& nAmount)
     return true;
 }
 //!--------------------------------------------------------------------------------------------------------------------------!//
+
+/** CLORE START */
+bool CScript::IsPayToColdStaking() const
+{
+    // Cold staking script pattern:
+    // OP_DUP OP_HASH160 OP_ROT OP_IF OP_CHECKCOLDSTAKEVERIFY <20-byte staking key> OP_ELSE <20-byte spending key> OP_ENDIF OP_EQUALVERIFY OP_CHECKSIG
+    // Total size: 1 + 1 + 1 + 1 + 1 + 1 + 20 + 1 + 1 + 20 + 1 + 1 + 1 = 51 bytes
+    if (this->size() != 51) return false;
+    
+    return ((*this)[0] == OP_DUP &&
+            (*this)[1] == OP_HASH160 &&
+            (*this)[2] == OP_ROT &&
+            (*this)[3] == OP_IF &&
+            (*this)[4] == OP_CHECKCOLDSTAKEVERIFY &&
+            (*this)[5] == 0x14 &&  // 20 bytes for staking key
+            (*this)[26] == OP_ELSE &&
+            (*this)[27] == 0x14 &&  // 20 bytes for spending key
+            (*this)[48] == OP_ENDIF &&
+            (*this)[49] == OP_EQUALVERIFY &&
+            (*this)[50] == OP_CHECKSIG);
+}
+/** CLORE END */
 
 

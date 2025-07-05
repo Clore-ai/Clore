@@ -1,9 +1,22 @@
 // Copyright (c) 2012-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2019 The Raven Core developers
 // Copyright (c) 2020-2021 The Neoxa Core developers
-// Copyright (c) 2022-2022 The CLORE.AI
+// Copyright (c) 2022-2024 The CLORE.AI Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+/**
+ * CLORE RPC API Tests - EXTREMELY CRITICAL
+ * 
+ * Tests JSON-RPC API functionality including transaction creation, asset operations, network control, and peer management.
+ * Primary interface for exchanges, wallets, services, and automated systems to interact with CLORE nodes programmatically.
+ * 
+ * IMPACT SUMMARY:
+ * - Security: Validates API parameter handling preventing injection attacks and ensuring secure transaction operations
+ * - Performance: Tests efficient RPC processing for high-frequency trading systems and service integrations
+ * - Users: Enables wallet integration, exchange deposits/withdrawals, and all programmatic CLORE interactions
+ * - Business: Critical for exchange operations, trading systems, asset management platforms, and validator control interfaces
+ */
 
 #include "rpc/server.h"
 #include "rpc/client.h"

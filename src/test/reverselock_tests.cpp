@@ -1,9 +1,22 @@
 // Copyright (c) 2015-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2019 The Raven Core developers
 // Copyright (c) 2020-2021 The Neoxa Core developers
-// Copyright (c) 2022-2022 The CLORE.AI
+// Copyright (c) 2022-2024 The CLORE.AI Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+/**
+ * CLORE Reverse Lock Tests - HIGHLY RELEVANT
+ * 
+ * Tests reverse lock utility enabling temporary lock release in multi-threaded operations, preventing deadlocks and improving concurrency.
+ * Critical synchronization primitive for complex multi-threaded scenarios in network operations, validation, and mempool management.
+ * 
+ * IMPACT SUMMARY:
+ * - Security: Prevents deadlock conditions and race conditions that could halt node operations or create inconsistent state
+ * - Performance: Enables efficient multi-threaded operations improving node responsiveness and throughput under load
+ * - Users: Improves node stability and response times during high transaction volume and network activity
+ * - Business: Critical for exchange and service infrastructure requiring high-performance concurrent operations
+ */
 
 #include "reverselock.h"
 #include "test/test_clore.h"

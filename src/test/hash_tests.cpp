@@ -1,9 +1,22 @@
 // Copyright (c) 2013-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2019 The Raven Core developers
 // Copyright (c) 2020-2021 The Neoxa Core developers
-// Copyright (c) 2022-2022 The CLORE.AI
+// Copyright (c) 2022-2024 The CLORE.AI Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+/**
+ * CLORE Hash Function Tests - EXTREMELY CRITICAL
+ * 
+ * Tests core hash functions including MurmurHash3 (bloom filters), Hash16R (mining), 
+ * and SipHash (networking). These are fundamental cryptographic primitives.
+ * 
+ * IMPACT SUMMARY:
+ * - Security: Hash failures could break mining, networking, or create consensus splits
+ * - Performance: Hash functions are used extensively in all blockchain operations
+ * - Users: Mining rewards and transaction processing depend on correct hashing
+ * - Business: Mining pools and exchanges depend on hash function reliability
+ */
 
 #include "hash.h"
 #include "utilstrencodings.h"

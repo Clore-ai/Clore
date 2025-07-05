@@ -1,9 +1,23 @@
 // Copyright (c) 2012-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2019 The Raven Core developers
 // Copyright (c) 2020-2021 The Neoxa Core developers
-// Copyright (c) 2022-2022 The CLORE.AI
+// Copyright (c) 2022-2024 The CLORE.AI Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+/**
+ * CLORE Network Communication Tests - EXTREMELY CRITICAL
+ * 
+ * Tests core networking functionality including peer discovery, address management, node connections, and network resilience.
+ * Fundamental infrastructure enabling all CLORE nodes to communicate, synchronize, and maintain consensus across the network.
+ * 
+ * IMPACT SUMMARY:
+ * - Security: Validates peer management systems preventing network partitioning, eclipse attacks, and DoS vulnerabilities
+ * - Performance: Ensures efficient peer discovery and connection management for optimal network participation and data propagation
+ * - Users: Enables reliable blockchain synchronization, transaction broadcasting, and network connectivity for all wallet operations
+ * - Business: Required for all network participants including miners, validators, exchanges, and services dependent on network reliability
+ */
+
 #include "addrman.h"
 #include "test/test_clore.h"
 #include <string>

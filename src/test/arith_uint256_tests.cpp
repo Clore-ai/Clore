@@ -1,9 +1,40 @@
 // Copyright (c) 2011-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2019 The Raven Core developers
 // Copyright (c) 2020-2021 The Neoxa Core developers
-// Copyright (c) 2022-2022 The CLORE.AI
+// Copyright (c) 2022-2024 The CLORE.AI Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+/**
+ * CLORE 256-bit Arithmetic Tests
+ * 
+ * These tests validate 256-bit unsigned integer operations which are FUNDAMENTAL
+ * to CLORE's cryptographic security and blockchain consensus:
+ * 
+ * 1. Hash Operations: All blockchain hashes are 256-bit values
+ * 2. Proof-of-Work: Difficulty calculations require precise 256-bit arithmetic
+ * 3. Cryptography: Public key operations use 256-bit integers
+ * 4. Target Calculations: Mining targets depend on accurate large integer math
+ * 5. Consensus Safety: Arithmetic errors could cause chain splits
+ * 
+ * WHY THIS MATTERS FOR CLORE:
+ * - Block hashes, transaction hashes, and merkle roots are all 256-bit values
+ * - Proof-of-Work difficulty adjustment requires precise arithmetic
+ * - Mining target comparisons must be mathematically correct
+ * - Cryptographic signatures depend on 256-bit integer operations
+ * - Any overflow or precision errors could break network consensus
+ * - Validator nodes must perform identical arithmetic across all platforms
+ * 
+ * SECURITY IMPLICATIONS:
+ * - Arithmetic overflow could invalidate proof-of-work calculations
+ * - Precision errors could cause nodes to accept/reject different blocks
+ * - Bit manipulation errors could compromise cryptographic security
+ * - Division by zero could crash validator nodes
+ * - Incorrect comparisons could disrupt difficulty adjustment
+ * 
+ * CONSENSUS CRITICAL: All arithmetic operations must produce identical results
+ * across different platforms, compilers, and CPU architectures.
+ */
 
 #include <boost/test/unit_test.hpp>
 #include <stdint.h>

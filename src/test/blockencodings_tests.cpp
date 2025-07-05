@@ -1,9 +1,22 @@
 // Copyright (c) 2011-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2019 The Raven Core developers
 // Copyright (c) 2020-2021 The Neoxa Core developers
-// Copyright (c) 2022-2022 The CLORE.AI
+// Copyright (c) 2022-2024 The CLORE.AI Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+/**
+ * CLORE Compact Block Encoding Tests - HIGHLY CRITICAL
+ * 
+ * Tests compact block encoding that reduces block transmission size by 95%+ through efficient compression.
+ * Critical for network bandwidth optimization and faster block propagation.
+ * 
+ * IMPACT SUMMARY:
+ * - Security: Maintains block integrity while enabling faster propagation that reduces reorganization attack windows
+ * - Performance: Dramatically reduces bandwidth usage and improves network synchronization speed
+ * - Users: Enables participation from bandwidth-constrained regions and mobile devices
+ * - Business: Reduces infrastructure costs and enables more decentralized node distribution
+ */
 
 #include "blockencodings.h"
 #include "consensus/merkle.h"

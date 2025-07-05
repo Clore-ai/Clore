@@ -71,25 +71,25 @@ UniValue listvalidatorconf(const JSONRPCRequest& request)
         strFilter = request.params[0].get_str();
     }
 
-    std::vector<CValidatorConfig::CValidatorEntry> mnEntries;
-    mnEntries = validatorConfig.getEntries();
+    std::vector<CValidatorConfig::CValidatorEntry> validatorEntries;
+    validatorEntries = validatorConfig.getEntries();
 
     const CChainParams& chainparams = GetParams();
     UniValue ret(UniValue::VARR);
 
-    for (const auto& mne : mnEntries) {
+    for (const auto& validatorEntry : validatorEntries) {
         // Apply filter if specified
         if (!strFilter.empty()) {
-            if (mne.getAlias().find(strFilter) == std::string::npos &&
-                mne.getIp().find(strFilter) == std::string::npos &&
-                mne.getTxHash().find(strFilter) == std::string::npos) {
+            if (validatorEntry.getAlias().find(strFilter) == std::string::npos &&
+                validatorEntry.getIp().find(strFilter) == std::string::npos &&
+                validatorEntry.getTxHash().find(strFilter) == std::string::npos) {
                 continue;
             }
         }
 
         // Determine status based on authorization
         std::string status = "UNKNOWN";
-        bool isAuthorized = chainparams.IsAuthorizedValidatorAlias(mne.getAlias());
+        bool isAuthorized = chainparams.IsAuthorizedValidatorAlias(validatorEntry.getAlias());
 
         if (chainparams.NetworkIDString() == "regtest") {
             status = "AUTHORIZED_REGTEST";
@@ -101,16 +101,16 @@ UniValue listvalidatorconf(const JSONRPCRequest& request)
 
         // Convert output index
         int outputIndex = 0;
-        mne.castOutputIndex(outputIndex);
+        validatorEntry.castOutputIndex(outputIndex);
 
-        UniValue mnObj(UniValue::VOBJ);
-        mnObj.pushKV("alias", mne.getAlias());
-        mnObj.pushKV("address", mne.getIp());
-        mnObj.pushKV("txHash", mne.getTxHash());
-        mnObj.pushKV("outputIndex", outputIndex);
-        mnObj.pushKV("status", status);
-        mnObj.pushKV("authorized", isAuthorized || chainparams.NetworkIDString() == "regtest");
-        ret.push_back(mnObj);
+        UniValue validatorObj(UniValue::VOBJ);
+        validatorObj.pushKV("alias", validatorEntry.getAlias());
+        validatorObj.pushKV("address", validatorEntry.getIp());
+        validatorObj.pushKV("txHash", validatorEntry.getTxHash());
+        validatorObj.pushKV("outputIndex", outputIndex);
+        validatorObj.pushKV("status", status);
+        validatorObj.pushKV("authorized", isAuthorized || chainparams.NetworkIDString() == "regtest");
+        ret.push_back(validatorObj);
     }
 
     return ret;
@@ -147,7 +147,7 @@ UniValue getvalidatoroutputs(const JSONRPCRequest& request)
 
     UniValue ret(UniValue::VARR);
     for (const COutput& out : vPossibleCoins) {
-        if (out.tx->tx->vout[out.i].nValue == 1000 * COIN) { // 1000 CLORE collateral
+        if (out.tx->tx->vout[out.i].nValue == GetParams().GetConsensus().nValidatorCollateralAmt) { // Validator collateral
             UniValue obj(UniValue::VOBJ);
             obj.pushKV("txhash", out.tx->GetHash().ToString());
             obj.pushKV("outputidx", out.i);
@@ -214,14 +214,14 @@ UniValue getvalidatorstatus(const JSONRPCRequest& request)
         throw JSONRPCError(RPC_MISC_ERROR, "This is not a validator");
 
     // TODO: Implement proper validator status when infrastructure is ready
-    UniValue mnObj(UniValue::VOBJ);
-    mnObj.pushKV("outpoint", "Not implemented");
-    mnObj.pushKV("service", "Not implemented");
-    mnObj.pushKV("pubkey", "Not implemented");
-    mnObj.pushKV("status", "Not implemented");
-    mnObj.pushKV("message", "Validator infrastructure not yet implemented");
+    UniValue validatorObj(UniValue::VOBJ);
+    validatorObj.pushKV("outpoint", "Not implemented");
+    validatorObj.pushKV("service", "Not implemented");
+    validatorObj.pushKV("pubkey", "Not implemented");
+    validatorObj.pushKV("status", "Not implemented");
+    validatorObj.pushKV("message", "Validator infrastructure not yet implemented");
 
-    return mnObj;
+    return validatorObj;
 }
 
 UniValue validatorcurrent(const JSONRPCRequest& request)
@@ -293,9 +293,11 @@ UniValue createvalidatorbroadcast(const JSONRPCRequest& request)
         throw std::runtime_error(
             "createvalidatorbroadcast \"alias\" \"service\" \"keyCollateral\" \"txHash\" outputIndex\n"
             "\nCreates a validator broadcast message for the given validator.\n"
+            "\nSECURITY: Authorization is based on the collateral private key, not the alias.\n"
+            "\nOnly holders of authorized collateral private keys can create broadcasts.\n"
 
             "\nArguments:\n"
-            "1. \"alias\"         (string, required) Alias name for the validator\n"
+            "1. \"alias\"         (string, required) Alias name for the validator (informational only)\n"
             "2. \"service\"       (string, required) '<ip>:<port>' The validator service location\n"
             "3. \"keyCollateral\" (string, required) The collateral address private key\n"
             "4. \"txHash\"        (string, required) Transaction hash for the collateral\n"
@@ -303,44 +305,107 @@ UniValue createvalidatorbroadcast(const JSONRPCRequest& request)
 
             "\nResult:\n"
             "{\n"
-            "  \"alias\": \"xxxx\",       (string) Alias name\n"
-            "  \"result\": \"xxxx\",      (string) Result message\n"
-            "  \"hex\": \"xxxx\"          (string) Hex encoded broadcast (if successful)\n"
+            "  \"alias\": \"xxxx\",           (string) Alias name (informational)\n"
+            "  \"service\": \"xxxx\",         (string) Service address\n"
+            "  \"collateralAddress\": \"xxxx\", (string) Derived collateral address\n"
+            "  \"authorized\": true|false,    (boolean) Whether the collateral address is authorized\n"
+            "  \"result\": \"xxxx\",          (string) Result message\n"
+            "  \"hex\": \"xxxx\"              (string) Hex encoded broadcast (if successful)\n"
             "}\n"
 
             "\nExamples:\n" +
-            HelpExampleCli("createvalidatorbroadcast", "\"mn1\" \"127.0.0.1:9999\" \"privkey\" \"txhash\" 0") +
-            HelpExampleRpc("createvalidatorbroadcast", "\"mn1\", \"127.0.0.1:9999\", \"privkey\", \"txhash\", 0"));
+            HelpExampleCli("createvalidatorbroadcast", "\"validator1\" \"127.0.0.1:9999\" \"privkey\" \"txhash\" 0") +
+            HelpExampleRpc("createvalidatorbroadcast", "\"validator1\", \"127.0.0.1:9999\", \"privkey\", \"txhash\", 0"));
 
     std::string alias = request.params[0].get_str();
     std::string service = request.params[1].get_str();
-    std::string keyCollateral = request.params[2].get_str(); // Currently unused - for future implementation
+    std::string keyCollateral = request.params[2].get_str();
     std::string txHash = request.params[3].get_str();
-    /*int outputIndex = */ request.params[4].get_int(); // Currently unused
-
-    // Check if this validator is authorized via collateral address
-    // Extract address from private key to check authorization
-    std::string collateralAddress = ""; // TODO: Extract from keyCollateral when implemented
+    int outputIndex = request.params[4].get_int();
 
     const CChainParams& chainparams = GetParams();
-    bool isAuthorized = false;
-
-    // For now, check by alias since we don't have key->address conversion implemented
-    isAuthorized = chainparams.IsAuthorizedValidatorAlias(alias);
-
     UniValue statusObj(UniValue::VOBJ);
     statusObj.pushKV("alias", alias);
     statusObj.pushKV("service", service);
-    statusObj.pushKV("authorized", isAuthorized);
 
-    if (!isAuthorized && chainparams.NetworkIDString() != "regtest") {
-        statusObj.pushKV("result", "ERROR: Validator not authorized on this network");
-        statusObj.pushKV("error", "This validator alias is not in the authorized list for " + chainparams.NetworkIDString());
-    } else {
-        statusObj.pushKV("result", "Validator broadcast creation not yet implemented (but authorization passed)");
+    // SECURITY: Extract and validate collateral address from private key
+    std::string collateralAddress = "";
+    bool addressExtractionSuccess = false;
+    
+    try {
+        // Parse the private key
+        CCloreSecret cloreSecret;
+        if (!cloreSecret.SetString(keyCollateral)) {
+            statusObj.pushKV("authorized", false);
+            statusObj.pushKV("result", "ERROR: Invalid private key format");
+            statusObj.pushKV("error", "The provided keyCollateral is not a valid private key");
+            statusObj.pushKV("hex", "");
+            return statusObj;
+        }
+
+        // Get the CKey from CCloreSecret
+        CKey key = cloreSecret.GetKey();
+        if (!key.IsValid()) {
+            statusObj.pushKV("authorized", false);
+            statusObj.pushKV("result", "ERROR: Invalid private key");
+            statusObj.pushKV("error", "The private key is not valid");
+            statusObj.pushKV("hex", "");
+            return statusObj;
+        }
+
+        // Get public key and derive address
+        CPubKey pubkey = key.GetPubKey();
+        if (!pubkey.IsValid()) {
+            statusObj.pushKV("authorized", false);
+            statusObj.pushKV("result", "ERROR: Cannot derive public key");
+            statusObj.pushKV("error", "Failed to derive public key from private key");
+            statusObj.pushKV("hex", "");
+            return statusObj;
+        }
+
+        // Convert public key to address
+        CKeyID keyID = pubkey.GetID();
+        CTxDestination dest = keyID;
+        collateralAddress = EncodeDestination(dest);
+        addressExtractionSuccess = true;
+
+        statusObj.pushKV("collateralAddress", collateralAddress);
+
+    } catch (const std::exception& e) {
+        statusObj.pushKV("authorized", false);
+        statusObj.pushKV("result", "ERROR: Failed to process private key");
+        statusObj.pushKV("error", std::string("Exception: ") + e.what());
+        statusObj.pushKV("hex", "");
+        return statusObj;
     }
 
-    statusObj.pushKV("hex", "");
+    // SECURITY: Check authorization by collateral address (not alias!)
+    bool isAuthorized = false;
+    if (addressExtractionSuccess) {
+        if (chainparams.NetworkIDString() == "regtest") {
+            // In regtest, all validators are authorized for testing
+            isAuthorized = true;
+        } else {
+            // Use the secure address-based authorization check
+            isAuthorized = chainparams.IsAuthorizedValidatorAddress(collateralAddress);
+        }
+    }
+
+    statusObj.pushKV("authorized", isAuthorized);
+
+    if (!isAuthorized) {
+        statusObj.pushKV("result", "ERROR: Validator not authorized on this network");
+        statusObj.pushKV("error", "The collateral address " + collateralAddress + 
+                                   " is not in the authorized validators list for " + 
+                                   chainparams.NetworkIDString() + " network");
+        statusObj.pushKV("hex", "");
+    } else {
+        // TODO: Implement actual broadcast creation when infrastructure is ready
+        statusObj.pushKV("result", "SUCCESS: Authorization verified (broadcast creation not yet implemented)");
+        statusObj.pushKV("note", "Collateral address authorization confirmed");
+        statusObj.pushKV("hex", "");
+    }
+
     return statusObj;
 }
 
@@ -536,11 +601,11 @@ UniValue listauthorizedvalidators(const JSONRPCRequest& request)
     }
 
     const CChainParams& chainparams = GetParams();
-    const std::vector<CChainParams::AuthorizedValidator>& authorizedMNs = chainparams.GetAuthorizedValidators();
+    const std::vector<CChainParams::AuthorizedValidator>& authorizedValidators = chainparams.GetAuthorizedValidators();
 
     UniValue ret(UniValue::VARR);
 
-    for (const auto& validator : authorizedMNs) {
+    for (const auto& validator : authorizedValidators) {
         // Apply filter if specified
         if (!strFilter.empty()) {
             if (validator.alias.find(strFilter) == std::string::npos &&
@@ -634,8 +699,8 @@ UniValue createvalidatorconfig(const JSONRPCRequest& request)
             "}\n"
 
             "\nExamples:\n" +
-            HelpExampleCli("createvalidatorconfig", "\"mn1\" \"127.0.0.1:8788\" \"abc123def456...\" 0") +
-            HelpExampleRpc("createvalidatorconfig", "\"mn1\", \"127.0.0.1:8788\", \"abc123def456...\", 0"));
+            HelpExampleCli("createvalidatorconfig", "\"validator1\" \"127.0.0.1:8788\" \"abc123def456...\" 0") +
+            HelpExampleRpc("createvalidatorconfig", "\"validator1\", \"127.0.0.1:8788\", \"abc123def456...\", 0"));
 
     std::string alias = request.params[0].get_str();
     std::string address = request.params[1].get_str();
@@ -701,12 +766,12 @@ UniValue createvalidatorconfig(const JSONRPCRequest& request)
         if (wtx) {
             if (outputIndex >= 0 && outputIndex < (int)wtx->tx->vout.size()) {
                 CAmount nValue = wtx->tx->vout[outputIndex].nValue;
-                if (nValue == 1000 * COIN) {
+                if (nValue == GetParams().GetConsensus().nValidatorCollateralAmt) {
                     result.pushKV("collateralValid", true);
                 } else {
                     result.pushKV("collateralValid", false);
                     result.pushKV("collateralAmount", (double)nValue / COIN);
-                    result.pushKV("warning", "Collateral amount is not exactly 1000 CLORE");
+                    result.pushKV("warning", strprintf("Collateral amount is not exactly %d CLORE", GetParams().GetConsensus().nValidatorCollateralAmt / COIN));
                 }
             } else {
                 result.pushKV("collateralValid", false);
@@ -768,8 +833,8 @@ UniValue addvalidatorconfig(const JSONRPCRequest& request)
             "}\n"
 
             "\nExamples:\n" +
-            HelpExampleCli("addvalidatorconfig", "\"mn1\" \"127.0.0.1:8788\" \"93HaYBV...\" \"abc123...\" 0") +
-            HelpExampleRpc("addvalidatorconfig", "\"mn1\", \"127.0.0.1:8788\", \"93HaYBV...\", \"abc123...\", 0"));
+            HelpExampleCli("addvalidatorconfig", "\"validator1\" \"127.0.0.1:8788\" \"93HaYBV...\" \"abc123...\" 0") +
+            HelpExampleRpc("addvalidatorconfig", "\"validator1\", \"127.0.0.1:8788\", \"93HaYBV...\", \"abc123...\", 0"));
 
     std::string alias = request.params[0].get_str();
     std::string address = request.params[1].get_str();
@@ -826,8 +891,8 @@ UniValue removevalidatorconfig(const JSONRPCRequest& request)
             "}\n"
 
             "\nExamples:\n" +
-            HelpExampleCli("removevalidatorconfig", "\"mn1\"") +
-            HelpExampleRpc("removevalidatorconfig", "\"mn1\""));
+            HelpExampleCli("removevalidatorconfig", "\"validator1\"") +
+            HelpExampleRpc("removevalidatorconfig", "\"validator1\""));
 
     std::string alias = request.params[0].get_str();
     UniValue result(UniValue::VOBJ);
@@ -878,8 +943,8 @@ UniValue startvalidator(const JSONRPCRequest& request)
             "}\n"
 
             "\nExamples:\n" +
-            HelpExampleCli("startvalidator", "\"alias\" false \"my_mn\"") +
-            HelpExampleRpc("startvalidator", "\"alias\", false, \"my_mn\""));
+            HelpExampleCli("startvalidator", "\"alias\" false \"my_validator\"") +
+            HelpExampleRpc("startvalidator", "\"alias\", false, \"my_validator\""));
 
     std::string strCommand = request.params[0].get_str();
 

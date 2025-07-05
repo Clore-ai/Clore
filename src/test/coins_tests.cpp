@@ -1,9 +1,22 @@
 // Copyright (c) 2014-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2019 The Raven Core developers
 // Copyright (c) 2020-2021 The Neoxa Core developers
-// Copyright (c) 2022-2022 The CLORE.AI
+// Copyright (c) 2022-2024 The CLORE.AI Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+/**
+ * CLORE UTXO/Coin Management Tests - EXTREMELY CRITICAL
+ * 
+ * Tests UTXO system that prevents double-spending and manages unspent transaction outputs.
+ * Core security mechanism for blockchain integrity and transaction validation.
+ * 
+ * IMPACT SUMMARY:
+ * - Security: Prevents double-spending attacks and maintains blockchain state integrity
+ * - Performance: Efficient UTXO cache directly impacts block validation speed
+ * - Users: Transaction validation and confirmation times depend on UTXO performance
+ * - Business: Validator competitiveness and operational costs affected by UTXO efficiency
+ */
 
 #include "coins.h"
 #include "script/standard.h"

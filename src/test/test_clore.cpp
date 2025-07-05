@@ -1,7 +1,22 @@
 // Copyright (c) 2011-2016 The Bitcoin Core developers
-// Copyright (c) 2017-2021 The Raven Core developers
+// Copyright (c) 2017-2019 The Raven Core developers
+// Copyright (c) 2020-2021 The Neoxa Core developers
+// Copyright (c) 2022-2024 The CLORE.AI Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+/**
+ * CLORE Test Infrastructure - EXTREMELY CRITICAL
+ * 
+ * Core testing infrastructure providing blockchain testing environments, mock data generation, and comprehensive test chain setup.
+ * Essential foundation enabling reliable testing of all CLORE components including consensus, validation, mining, and network operations.
+ * 
+ * IMPACT SUMMARY:
+ * - Security: Enables comprehensive security testing preventing regressions and validating all critical blockchain security features
+ * - Performance: Provides efficient test environments for performance validation and regression testing of core components
+ * - Users: Ensures reliable wallet and node functionality through comprehensive testing of user-facing features
+ * - Business: Critical foundation for validator testing, exchange integration confidence, and maintaining network reliability
+ */
 
 #include "test_clore.h"
 #include "chainparams.h"

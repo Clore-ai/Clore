@@ -52,6 +52,8 @@ const char* GetTxnOutputType(txnouttype t)
         return ASSET_TRANSFER_STRING;
     case TX_REISSUE_ASSET:
         return ASSET_REISSUE_STRING;
+    case TX_COLDSTAKE:
+        return "coldstake";
         /** CLORE END */
     }
     return nullptr;
@@ -398,3 +400,43 @@ bool IsValidDestination(const CTxDestination& dest)
 {
     return dest.which() != 0;
 }
+
+/** CLORE Cold Staking Implementation START */
+
+static bool MatchPayToColdStaking(const CScript& script, valtype& stakerPubKeyHash, valtype& ownerPubKeyHash)
+{
+    if (script.IsPayToColdStaking()) {
+        stakerPubKeyHash = valtype(script.begin() + 6, script.begin() + 26);
+        ownerPubKeyHash = valtype(script.begin() + 28, script.begin() + 48);
+        return true;
+    }
+    return false;
+}
+
+CScript GetScriptForColdStaking(const CKeyID& stakingKey, const CKeyID& spendingKey)
+{
+    CScript script;
+    script << OP_DUP << OP_HASH160 << OP_ROT <<
+            OP_IF << OP_CHECKCOLDSTAKEVERIFY << ToByteVector(stakingKey) <<
+            OP_ELSE << ToByteVector(spendingKey) << OP_ENDIF <<
+            OP_EQUALVERIFY << OP_CHECKSIG;
+    return script;
+}
+
+bool ExtractColdStakeAddresses(const CScript& script, CKeyID& stakingKey, CKeyID& spendingKey)
+{
+    valtype vStakingKey, vSpendingKey;
+    if (MatchPayToColdStaking(script, vStakingKey, vSpendingKey)) {
+        stakingKey = CKeyID(uint160(vStakingKey));
+        spendingKey = CKeyID(uint160(vSpendingKey));
+        return true;
+    }
+    return false;
+}
+
+bool IsColdStakeScript(const CScript& script)
+{
+    return script.IsPayToColdStaking();
+}
+
+/** CLORE Cold Staking Implementation END */

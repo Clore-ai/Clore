@@ -13307,32 +13307,60 @@ bool AreEnforcedValuesDeployed()
 
 bool AreCoinbaseCheckAssetsDeployed()
 {
-    return false; // Assets are disabled
+    if (fCheckCoinbaseAssetsIsActive)
+        return true;
+
+    const ThresholdState thresholdState = VersionBitsTipState(GetParams().GetConsensus(), Consensus::DEPLOYMENT_COINBASE_ASSETS);
+    if (thresholdState == THRESHOLD_ACTIVE)
+        fCheckCoinbaseAssetsIsActive = true;
+
+    return fCheckCoinbaseAssetsIsActive;
 }
 
 bool AreAssetsDeployed()
 {
-    return false; // Assets are disabled
+    if (fAssetsIsActive)
+        return true;
+
+    const ThresholdState thresholdState = VersionBitsTipState(GetParams().GetConsensus(), Consensus::DEPLOYMENT_ASSETS);
+    if (thresholdState == THRESHOLD_ACTIVE)
+        fAssetsIsActive = true;
+
+    return fAssetsIsActive;
 }
 
 bool IsRip5Active()
 {
-    return false; // Assets are disabled
+    if (fRip5IsActive)
+        return true;
+
+    const ThresholdState thresholdState = VersionBitsTipState(GetParams().GetConsensus(), Consensus::DEPLOYMENT_MSG_REST_ASSETS);
+    if (thresholdState == THRESHOLD_ACTIVE)
+        fRip5IsActive = true;
+
+    return fRip5IsActive;
 }
 
 bool AreMessagesDeployed()
 {
-    return false; // Assets are disabled
+    return IsRip5Active();
 }
 
 bool AreTransferScriptsSizeDeployed()
 {
-    return false; // Assets are disabled
+    if (fTransferScriptIsActive)
+        return true;
+
+    const ThresholdState thresholdState = VersionBitsTipState(GetParams().GetConsensus(), Consensus::DEPLOYMENT_TRANSFER_SCRIPT_SIZE);
+    if (thresholdState == THRESHOLD_ACTIVE)
+        fTransferScriptIsActive = true;
+
+    return fTransferScriptIsActive;
 }
 
 bool AreRestrictedAssetsDeployed()
 {
-    return false; // Assets are disabled
+    return IsRip5Active();
 }
 
 bool IsDGWActive(unsigned int nBlockNumber)
@@ -13348,17 +13376,25 @@ bool IsDGWActive(unsigned int nBlockNumber)
 
 bool IsMessagingActive(unsigned int nBlockNumber)
 {
-    return false; // Assets are disabled
+    if (GetParams().MessagingActivationBlock()) {
+        return nBlockNumber > GetParams().MessagingActivationBlock();
+    } else {
+        return AreMessagesDeployed();
+    }
 }
 
 bool IsRestrictedActive(unsigned int nBlockNumber)
 {
-    return false; // Assets are disabled
+    if (GetParams().RestrictedActivationBlock()) {
+        return nBlockNumber > GetParams().RestrictedActivationBlock();
+    } else {
+        return AreRestrictedAssetsDeployed();
+    }
 }
 
 CAssetsCache* GetCurrentAssetCache()
 {
-    return nullptr; // Assets are disabled
+    return passets;
 }
 /** CLORE END */
 

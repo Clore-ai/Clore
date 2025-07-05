@@ -1,9 +1,22 @@
 // Copyright (c) 2012-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2019 The Raven Core developers
 // Copyright (c) 2020-2021 The Neoxa Core developers
-// Copyright (c) 2022-2022 The CLORE.AI
+// Copyright (c) 2022-2024 The CLORE.AI Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+/**
+ * CLORE P2SH Script Tests - EXTREMELY CRITICAL
+ * 
+ * Tests Pay-to-Script-Hash functionality enabling multi-signature wallets, complex transaction conditions, and advanced security features.
+ * Essential for exchange cold storage, validator security, corporate wallets, and any advanced transaction requiring multiple signatures or conditions.
+ * 
+ * IMPACT SUMMARY:
+ * - Security: Validates multi-signature functionality and script execution preventing fund loss and enabling advanced security models
+ * - Performance: Ensures efficient P2SH validation and DoS protection through proper sigop counting and script limits
+ * - Users: Enables multi-signature wallets, shared accounts, and advanced transaction types for enhanced security
+ * - Business: Critical for exchange cold storage, corporate treasury management, validator operations, and institutional custody solutions
+ */
 
 #include "consensus/tx_verify.h"
 #include "core_io.h"

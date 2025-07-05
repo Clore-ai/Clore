@@ -24,7 +24,7 @@ class CActiveValidator
 {
 private:
     // critical section to protect the inner data structures
-    mutable RecursiveMutex cs;
+    mutable CCriticalSection cs;
 
     // Validator state
     int nState{ACTIVE_VALIDATOR_INITIAL};
@@ -56,7 +56,7 @@ public:
     COutPoint outpoint;
     CService service;
     CPubKey pubKeyValidator;
-    CKey keyValidator;
+    CKey validatorPrivKey;
 
     // State management
     void ManageState();
@@ -78,7 +78,8 @@ public:
     std::string GetStatusMessage() const { return strNotCapableReason; }
 };
 
-// Global instance
+// Global validator state
+extern bool fValidatorMode;
 extern CActiveValidator activeValidator;
 
 #endif // CLORE_ACTIVEVALIDATOR_H

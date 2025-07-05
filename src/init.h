@@ -72,6 +72,12 @@ bool AppInitLockDataDirectory();
 bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler);
 void PrepareShutdown();
 
+/**
+ * Initialize active validator.
+ * @note This should be called after the main initialization.
+ */
+bool InitActiveValidator();
+
 /** The help message mode determines what help message to show */
 enum HelpMessageMode {
     HMM_CLORE_BLOCKCHAIND

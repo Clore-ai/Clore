@@ -1,9 +1,22 @@
 // Copyright (c) 2017 The Bitcoin Core developers
 // Copyright (c) 2017-2019 The Raven Core developers
 // Copyright (c) 2020-2021 The Neoxa Core developers
-// Copyright (c) 2022-2022 The CLORE.AI
+// Copyright (c) 2022-2024 The CLORE.AI Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+/**
+ * CLORE Script Standard Tests - EXTREMELY CRITICAL
+ * 
+ * Tests comprehensive script classification, address extraction, and ownership determination for all transaction types including CLORE-specific asset scripts.
+ * Essential foundation for all wallet operations, transaction processing, validator actions, and asset functionality inherited from Ravencoin.
+ * 
+ * IMPACT SUMMARY:
+ * - Security: Validates script type identification and ownership detection preventing misclassification and fund loss
+ * - Performance: Ensures efficient script parsing and classification for fast transaction and wallet operations
+ * - Users: Enables wallet functionality, address generation, transaction sending, and asset management operations
+ * - Business: Critical infrastructure for exchanges, services, validator operations, and all CLORE transaction processing
+ */
 
 #include "key.h"
 #include "keystore.h"

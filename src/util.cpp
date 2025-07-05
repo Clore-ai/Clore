@@ -601,7 +601,7 @@ fs::path GetConfigFile(const std::string& confPath)
 
 fs::path GetValidatorConfigFile()
 {
-    fs::path pathConfigFile(gArgs.GetArg("-mnconf", CLORE_VALIDATOR_CONF_FILENAME));
+    fs::path pathConfigFile(gArgs.GetArg("-validatorconf", CLORE_VALIDATOR_CONF_FILENAME));
     if (!pathConfigFile.is_absolute())
         pathConfigFile = GetDataDir(false) / pathConfigFile;
 

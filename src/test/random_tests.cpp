@@ -1,9 +1,22 @@
 // Copyright (c) 2017 The Bitcoin Core developers
 // Copyright (c) 2017-2019 The Raven Core developers
 // Copyright (c) 2020-2021 The Neoxa Core developers
-// Copyright (c) 2022-2022 The CLORE.AI
+// Copyright (c) 2022-2024 The CLORE.AI Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+/**
+ * CLORE Random Number Generation Tests - EXTREMELY CRITICAL
+ * 
+ * Tests cryptographic and performance random number generators ensuring secure randomness for private keys, nonces, and network operations.
+ * Fundamental security component where any weakness could compromise wallet security, transaction privacy, and overall network integrity.
+ * 
+ * IMPACT SUMMARY:
+ * - Security: Validates cryptographic randomness preventing private key prediction, transaction correlation, and security exploits
+ * - Performance: Ensures efficient random generation for non-cryptographic use cases while maintaining quality randomness
+ * - Users: Protects wallet security, transaction privacy, and enables secure key generation for all CLORE operations
+ * - Business: Critical for exchange security, custody solutions, and any application requiring secure random number generation
+ */
 
 #include "random.h"
 

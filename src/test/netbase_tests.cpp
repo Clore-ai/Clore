@@ -1,9 +1,22 @@
 // Copyright (c) 2012-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2019 The Raven Core developers
 // Copyright (c) 2020-2021 The Neoxa Core developers
-// Copyright (c) 2022-2022 The CLORE.AI
+// Copyright (c) 2022-2024 The CLORE.AI Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+/**
+ * CLORE Network Address Handling Tests - EXTREMELY CRITICAL
+ * 
+ * Tests network address parsing, validation, and classification for IPv4, IPv6, Tor, and subnet management.
+ * Fundamental networking infrastructure enabling secure peer connections, DoS protection, and privacy features.
+ * 
+ * IMPACT SUMMARY:
+ * - Security: Validates address handling preventing connections to malicious endpoints and enabling network-based DoS protection
+ * - Performance: Ensures efficient address parsing and peer classification for optimal network connectivity and bandwidth usage
+ * - Users: Enables diverse connectivity including Tor support for privacy, reliable peer discovery, and global network access
+ * - Business: Required for secure networking operations, exchange connectivity, service infrastructure, and regulatory compliance
+ */
 
 #include "netbase.h"
 #include "test/test_clore.h"

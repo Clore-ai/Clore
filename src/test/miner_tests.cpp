@@ -1,9 +1,22 @@
 // Copyright (c) 2011-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2019 The Raven Core developers
 // Copyright (c) 2020-2021 The Neoxa Core developers
-// Copyright (c) 2022-2022 The CLORE.AI
+// Copyright (c) 2022-2024 The CLORE.AI Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+/**
+ * CLORE Mining & Block Template Tests - EXTREMELY CRITICAL
+ * 
+ * Tests block template creation, transaction selection algorithms, and mining functionality for both PoW and validator phases.
+ * Core component that determines transaction inclusion, fee optimization, and valid block construction across network transitions.
+ * 
+ * IMPACT SUMMARY:
+ * - Security: Validates block construction rules preventing invalid blocks that could fork the network
+ * - Performance: Optimizes transaction selection algorithms for maximum fee revenue and efficient block construction
+ * - Users: Affects transaction confirmation speed, fee market dynamics, and mining/validator reward distribution
+ * - Business: Critical for mining profitability, validator operations, and all services dependent on reliable block production
+ */
 
 #include "chainparams.h"
 #include "coins.h"

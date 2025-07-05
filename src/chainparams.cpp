@@ -181,19 +181,15 @@ public:
         consensus.nFutureTimeDriftPoS = 3 * 60;        // 3 minutes
         consensus.nStakeTimestampMask = 15;            // 15 second timestamp mask
 
-        // Validator and budget parameters
-        consensus.nBudgetCycleBlocks = 30240; // 21 days at 1 minute blocks
-        consensus.nBudgetFeeConfirmations = 6;
+        // Validator parameters
         consensus.nCoinbaseMaturity = 100;                   // 100 blocks maturity
         consensus.nMaxMoneyOut = 25000000 * COIN;            // 25 million max money
-        consensus.nProposalEstablishmentTime = 60 * 60 * 24; // 24 hours
-        consensus.nMaxProposalPayments = 6;
+        consensus.nValidatorCollateralAmt = 1000 * COIN;     // 1000 CLORE validator collateral
 
         // Network upgrades
         consensus.vUpgrades[Consensus::BASE_NETWORK] = {0, 0, {}};
         consensus.vUpgrades[Consensus::ENABLE_POS_VALIDATORS] = {70002, 1000001439, {}};    // Validator activation (VALIDATOR) at block 1,000,001,439 (+1440 after DEPLOYMENT_POS)
         consensus.vUpgrades[Consensus::ENABLE_POS_STAKING] = {70002, 1000002879, {}};       // Staking logic activation (STAKING) at block 1,000,002,879 (+1440 blocks)
-        consensus.vUpgrades[Consensus::ENABLE_POS_TIME_PROTO_v2] = {70002, 1000002879, {}}; // Time protocol v2 (merged with STAKING phase)
         consensus.vUpgrades[Consensus::ENABLE_POS_REWARDS] = {70002, 1000004319, {}};       // PoS enabled, PoW disabled (REWARDS) at block 1,000,004,319 (+1440 blocks)
 
         consensus.BIP34LockedIn = 6048; // Locked_in at height 6048
@@ -389,19 +385,15 @@ public:
         consensus.nFutureTimeDriftPoS = 3 * 60;        // 3 minutes
         consensus.nStakeTimestampMask = 15;            // 15 second timestamp mask
 
-        // Validator and budget parameters
-        consensus.nBudgetCycleBlocks = 30240; // 21 days at 1 minute blocks
-        consensus.nBudgetFeeConfirmations = 6;
+        // Validator parameters
         consensus.nCoinbaseMaturity = 100;                   // 100 blocks maturity
         consensus.nMaxMoneyOut = 25000000 * COIN;            // 25 million max money
-        consensus.nProposalEstablishmentTime = 60 * 60 * 24; // 24 hours
-        consensus.nMaxProposalPayments = 6;
+        consensus.nValidatorCollateralAmt = 1000 * COIN;     // 1000 CLORE validator collateral
 
         // Network upgrades (testnet - 1440 block spacing for proper testing)
         consensus.vUpgrades[Consensus::BASE_NETWORK] = {0, 0, {}};
         consensus.vUpgrades[Consensus::ENABLE_POS_VALIDATORS] = {70002, 1000, {}};    // Validator activation (VALIDATOR phase)
         consensus.vUpgrades[Consensus::ENABLE_POS_STAKING] = {70002, 2440, {}};       // Staking logic activation (STAKING phase) +1440 blocks
-        consensus.vUpgrades[Consensus::ENABLE_POS_TIME_PROTO_v2] = {70002, 2440, {}}; // Time protocol v2 (merged with staking)
         consensus.vUpgrades[Consensus::ENABLE_POS_REWARDS] = {70002, 3880, {}};       // PoW disabled (REWARDS phase) +1440 blocks
 
         consensus.BIP34LockedIn = 8064; // Locked_in at height 8064
@@ -584,19 +576,15 @@ public:
         consensus.nFutureTimeDriftPoS = 3 * 60;        // 3 minutes
         consensus.nStakeTimestampMask = 15;            // 15 second timestamp mask
 
-        // Validator and budget parameters (testing values)
-        consensus.nBudgetCycleBlocks = 1440; // 1 day at 1 minute blocks
-        consensus.nBudgetFeeConfirmations = 3;
+        // Validator parameters (testing values)
         consensus.nCoinbaseMaturity = 10;              // 10 blocks maturity for testing
         consensus.nMaxMoneyOut = 25000000 * COIN;      // 25 million max money
-        consensus.nProposalEstablishmentTime = 60 * 5; // 5 minutes for testing
-        consensus.nMaxProposalPayments = 6;
+        consensus.nValidatorCollateralAmt = 1000 * COIN; // 1000 CLORE validator collateral
 
         // Network upgrades (regtest - 50 block spacing for rapid testing)
         consensus.vUpgrades[Consensus::BASE_NETWORK] = {0, 0, {}};
         consensus.vUpgrades[Consensus::ENABLE_POS_VALIDATORS] = {70002, 100, {}};    // Validator activation (VALIDATOR phase)
         consensus.vUpgrades[Consensus::ENABLE_POS_STAKING] = {70002, 150, {}};       // Staking logic activation (STAKING phase) +50 blocks
-        consensus.vUpgrades[Consensus::ENABLE_POS_TIME_PROTO_v2] = {70002, 150, {}}; // Time protocol v2 (merged with staking)
         consensus.vUpgrades[Consensus::ENABLE_POS_REWARDS] = {70002, 200, {}};       // PoW disabled (REWARDS phase) +50 blocks
 
         consensus.BIP34LockedIn = 0;

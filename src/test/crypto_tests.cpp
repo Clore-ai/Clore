@@ -1,9 +1,21 @@
 // Copyright (c) 2014-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2019 The Raven Core developers
 // Copyright (c) 2020-2021 The Neoxa Core developers
-// Copyright (c) 2022-2022 The CLORE.AI
+// Copyright (c) 2022-2024 The CLORE.AI Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+/**
+ * CLORE Cryptographic Primitive Tests - EXTREMELY CRITICAL
+ * 
+ * Tests fundamental cryptographic functions (SHA, HMAC, AES, ChaCha20) that secure blockchain operations, transactions, and wallet protection.
+ * 
+ * IMPACT SUMMARY:
+ * - Security: Prevents hash collisions, key recovery attacks, and cryptographic failures that could compromise entire blockchain
+ * - Performance: Cryptographic speed affects block validation, transaction processing, and network sync times
+ * - Users: Protects private keys, wallet files, and transaction integrity for all CLORE users
+ * - Business: Enables exchange integration, regulatory compliance, and business trust through provable cryptographic security
+ */
 
 #include "crypto/aes.h"
 #include "crypto/chacha20.h"

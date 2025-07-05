@@ -2,9 +2,22 @@
 // Copyright (c) 2014-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2019 The Raven Core developers
 // Copyright (c) 2020-2021 The Neoxa Core developers
-// Copyright (c) 2022-2022 The CLORE.AI
+// Copyright (c) 2022-2024 The CLORE.AI Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+/**
+ * CLORE UniValue JSON Tests - EXTREMELY CRITICAL
+ * 
+ * Tests JSON parsing, serialization, and data type handling for all RPC API communications and configuration management.
+ * Essential for RPC functionality enabling wallet operations, validator control, network monitoring, and all external integrations.
+ * 
+ * IMPACT SUMMARY:
+ * - Security: Validates JSON parsing preventing injection attacks, malformed data handling, and ensuring secure API communication
+ * - Performance: Ensures efficient JSON processing critical for RPC responsiveness and validator API operations
+ * - Users: Enables all wallet RPC commands, transaction queries, balance checks, and external application integrations
+ * - Business: Critical for exchange integrations, trading bots, validator management tools, and all programmatic interactions
+ */
 
 #include <stdint.h>
 #include <vector>

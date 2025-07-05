@@ -10,7 +10,10 @@
 #include "util.h"
 #include "utilstrencodings.h"
 
+#include <map>
+#include <set>
 #include <stdio.h>
+#include <vector>
 
 #include <boost/thread.hpp>
 

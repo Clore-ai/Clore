@@ -15,52 +15,16 @@ const struct NetworkUpgradeInfo NetworkUpgradeInfo[] = {
         /*.strInfo =*/"The base network rules",
     },
     {
+        /*.strName =*/"Validator Activation",
+        /*.strInfo =*/"Enables validator nodes and stake-based consensus preparation",
+    },
+    {
         /*.strName =*/"PoS Preparation",
         /*.strInfo =*/"Enables Proof of Stake preparation phase (hybrid PoW/PoS)",
     },
     {
-        /*.strName =*/"Proof of Stake v2",
-        /*.strInfo =*/"Enables improved Proof of Stake with better stake modifier",
-    },
-    {
         /*.strName =*/"PoS Completion",
         /*.strInfo =*/"Enables Proof of Stake completion phase - PoW mining permanently disabled",
-    },
-    {
-        /*.strName =*/"BIP65",
-        /*.strInfo =*/"Enables BIP65 CLTV",
-    },
-    {
-        /*.strName =*/"Stake Modifier v2",
-        /*.strInfo =*/"Enables 256-bit Stake Modifier v2",
-    },
-    {
-        /*.strName =*/"Time Protocol v2",
-        /*.strInfo =*/"Enables Time Protocol v2 with slot-based timestamps",
-    },
-    {
-        /*.strName =*/"Validator Payments v2",
-        /*.strInfo =*/"Enables Validator Payments v2",
-    },
-    {
-        /*.strName =*/"Validator Payments v3",
-        /*.strInfo =*/"Enables Validator Payments v3",
-    },
-    {
-        /*.strName =*/"Validator Payments v4",
-        /*.strInfo =*/"Enables Validator Payments v4",
-    },
-    {
-        /*.strName =*/"Validator Payments v5",
-        /*.strInfo =*/"Enables Validator Payments v5",
-    },
-    {
-        /*.strName =*/"Validator Payments v6",
-        /*.strInfo =*/"Enables Validator Payments v6",
-    },
-    {
-        /*.strName =*/"Validator Payments v7",
-        /*.strInfo =*/"Enables Validator Payments v7",
     },
     {
         /*.strName =*/"Test Dummy",

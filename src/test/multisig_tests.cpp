@@ -1,9 +1,22 @@
 // Copyright (c) 2011-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2019 The Raven Core developers
 // Copyright (c) 2020-2021 The Neoxa Core developers
-// Copyright (c) 2022-2022 The CLORE.AI
+// Copyright (c) 2022-2024 The CLORE.AI Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+/**
+ * CLORE Multi-Signature Tests - EXTREMELY CRITICAL
+ * 
+ * Tests multi-signature functionality enabling shared control of funds requiring multiple cryptographic signatures for transaction authorization.
+ * Essential for corporate wallets, exchange security, validator operations, and advanced custody solutions requiring multi-party approval.
+ * 
+ * IMPACT SUMMARY:
+ * - Security: Enables advanced security models preventing single points of failure in high-value fund management
+ * - Performance: Ensures efficient multisig script verification for complex enterprise wallet configurations
+ * - Users: Powers corporate shared wallets, family accounts, and sophisticated personal security setups
+ * - Business: Required for exchange cold storage, institutional custody, escrow services, and validator node security
+ */
 
 #include "key.h"
 #include "keystore.h"

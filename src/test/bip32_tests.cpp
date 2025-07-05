@@ -1,9 +1,22 @@
 // Copyright (c) 2013-2015 The Bitcoin Core developers
 // Copyright (c) 2017-2019 The Raven Core developers
 // Copyright (c) 2020-2021 The Neoxa Core developers
-// Copyright (c) 2022-2022 The CLORE.AI
+// Copyright (c) 2022-2024 The CLORE.AI Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+/**
+ * CLORE BIP32 Hierarchical Deterministic Wallet Tests - EXTREMELY CRITICAL
+ * 
+ * Tests HD wallet functionality that enables unlimited address generation from single seed.
+ * Modern wallet standard required for seed phrase backup/recovery and exchange integration.
+ * 
+ * IMPACT SUMMARY:
+ * - Security: Enables secure wallet backup through seed phrases and hardened key derivation
+ * - Performance: Allows unlimited address generation without compromising private keys
+ * - Users: Provides simple 12/24 word backup and cross-wallet compatibility for modern wallets
+ * - Business: Essential for exchange integration, hardware wallet support, and payment processors
+ */
 
 #include <boost/test/unit_test.hpp>
 

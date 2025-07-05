@@ -1,9 +1,22 @@
 // Copyright (c) 2014-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2019 The Raven Core developers
 // Copyright (c) 2020-2021 The Neoxa Core developers
-// Copyright (c) 2022-2022 The CLORE.AI
+// Copyright (c) 2022-2024 The CLORE.AI Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+/**
+ * CLORE Version Bits Tests - EXTREMELY CRITICAL
+ * 
+ * Tests BIP 9 version bits deployment mechanism for coordinated network upgrades and soft fork activation.
+ * Essential for consensus upgrades enabling secure network-wide feature deployment including PoS transition and protocol improvements.
+ * 
+ * IMPACT SUMMARY:
+ * - Security: Validates consensus upgrade mechanism preventing network splits and ensuring coordinated feature activation
+ * - Performance: Ensures efficient soft fork deployment and threshold validation for network upgrades
+ * - Users: Enables seamless network upgrades without requiring immediate node updates, maintaining network compatibility
+ * - Business: Critical for deploying PoS transition, protocol improvements, and maintaining network consensus integrity
+ */
 
 #include "chain.h"
 #include "versionbits.h"

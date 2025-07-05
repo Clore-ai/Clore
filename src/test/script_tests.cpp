@@ -1,9 +1,22 @@
 // Copyright (c) 2011-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2019 The Raven Core developers
 // Copyright (c) 2020-2021 The Neoxa Core developers
-// Copyright (c) 2022-2022 The CLORE.AI
+// Copyright (c) 2022-2024 The CLORE.AI Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+/**
+ * CLORE Script Execution Tests - EXTREMELY CRITICAL
+ * 
+ * Comprehensive test suite for script execution engine including JSON test vectors, multi-signature validation, and consensus-critical script operations.
+ * Essential for network security and transaction validation ensuring all script types execute correctly and securely under all conditions.
+ * 
+ * IMPACT SUMMARY:
+ * - Security: Validates script execution engine preventing consensus bugs that could fork the network or enable attacks
+ * - Performance: Ensures efficient script validation for fast transaction processing and block validation
+ * - Users: Enables all transaction types including multi-signature, complex conditions, and secure fund transfers
+ * - Business: Critical for exchange operations, institutional multi-sig, validator functionality, and network consensus integrity
+ */
 
 #include "data/script_tests.json.h"
 

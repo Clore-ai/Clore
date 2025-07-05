@@ -1,9 +1,22 @@
 // Copyright (c) 2014-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2019 The Raven Core developers
 // Copyright (c) 2020-2021 The Neoxa Core developers
-// Copyright (c) 2022-2022 The CLORE.AI
+// Copyright (c) 2022-2024 The CLORE.AI Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+/**
+ * CLORE Skip List Tests - EXTREMELY CRITICAL
+ * 
+ * Tests skip list data structure enabling efficient blockchain navigation, block ancestor lookups, and chain synchronization operations.
+ * Essential for fast block traversal during validation, sync operations, and any functionality requiring historical block access.
+ * 
+ * IMPACT SUMMARY:
+ * - Security: Validates skip list integrity ensuring correct blockchain navigation and preventing consensus failures during chain operations
+ * - Performance: Enables fast block lookups and chain traversal critical for sync speed, validation efficiency, and user experience
+ * - Users: Enables responsive wallet operations, fast transaction history, and efficient blockchain synchronization
+ * - Business: Critical for exchange operations, validator sync, block explorer functionality, and any service requiring blockchain navigation
+ */
 
 #include "chain.h"
 #include "util.h"

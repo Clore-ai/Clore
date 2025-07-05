@@ -1,9 +1,22 @@
 // Copyright (c) 2012-2015 The Bitcoin Core developers
 // Copyright (c) 2017-2019 The Raven Core developers
 // Copyright (c) 2020-2021 The Neoxa Core developers
-// Copyright (c) 2022-2022 The CLORE.AI
+// Copyright (c) 2022-2024 The CLORE.AI Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+/**
+ * CLORE System Sanity Tests - EXTREMELY CRITICAL
+ * 
+ * Tests fundamental system library compatibility including C/C++ standard libraries and OpenSSL cryptographic functions.
+ * Essential validation ensuring the underlying system can safely execute cryptographic operations required for CLORE's security.
+ * 
+ * IMPACT SUMMARY:
+ * - Security: Validates OpenSSL ECC functionality preventing cryptographic failures that could compromise all private key operations
+ * - Performance: Ensures system libraries function correctly for optimal node performance and stability
+ * - Users: Prevents wallet corruption and transaction failures by verifying system compatibility before node startup
+ * - Business: Critical prerequisite for exchange and service deployment ensuring reliable cryptographic infrastructure
+ */
 
 #include "compat/sanity.h"
 #include "key.h"

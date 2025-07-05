@@ -1,9 +1,22 @@
 // Copyright (c) 2011-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2019 The Raven Core developers
 // Copyright (c) 2020-2021 The Neoxa Core developers
-// Copyright (c) 2022-2022 The CLORE.AI
+// Copyright (c) 2022-2024 The CLORE.AI Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+/**
+ * CLORE Denial of Service Protection Tests - EXTREMELY CRITICAL
+ * 
+ * Tests DoS protection mechanisms including peer eviction, misbehavior scoring, and resource limits.
+ * Essential for validator node protection and network stability against malicious attacks.
+ * 
+ * IMPACT SUMMARY:
+ * - Security: Prevents network partitioning, resource exhaustion, and validator node crashes
+ * - Performance: Maintains network responsiveness by blocking malicious peers and spam attacks
+ * - Users: Ensures reliable transaction propagation and consistent network connectivity
+ * - Business: Protects exchange nodes, mining pools, and service providers from operational disruption
+ */
 
 // Unit tests for denial-of-service detection/prevention code
 

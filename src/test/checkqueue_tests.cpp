@@ -1,9 +1,22 @@
 // Copyright (c) 2012-2017 The Bitcoin Core developers
 // Copyright (c) 2017-2019 The Raven Core developers
 // Copyright (c) 2020-2021 The Neoxa Core developers
-// Copyright (c) 2022-2022 The CLORE.AI
+// Copyright (c) 2022-2024 The CLORE.AI Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+/**
+ * CLORE Check Queue Tests - EXTREMELY CRITICAL
+ * 
+ * Tests parallel transaction validation system that utilizes multiple CPU cores for validator performance.
+ * Thread-safe parallel processing essential for competitive block validation and network consensus.
+ * 
+ * IMPACT SUMMARY:
+ * - Security: Ensures thread-safe validation prevents race conditions and maintains consensus integrity
+ * - Performance: Multi-core validation dramatically improves block processing speed and validator competitiveness
+ * - Users: Faster validation leads to quicker transaction confirmations and network synchronization
+ * - Business: Efficient CPU utilization reduces infrastructure costs and enables competitive staking operations
+ */
 
 #include "util.h"
 #include "utiltime.h"

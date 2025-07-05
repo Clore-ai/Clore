@@ -1,9 +1,22 @@
 // Copyright (c) 2015 The Bitcoin Core developers
 // Copyright (c) 2017-2019 The Raven Core developers
 // Copyright (c) 2020-2021 The Neoxa Core developers
-// Copyright (c) 2022-2022 The CLORE.AI
+// Copyright (c) 2022-2024 The CLORE.AI Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+/**
+ * CLORE Proof-of-Work Tests - EXTREMELY CRITICAL
+ * 
+ * Tests difficulty adjustment algorithms, work calculation, and PoW consensus mechanisms during CLORE's mining phase.
+ * Critical for network security, consistent block times, and mining economics before transitioning to validator-based consensus.
+ * 
+ * IMPACT SUMMARY:
+ * - Security: Validates difficulty adjustment preventing hashrate manipulation attacks and ensuring network stability
+ * - Performance: Maintains consistent block times and optimal mining difficulty for network efficiency
+ * - Users: Ensures predictable transaction confirmation times and stable mining rewards during PoW phase
+ * - Business: Critical for mining operations, mining pools, and exchanges during proof-of-work network operation
+ */
 
 #include "chain.h"
 #include "chainparams.h"

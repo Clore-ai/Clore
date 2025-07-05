@@ -1,9 +1,22 @@
 // Copyright (c) 2016 The Bitcoin Core developers
 // Copyright (c) 2017-2019 The Raven Core developers
 // Copyright (c) 2020-2021 The Neoxa Core developers
-// Copyright (c) 2022-2022 The CLORE.AI
+// Copyright (c) 2022-2024 The CLORE.AI Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+/**
+ * CLORE RAII Event Management Tests - HIGHLY RELEVANT
+ * 
+ * Tests Resource Acquisition Is Initialization (RAII) wrappers for libevent ensuring proper memory management in asynchronous operations.
+ * Critical for network stack reliability, RPC server operations, and preventing memory leaks in long-running CLORE node processes.
+ * 
+ * IMPACT SUMMARY:
+ * - Security: Prevents memory leaks and resource exhaustion attacks that could crash nodes or degrade network performance
+ * - Performance: Ensures efficient resource management in network operations and asynchronous I/O without memory overhead
+ * - Users: Improves node stability and reliability preventing crashes during extended operation periods
+ * - Business: Critical for exchange and service infrastructure requiring 24/7 uptime and reliable network operations
+ */
 
 #include <event2/event.h>
 

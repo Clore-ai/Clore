@@ -1,9 +1,22 @@
 // Copyright (c) 2012-2015 The Bitcoin Core developers
 // Copyright (c) 2017-2019 The Raven Core developers
 // Copyright (c) 2020-2021 The Neoxa Core developers
-// Copyright (c) 2022-2022 The CLORE.AI
+// Copyright (c) 2022-2024 The CLORE.AI Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+/**
+ * CLORE Private/Public Key Cryptography Tests - EXTREMELY CRITICAL
+ * 
+ * Tests fundamental cryptographic key operations including private key management, public key derivation, digital signatures, and key recovery.  
+ * Core security foundation for all wallet operations, transaction signing, and validator authentication.
+ * 
+ * IMPACT SUMMARY:
+ * - Security: Validates cryptographic primitives that protect user funds and validator private keys from theft
+ * - Performance: Ensures efficient key operations for fast transaction signing and signature verification
+ * - Users: Protects wallet security, enables transaction signing, and supports hardware wallet integration  
+ * - Business: Required for exchange wallet integration, custody solutions, and all CLORE financial operations
+ */
 
 #include "key.h"
 
