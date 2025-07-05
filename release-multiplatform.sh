@@ -24,11 +24,23 @@
 #
 # =============================================================================
 
-BUILD_LINUX_X64=false     # Build for Linux x86_64 (Intel/AMD servers) - Set to true for Ubuntu 22.04
+BUILD_LINUX_X64=true      # Build for Linux x86_64 (Intel/AMD servers) - Set to true for Ubuntu 22.04
 BUILD_LINUX_ARM64=false    # Build for Linux ARM64 (AWS Graviton, Apple Silicon containers)
 BUILD_MACOS_X64=true      # Build for Intel Macs (cross-compilation issues)
 BUILD_MACOS_ARM64=false    # Build for Apple Silicon Macs (M1/M2/M3) - only on macOS hosts
-BUILD_WINDOWS_X64=false    # Build for Windows x64 - Set to true for Ubuntu with MinGW
+BUILD_WINDOWS_X64=true    # Build for Windows x64 - Set to true for Ubuntu with MinGW
+
+# Test configuration
+ENABLE_TESTS=true         # Enable tests and security checks (set to false for faster builds)
+RUN_SECURITY_CHECKS=true  # Run security and symbol checks after build
+
+# Build configuration
+REBUILD=false             # Force rebuild even if binaries already exist
+
+# Environment variable overrides
+[[ -n "$ENABLE_TESTS" ]] && ENABLE_TESTS="$ENABLE_TESTS" || ENABLE_TESTS=true
+[[ -n "$RUN_SECURITY_CHECKS" ]] && RUN_SECURITY_CHECKS="$RUN_SECURITY_CHECKS" || RUN_SECURITY_CHECKS=true
+[[ -n "$REBUILD" ]] && REBUILD="$REBUILD" || REBUILD=false
 
 # =============================================================================
 
@@ -71,6 +83,172 @@ error() {
 
 warning() {
     echo -e "${YELLOW}[WARNING] $1${NC}"
+}
+
+# Check if target binaries already exist
+is_target_built() {
+    local target=$1
+    local target_dir="$BUILD_DIR/$target"
+    
+    if [[ "$REBUILD" == "true" ]]; then
+        return 1  # Force rebuild
+    fi
+    
+    # Check if binaries exist
+    if [[ $target == windows-* ]]; then
+        if [[ -f "$target_dir/bin/clore_blockchaind.exe" && -f "$target_dir/bin/clore-cli.exe" ]]; then
+            return 0  # Already built
+        fi
+    else
+        if [[ -f "$target_dir/bin/clore_blockchaind" && -f "$target_dir/bin/clore-cli" ]]; then
+            return 0  # Already built
+        fi
+    fi
+    
+    return 1  # Not built
+}
+
+# Check if Docker is needed and available
+check_docker_requirements() {
+    local docker_needed=false
+    local docker_targets=()
+    
+    # Determine which targets will need Docker
+    for target in "${!TARGETS[@]}"; do
+        case $target in
+            "linux-x64")
+                if [[ "$ARCH_TYPE" != "x86_64" || "$OS_TYPE" != "Linux" ]]; then
+                    docker_needed=true
+                    docker_targets+=("$target")
+                fi
+                ;;
+            "linux-arm64")
+                if [[ "$ARCH_TYPE" != "aarch64" && "$ARCH_TYPE" != "arm64" ]] || [[ "$OS_TYPE" != "Linux" ]]; then
+                    docker_needed=true
+                    docker_targets+=("$target")
+                fi
+                ;;
+        esac
+    done
+    
+    # If Docker is needed, check if it's available
+    if [[ "$docker_needed" == "true" ]]; then
+        build_log "Docker required for cross-platform builds: ${docker_targets[*]}"
+        
+        if ! command -v docker >/dev/null 2>&1; then
+            echo ""
+            echo -e "${RED}Docker needs to be installed for cross-platform builds.${NC}"
+            echo -e "${YELLOW}Required for: ${docker_targets[*]}${NC}"
+            echo ""
+            
+            case "$OS_TYPE" in
+                "Darwin")
+                    # Check macOS version first
+                    local macos_version=$(sw_vers -productVersion)
+                    local macos_major=$(echo "$macos_version" | cut -d. -f1)
+                    local macos_minor=$(echo "$macos_version" | cut -d. -f2)
+                    
+                    echo -e "${GREEN}Install Docker on macOS ($macos_version):${NC}"
+                    
+                    # Docker Desktop requires macOS 13+ (Ventura)
+                    if [[ "$macos_major" -ge 13 ]] || [[ "$macos_major" -eq 12 && "$macos_minor" -ge 6 ]]; then
+                        echo "  brew install --cask docker"
+                        echo ""
+                        echo -e "${BLUE}Would you like me to install Docker Desktop now? (y/n)${NC}"
+                        read -r response
+                        if [[ "$response" =~ ^[Yy]$ ]]; then
+                            build_log "Installing Docker Desktop via Homebrew..."
+                            if brew install --cask docker; then
+                                echo ""
+                                echo -e "${GREEN}Docker installed successfully!${NC}"
+                                echo -e "${YELLOW}Please start Docker Desktop from Applications, then re-run this script.${NC}"
+                                echo "Or run: open -a Docker"
+                            else
+                                echo -e "${RED}Installation failed. Your macOS version may not be supported.${NC}"
+                            fi
+                            exit 0
+                        fi
+                    else
+                        echo -e "${YELLOW}Your macOS version ($macos_version) is too old for Docker Desktop.${NC}"
+                        echo ""
+                        echo -e "${GREEN}Alternative: Use Colima (lightweight Docker)${NC}"
+                        echo "  brew install colima docker"
+                        echo "  brew install qemu  # For better cross-platform emulation"
+                        echo ""
+                        echo -e "${BLUE}Would you like me to install Colima + QEMU instead? (y/n)${NC}"
+                        read -r response
+                        if [[ "$response" =~ ^[Yy]$ ]]; then
+                            build_log "Installing Colima, Docker CLI, and QEMU via Homebrew..."
+                            if brew install colima docker qemu; then
+                                echo ""
+                                echo -e "${GREEN}Colima, Docker CLI, and QEMU installed successfully!${NC}"
+                                echo -e "${YELLOW}Starting Colima with QEMU support...${NC}"
+                                if colima start --vm-type qemu; then
+                                    echo -e "${GREEN}Colima is now running with QEMU! You can now run the build script.${NC}"
+                                    exit 0
+                                else
+                                    echo -e "${YELLOW}Colima installed but failed to start with QEMU. Trying default...${NC}"
+                                    if colima start; then
+                                        echo -e "${GREEN}Colima is now running! You can now run the build script.${NC}"
+                                        exit 0
+                                    else
+                                        echo -e "${YELLOW}Colima installed but failed to start. Try: colima start${NC}"
+                                        exit 0
+                                    fi
+                                fi
+                            else
+                                echo -e "${RED}Homebrew installation failed (likely due to macOS version compatibility).${NC}"
+                                echo ""
+                                echo -e "${YELLOW}Alternative options for macOS $macos_version:${NC}"
+                                echo ""
+                                echo -e "${GREEN}Option 1: Try Colima without QEMU${NC}"
+                                echo "  brew install colima docker"
+                                echo ""
+                                echo -e "${GREEN}Option 2: Manual Docker installation${NC}"
+                                echo "  Download older Docker Desktop version from:"
+                                echo "  https://docs.docker.com/desktop/release-notes/"
+                                echo "  Look for versions compatible with macOS 10.15+"
+                                echo ""
+                                echo -e "${GREEN}Option 3: Use VM or build on different machine${NC}"
+                                echo "  - Build on Linux VM"
+                                echo "  - Use GitHub Actions/CI"
+                                echo "  - Build on newer macOS machine"
+                                echo ""
+                                echo -e "${BLUE}Would you like me to try installing just Colima + Docker (without QEMU)? (y/n)${NC}"
+                                read -r fallback_response
+                                if [[ "$fallback_response" =~ ^[Yy]$ ]]; then
+                                    build_log "Trying Colima + Docker without QEMU..."
+                                    if brew install colima docker; then
+                                        echo -e "${GREEN}Colima and Docker CLI installed successfully!${NC}"
+                                        echo -e "${YELLOW}Starting Colima...${NC}"
+                                        if colima start; then
+                                            echo -e "${GREEN}Colima is now running! You can now run the build script.${NC}"
+                                            exit 0
+                                        else
+                                            echo -e "${YELLOW}Colima installed but failed to start. Try: colima start${NC}"
+                                            exit 0
+                                        fi
+                                    else
+                                        echo -e "${RED}Installation still failed. Please try manual installation.${NC}"
+                                    fi
+                                fi
+                            fi
+                            exit 0
+                        fi
+                    fi
+                    ;;
+                "Linux")
+                    echo -e "${GREEN}Install Docker on Linux:${NC}"
+                    echo "  sudo apt-get update && sudo apt-get install -y docker.io"
+                    echo "  sudo usermod -aG docker \$USER && newgrp docker"
+                    ;;
+            esac
+            echo ""
+            exit 1
+        fi
+        
+        build_log "Docker is available and running - cross-platform builds enabled"
+    fi
 }
 
 # Build configuration - using associative array (requires Bash 4.0+)
@@ -141,13 +319,14 @@ case "$OS_TYPE" in
         fi
         ;;
     *)
-        error "Unsupported build host OS: $OS_TYPE. This script only supports macOS (Darwin) and Linux hosts."
+        error "Unsupported build host OS: $OS_TYPE. This script only supports macOS and Linux (Ubuntu 22.04+)."
         ;;
 esac
 
 echo -e "${BLUE}=== CLORE Multi-Platform Release Builder v${VERSION} ===${NC}"
 echo -e "${BLUE}Build Environment: ${OS_TYPE} ${ARCH_TYPE}${NC}"
 echo -e "${BLUE}Bash Version: ${BASH_VERSION}${NC}"
+echo -e "${BLUE}Build Mode: ${REBUILD:+Force Rebuild}${REBUILD:-Incremental}${NC}"
 
 # Show supported build targets for current host
 case "$OS_TYPE" in
@@ -158,9 +337,15 @@ case "$OS_TYPE" in
         echo -e "${BLUE}Host Capabilities: Linux (native), Windows (MinGW) - macOS builds not supported${NC}"
         ;;
     *)
-        echo -e "${YELLOW}Host Capabilities: Unknown - some builds may fail${NC}"
+        echo -e "${BLUE}Host Capabilities: Unknown - some builds may fail${NC}"
         ;;
 esac
+
+echo ""
+echo -e "${BLUE}Configuration:${NC}"
+echo -e "  Tests: ${ENABLE_TESTS}"
+echo -e "  Security Checks: ${RUN_SECURITY_CHECKS}"
+echo -e "  Rebuild: ${REBUILD}"
 echo ""
 echo -e "${BLUE}Enabled Build Targets:${NC}"
 if [[ ${#TARGETS[@]} -gt 0 ]]; then
@@ -190,9 +375,13 @@ case "$OS_TYPE" in
         ;;
 esac
 
-# Clean previous builds
-echo -e "${BLUE}Cleaning previous builds...${NC}"
-rm -rf "$BUILD_DIR" "$RELEASE_DIR"
+# Clean previous builds only if rebuilding
+if [[ "$REBUILD" == "true" ]]; then
+    echo -e "${BLUE}Cleaning previous builds (rebuild mode)...${NC}"
+    rm -rf "$BUILD_DIR" "$RELEASE_DIR"
+fi
+
+# Ensure directories exist
 mkdir -p "$BUILD_DIR" "$RELEASE_DIR"
 
 # Functions moved to top of script
@@ -380,47 +569,12 @@ check_linux_dependencies() {
 
 # Check Docker availability for containerized builds
 check_docker_availability() {
-    # Check for Docker for Linux builds (required when cross-compiling from different architectures)
-    if ! command -v docker >/dev/null 2>&1; then
-        warning "Docker not found. Cross-platform Linux builds will be limited."
-        case "$OS_TYPE" in
-            "Darwin")
-                warning "Install Docker Desktop from https://docker.com"
-                ;;
-            "Linux")
-                warning "Install Docker with: sudo apt-get install docker.io"
-                warning "Add user to docker group: sudo usermod -aG docker \$USER"
-                ;;
-        esac
-        
-        # Only disable Docker builds if host architecture doesn't match target
-        if [[ "$ARCH_TYPE" != "x86_64" ]] && [[ -n "${TARGETS[linux-x64]}" ]]; then
-            warning "Docker required for cross-platform x64 build from $ARCH_TYPE host"
-            unset TARGETS["linux-x64"]
-        fi
-        if [[ "$ARCH_TYPE" != "aarch64" && "$ARCH_TYPE" != "arm64" ]] && [[ -n "${TARGETS[linux-arm64]}" ]]; then
-            warning "Docker required for cross-platform ARM64 build from $ARCH_TYPE host"
-            unset TARGETS["linux-arm64"]
-        fi
-    elif ! docker info >/dev/null 2>&1; then
-        warning "Docker is not running."
-        case "$OS_TYPE" in
-            "Darwin")
-                warning "Please start Docker Desktop"
-                ;;
-            "Linux")
-                warning "Start Docker with: sudo systemctl start docker"
-                ;;
-        esac
-        # Apply same logic as above for disabled targets
-        if [[ "$ARCH_TYPE" != "x86_64" ]] && [[ -n "${TARGETS[linux-x64]}" ]]; then
-            unset TARGETS["linux-x64"]
-        fi
-        if [[ "$ARCH_TYPE" != "aarch64" && "$ARCH_TYPE" != "arm64" ]] && [[ -n "${TARGETS[linux-arm64]}" ]]; then
-            unset TARGETS["linux-arm64"]
-        fi
-    else
+    # Docker requirements are now checked earlier in check_docker_requirements()
+    # This function is kept for compatibility but does minimal checking
+    if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
         build_log "Docker detected and running - containerized builds available"
+    else
+        build_log "Docker not available - will use native builds where possible"
     fi
 }
 
@@ -459,6 +613,9 @@ build_linux_docker() {
     # Create Dockerfile for the build
     cat > "$target_dir/Dockerfile" << EOF
 FROM ${docker_image}
+
+# Accept build arguments
+ARG ENABLE_TESTS=false
 
 # Install build dependencies
 RUN apt-get update && apt-get install -y \\
@@ -510,10 +667,15 @@ RUN mkdir -p /build/db4 && \\
 # Build project using native system dependencies (no depends system needed)
 RUN export BDB_PREFIX="/build/db4" && \\
     ./autogen.sh && \\
+    if [ "$ENABLE_TESTS" = "true" ]; then
+        TEST_FLAG="--enable-tests"
+    else
+        TEST_FLAG="--disable-tests"
+    fi && \\
     ./configure \\
       --enable-cxx \\
       --disable-shared \\
-      --disable-tests \\
+      \$TEST_FLAG \\
       --disable-gui-tests \\
       --with-pic \\
       --without-bench \\
@@ -546,7 +708,8 @@ EOF
         "linux-arm64") platform_flag="--platform linux/arm64" ;;
     esac
     
-    docker build $platform_flag -t "clore-build-$arch" -f "$target_dir/Dockerfile" . || {
+    # Pass test configuration to Docker
+    docker build $platform_flag --build-arg ENABLE_TESTS="$ENABLE_TESTS" -t "clore-build-$arch" -f "$target_dir/Dockerfile" . || {
         error "Docker build failed for $target"
         return 1
     }
@@ -740,7 +903,12 @@ configure_build() {
                 # Use system dependencies + Berkeley DB
                 configure_args="--enable-cxx"
                 configure_args="$configure_args --disable-shared"
-                configure_args="$configure_args --disable-tests"
+                # Test configuration
+                if [[ "$ENABLE_TESTS" == "true" ]]; then
+                    configure_args="$configure_args --enable-tests"
+                else
+                    configure_args="$configure_args --disable-tests"
+                fi
                 configure_args="$configure_args --disable-gui-tests"
                 configure_args="$configure_args --with-pic"
                 configure_args="$configure_args --without-bench"
@@ -788,7 +956,12 @@ configure_build() {
                 # Use system dependencies (available via apt-get) + Berkeley DB
                 configure_args="--enable-cxx"
                 configure_args="$configure_args --disable-shared"
-                configure_args="$configure_args --disable-tests"
+                # Test configuration
+                if [[ "$ENABLE_TESTS" == "true" ]]; then
+                    configure_args="$configure_args --enable-tests"
+                else
+                    configure_args="$configure_args --disable-tests"
+                fi
                 configure_args="$configure_args --disable-gui-tests"
                 configure_args="$configure_args --with-pic"
                 configure_args="$configure_args --without-bench"
@@ -850,7 +1023,12 @@ configure_build() {
             # Use system dependencies (available via Homebrew/macOS) + Berkeley DB
             configure_args="--enable-cxx"
             configure_args="$configure_args --disable-shared"
-            configure_args="$configure_args --disable-tests"
+            # Test configuration
+            if [[ "$ENABLE_TESTS" == "true" ]]; then
+                configure_args="$configure_args --enable-tests"
+            else
+                configure_args="$configure_args --disable-tests"
+            fi
             configure_args="$configure_args --disable-gui-tests"
             configure_args="$configure_args --with-pic"
             configure_args="$configure_args --without-bench"
@@ -913,7 +1091,12 @@ configure_build() {
             # Use system dependencies (available via Homebrew/macOS) + Berkeley DB
             configure_args="--enable-cxx"
             configure_args="$configure_args --disable-shared"
-            configure_args="$configure_args --disable-tests"
+            # Test configuration
+            if [[ "$ENABLE_TESTS" == "true" ]]; then
+                configure_args="$configure_args --enable-tests"
+            else
+                configure_args="$configure_args --disable-tests"
+            fi
             configure_args="$configure_args --disable-gui-tests"
             configure_args="$configure_args --with-pic"
             configure_args="$configure_args --without-bench"
@@ -946,7 +1129,12 @@ configure_build() {
             configure_args="--prefix=$PWD/depends/x86_64-w64-mingw32"
             configure_args="$configure_args --enable-cxx"
             configure_args="$configure_args --disable-shared"
-            configure_args="$configure_args --disable-tests"
+            # Test configuration
+            if [[ "$ENABLE_TESTS" == "true" ]]; then
+                configure_args="$configure_args --enable-tests"
+            else
+                configure_args="$configure_args --disable-tests"
+            fi
             configure_args="$configure_args --with-pic"
             configure_args="$configure_args --without-bench"
             configure_args="$configure_args --enable-zmq"
@@ -973,6 +1161,35 @@ build_target() {
     
     # Configure and build for this target
     configure_build "$target"
+    
+    # Run security checks if enabled
+    if [[ "$RUN_SECURITY_CHECKS" == "true" ]]; then
+        build_log "Running security checks for $target..."
+        case $target in
+            windows-*)
+                # Windows builds - security checks may not be available
+                if command -v x86_64-w64-mingw32-objdump >/dev/null 2>&1; then
+                    build_log "Running Windows security checks..."
+                    make -C src check-security 2>/dev/null || warning "Security checks not available for Windows cross-compilation"
+                else
+                    warning "Windows security check tools not available"
+                fi
+                ;;
+            *)
+                # Unix-like systems
+                if make -C src check-security 2>/dev/null; then
+                    build_log "Security checks passed for $target"
+                else
+                    warning "Security checks failed or not available for $target"
+                fi
+                if make -C src check-symbols 2>/dev/null; then
+                    build_log "Symbol checks passed for $target"
+                else
+                    warning "Symbol checks failed or not available for $target"
+                fi
+                ;;
+        esac
+    fi
     
     # Check if build completed successfully
     if [[ ! -f "src/clore_blockchaind" && ! -f "src/clore_blockchaind.exe" ]]; then
@@ -1242,14 +1459,26 @@ generate_checksums() {
 main() {
     build_log "Starting multi-platform build process..."
     
+    # Check Docker requirements early
+    check_docker_requirements
+    
     # Check dependencies
     check_dependencies
     
     # Build for each target
     local successful_builds=()
     local failed_builds=()
+    local skipped_builds=()
     
     for target in "${!TARGETS[@]}"; do
+        # Check if target is already built
+        if is_target_built "$target"; then
+            build_log "Target $target already built, skipping..."
+            skipped_builds+=("$target")
+            successful_builds+=("$target")  # Count as successful for packaging
+            continue
+        fi
+        
         build_log "Starting build for $target..."
         
         # Build the target
@@ -1297,6 +1526,15 @@ main() {
         find "$RELEASE_DIR" -type f \( -name "*.deb" -o -name "*.rpm" -o -name "*.tar.gz" -o -name "*.zip" -o -name "*.dmg" \) -exec basename {} \; | sort | sed 's/^/  /'
     fi
     
+    if [[ ${#skipped_builds[@]} -gt 0 ]]; then
+        echo ""
+        echo -e "${YELLOW}⏭️  Skipped builds (${#skipped_builds[@]}):${NC}"
+        for target in "${skipped_builds[@]}"; do
+            echo -e "  ${YELLOW}⏭️  $target (already built)${NC}"
+        done
+        echo -e "${YELLOW}Use REBUILD=true to force rebuild all targets${NC}"
+    fi
+    
     if [[ ${#failed_builds[@]} -gt 0 ]]; then
         echo ""
         echo -e "${RED}❌ Failed builds (${#failed_builds[@]}):${NC}"
@@ -1320,15 +1558,26 @@ case "${1:-build}" in
     "build"|"")
         main
         ;;
+    "rebuild")
+        build_log "Forced rebuild enabled - will rebuild all targets"
+        REBUILD=true
+        main
+        ;;
     "help"|"-h"|"--help")
         echo "CLORE Multi-Platform Release Builder"
         echo ""
         echo "Usage: $0 [command]"
         echo ""
         echo "Commands:"
-        echo "  build    Build releases for enabled platforms (default)"
-        echo "  clean    Clean build directories"
-        echo "  help     Show this help message"
+        echo "  build        Build releases for enabled platforms (default) - skip if already built"
+        echo "  rebuild      Force rebuild all platforms even if already built"
+        echo "  clean        Clean build directories"
+        echo "  help         Show this help message"
+        echo ""
+        echo "Environment Variables:"
+        echo "  REBUILD=true    Force rebuild all targets (same as 'rebuild' command)"
+        echo "  ENABLE_TESTS=true/false    Enable or disable tests (default: true)"
+        echo "  RUN_SECURITY_CHECKS=true/false    Enable or disable security checks (default: true)"
         echo ""
         echo "Platform Configuration (edit flags at top of script):"
         echo "  BUILD_LINUX_X64=$BUILD_LINUX_X64      # Linux x86_64 (Intel/AMD servers)"
@@ -1337,29 +1586,25 @@ case "${1:-build}" in
         echo "  BUILD_MACOS_ARM64=$BUILD_MACOS_ARM64    # Apple Silicon Macs (M1/M2/M3)"
         echo "  BUILD_WINDOWS_X64=$BUILD_WINDOWS_X64    # Windows x86_64"
         echo ""
+        echo "Test Configuration:"
+        echo "  ENABLE_TESTS=$ENABLE_TESTS        # Enable tests and unit tests"
+        echo "  RUN_SECURITY_CHECKS=$RUN_SECURITY_CHECKS  # Run security and symbol checks"
+        echo ""
+        echo "Build Configuration:"
+        echo "  REBUILD=$REBUILD             # Force rebuild even if binaries exist"
+        echo ""
         echo "Build Host Architecture Support:"
         echo "  Apple Silicon (M1/M2/M3):  ✅ macOS ARM64 (native)  ✅ Linux ARM64 (Docker)  ⚠️  Linux x64 (slow)  ❌ Windows x64"
         echo "  Intel Mac:                 ✅ macOS x64 (native)    ✅ Linux x64 (Docker)   ⚠️  Linux ARM64 (slow) ✅ Windows x64 (MinGW)"  
         echo "  Linux x64:                 ✅ Linux x64 (native)    ✅ Windows x64 (MinGW)  ⚠️  Linux ARM64 (slow) ❌ macOS (impossible)"
         echo "  Linux ARM64:               ✅ Linux ARM64 (native)  ⚠️  Linux x64 (slow)    ⚠️  Windows x64 (slow)  ❌ macOS (impossible)"
         echo ""
-        echo "Legend: ✅ Fast/Reliable  ⚠️ Slow/May Fail  ❌ Not Possible"
+        echo "Examples:"
+        echo "  $0                    # Build all enabled platforms (incremental)"
+        echo "  $0 rebuild            # Force rebuild all platforms"
+        echo "  REBUILD=true $0       # Force rebuild using environment variable"
+        echo "  ENABLE_TESTS=false $0 # Build without tests for faster builds"
         echo ""
-        if [[ ${#TARGETS[@]} -gt 0 ]]; then
-            echo "Currently enabled targets:"
-            for target in "${!TARGETS[@]}"; do
-                echo "  ✅ $target"
-            done
-        else
-            echo "❌ No targets currently enabled!"
-        fi
-        echo ""
-        echo "Binary Compatibility:"
-        echo "  • ARM64 Linux ➜ Only works on ARM64 Linux systems"
-        echo "  • x64 Linux   ➜ Only works on x86_64 Linux systems"
-        echo "  • ARM64 macOS ➜ Only works on Apple Silicon Macs"
-        echo "  • x64 macOS   ➜ Works on Intel Macs AND Apple Silicon (via Rosetta)"
-        echo "  • x64 Windows ➜ Works on x86_64 Windows systems"
         ;;
     *)
         error "Unknown command: $1. Use '$0 help' for usage information."
