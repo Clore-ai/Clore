@@ -10,8 +10,7 @@
 #include "validation.h"
 #include "validator.h"
 
-// Global variables
-bool fValidatorMode = false;
+// Global variables are defined in activevalidator.cpp
 
 // Simple validator sync stub
 class CValidatorSync

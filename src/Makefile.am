@@ -499,8 +499,8 @@ clore_blockchaind_SOURCES += clore_blockchaind-res.rc
 endif
 
 clore_blockchaind_LDADD = \
-  $(LIBCLORE_WALLET) \
   $(LIBCLORE_SERVER) \
+  $(LIBCLORE_WALLET) \
   $(LIBCLORE_COMMON) \
   $(LIBUNIVALUE) \
   $(LIBCLORE_UTIL) \
