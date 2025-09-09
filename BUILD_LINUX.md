@@ -55,7 +55,7 @@ export BDB_PREFIX="$CLORE_ROOT/db4"
 # Generate build files
 ./autogen.sh
 
-# Configure (without wallet to avoid linking issues)
+# Configure (with wallet support for staking functionality)
 ./configure \
     --enable-cxx \
     --disable-shared \
@@ -65,7 +65,7 @@ export BDB_PREFIX="$CLORE_ROOT/db4"
     --disable-bench \
     --without-miniupnpc \
     --enable-zmq \
-    --disable-wallet \
+    --enable-wallet \
     BDB_LIBS="-L${BDB_PREFIX}/lib -ldb_cxx-4.8" \
     BDB_CFLAGS="-I${BDB_PREFIX}/include" \
     LDFLAGS="-L${BDB_PREFIX}/lib" \
@@ -106,8 +106,8 @@ cp src/clore-cli ~/clore-bin/
 
 ## Build Options
 
-### Enable Wallet Support
-Remove `--disable-wallet` from configure (may cause linking errors with current code)
+### Disable Wallet Support
+Replace `--enable-wallet` with `--disable-wallet` (not recommended - staking requires wallet)
 
 ### Enable Tests
 Replace `--disable-tests` with `--enable-tests`
@@ -117,7 +117,7 @@ Replace `--disable-bench` with `--enable-bench`
 
 ## Troubleshooting
 
-- **Linking errors**: Current code has issues with wallet/staking functions. Keep wallet disabled.
+- **Linking errors**: Wallet support is required for staking functionality in CLORE.
 - **Missing dependencies**: Install dev packages: `sudo apt-get install libboost-all-dev`
 - **Berkeley DB issues**: Ensure BDB_PREFIX points to your db4 installation
 

@@ -17,7 +17,9 @@
 
 #include <assert.h>
 #include <assets/assets.h>
+#ifdef ENABLE_WALLET
 #include <wallet/wallet.h>
+#endif
 
 bool CCoinsView::GetCoin(const COutPoint &outpoint, Coin &coin) const { return false; }
 uint256 CCoinsView::GetBestBlock() const { return uint256(); }

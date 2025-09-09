@@ -24,18 +24,18 @@
 #
 # =============================================================================
 
-BUILD_LINUX_X64=true      # Build for Linux x86_64 (Intel/AMD servers) - Set to true for Ubuntu 22.04
+BUILD_LINUX_X64=false      # Build for Linux x86_64 (Intel/AMD servers) - Set to true for Ubuntu 22.04
 BUILD_LINUX_ARM64=false    # Build for Linux ARM64 (AWS Graviton, Apple Silicon containers)
 BUILD_MACOS_X64=true      # Build for Intel Macs (cross-compilation issues)
 BUILD_MACOS_ARM64=false    # Build for Apple Silicon Macs (M1/M2/M3) - only on macOS hosts
-BUILD_WINDOWS_X64=true    # Build for Windows x64 - Set to true for Ubuntu with MinGW
+BUILD_WINDOWS_X64=false    # Build for Windows x64 - Set to true for Ubuntu with MinGW
 
 # Test configuration
 ENABLE_TESTS=true         # Enable tests and security checks (set to false for faster builds)
 RUN_SECURITY_CHECKS=true  # Run security and symbol checks after build
 
 # Build configuration
-REBUILD=false             # Force rebuild even if binaries already exist
+REBUILD=true             # Force rebuild even if binaries already exist
 
 # Environment variable overrides
 [[ -n "$ENABLE_TESTS" ]] && ENABLE_TESTS="$ENABLE_TESTS" || ENABLE_TESTS=true
@@ -667,10 +667,10 @@ RUN mkdir -p /build/db4 && \\
 # Build project using native system dependencies (no depends system needed)
 RUN export BDB_PREFIX="/build/db4" && \\
     ./autogen.sh && \\
-    if [ "$ENABLE_TESTS" = "true" ]; then
-        TEST_FLAG="--enable-tests"
-    else
-        TEST_FLAG="--disable-tests"
+    if [ "\$ENABLE_TESTS" = "true" ]; then \\
+        TEST_FLAG="--enable-tests"; \\
+    else \\
+        TEST_FLAG="--disable-tests"; \\
     fi && \\
     ./configure \\
       --enable-cxx \\
@@ -678,7 +678,7 @@ RUN export BDB_PREFIX="/build/db4" && \\
       \$TEST_FLAG \\
       --disable-gui-tests \\
       --with-pic \\
-      --without-bench \\
+      --disable-bench \\
       --without-miniupnpc \\
       --enable-zmq \\
       --enable-wallet \\
@@ -688,7 +688,6 @@ RUN export BDB_PREFIX="/build/db4" && \\
       CPPFLAGS="-I\${BDB_PREFIX}/include" \\
       CXXFLAGS="-fPIC -I\${BDB_PREFIX}/include -DBOOST_SPIRIT_THREADSAFE -DHAVE_BUILD_INFO -D__STDC_FORMAT_MACROS" \\
       LIBS="-ldb_cxx-4.8 -lboost_system -lzmq" && \\
-    make -C src/wallet -j\$(nproc) && \\
     make -j\$(nproc)
 
 # Copy binaries to output directory

@@ -11,7 +11,9 @@
 #include "primitives/block.h"
 #include "script/standard.h"
 #include "util.h"
+#ifdef ENABLE_WALLET
 #include "wallet/wallet.h"
+#endif
 
 bool CheckBlockSignature(const CBlock& block)
 {

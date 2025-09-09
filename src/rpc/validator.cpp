@@ -16,7 +16,9 @@
 #include "validation.h"
 #include "validator.h"
 #include "validatorconfig.h"
+#ifdef ENABLE_WALLET
 #include "wallet/wallet.h"
+#endif
 
 #include <univalue.h>
 

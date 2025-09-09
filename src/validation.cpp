@@ -53,7 +53,9 @@
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/thread.hpp>
 #include <script/ismine.h>
+#ifdef ENABLE_WALLET
 #include <wallet/wallet.h>
+#endif
 
 #include "base58.h"
 

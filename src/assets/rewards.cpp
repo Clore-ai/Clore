@@ -13,11 +13,13 @@
 #include <net.h>
 #include <base58.h>
 #include <consensus/validation.h>
-#include <wallet/coincontrol.h>
 #include <utilmoneystr.h>
 #include "assets/rewards.h"
 #include "assetsnapshotdb.h"
+#ifdef ENABLE_WALLET
+#include <wallet/coincontrol.h>
 #include "wallet/wallet.h"
+#endif
 
 std::map<uint256, CRewardSnapshot> mapRewardSnapshots;
 
