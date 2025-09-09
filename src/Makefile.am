@@ -52,10 +52,13 @@ EXTRA_LIBRARIES += \
   $(LIBCLORE_UTIL) \
   $(LIBCLORE_COMMON) \
   $(LIBCLORE_CONSENSUS) \
-  $(LIBCLORE_WALLET) \
   $(LIBCLORE_SERVER) \
   $(LIBclore_cli) \
   $(LIBCLORE_ZMQ)
+
+if ENABLE_WALLET
+EXTRA_LIBRARIES += $(LIBCLORE_WALLET)
+endif
 
 lib_LTLIBRARIES = $(LIBCLORECONSENSUS)
 
@@ -324,6 +327,7 @@ endif
 
 # wallet: shared between clore_blockchaind and clore-cli, but only linked
 # when wallet enabled
+if ENABLE_WALLET
 libclore_wallet_a_CPPFLAGS = $(AM_CPPFLAGS) $(CLORE_INCLUDES)
 libclore_wallet_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 libclore_wallet_a_SOURCES = \
@@ -338,6 +342,7 @@ libclore_wallet_a_SOURCES = \
   wallet/walletdb.cpp \
   wallet/bip39.cpp \
   $(CLORE_CORE_H)
+endif
 
 # crypto primitives library
 crypto_libclore_crypto_a_CPPFLAGS = $(AM_CPPFLAGS)
@@ -500,8 +505,6 @@ endif
 
 clore_blockchaind_LDADD = \
   $(LIBCLORE_SERVER) \
-  $(LIBCLORE_WALLET) \
-  $(LIBCLORE_SERVER) \
   $(LIBCLORE_COMMON) \
   $(LIBUNIVALUE) \
   $(LIBCLORE_UTIL) \
@@ -512,6 +515,10 @@ clore_blockchaind_LDADD = \
   $(LIBLEVELDB_SSE42) \
   $(LIBMEMENV) \
   $(LIBSECP256K1)
+
+if ENABLE_WALLET
+clore_blockchaind_LDADD += $(LIBCLORE_WALLET)
+endif
 
 clore_blockchaind_LDADD += $(BOOST_LIBS) $(BDB_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS) $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS) $(ZMQ_LIBS)
 

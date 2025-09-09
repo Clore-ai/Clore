@@ -39,8 +39,10 @@
 #include "stakeconsensus.h"
 #include "stakeinput.h"
 
+#ifdef ENABLE_WALLET
 #include "wallet/wallet.h"
 // #include "wallet/rpcwallet.h"
+#endif
 
 
 #include <algorithm>
@@ -319,12 +321,16 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
 
     // For POS blocks, we need to solve proof of stake first
     if (fProofOfStake) {
+#ifdef ENABLE_WALLET
         if (!SolveProofOfStake(pblock, pindexPrev, pwallet, availableCoins)) {
             return nullptr;
         }
         // POS blocks already have coinbase and coinstake transactions
         pblocktemplate->vTxFees[0] = 0;
         pblocktemplate->vTxSigOpsCost[0] = WITNESS_SCALE_FACTOR * GetLegacySigOpCount(*pblock->vtx[0]);
+#else
+        return nullptr; // Wallet required for staking
+#endif
         if (pblock->vtx.size() > 1) {
             pblocktemplate->vTxFees.push_back(0);
             pblocktemplate->vTxSigOpsCost.push_back(WITNESS_SCALE_FACTOR * GetLegacySigOpCount(*pblock->vtx[1]));
@@ -719,6 +725,7 @@ static CMutableTransaction NewCoinbase(const int nHeight, const CScript* pScript
     return txCoinbase;
 }
 
+#ifdef ENABLE_WALLET
 bool SolveProofOfStake(CBlock* pblock, CBlockIndex* pindexPrev, CWallet* pwallet, std::vector<CStakeableOutput>* availableCoins)
 {
     boost::this_thread::interruption_point();
@@ -755,7 +762,9 @@ bool SolveProofOfStake(CBlock* pblock, CBlockIndex* pindexPrev, CWallet* pwallet
     pblock->nTime = nTxNewTime;
     return true;
 }
+#endif
 
+#ifdef ENABLE_WALLET
 void CheckForCoins(CWallet* pwallet, std::vector<CStakeableOutput>* availableCoins)
 {
     if (pwallet && availableCoins) {
@@ -763,6 +772,7 @@ void CheckForCoins(CWallet* pwallet, std::vector<CStakeableOutput>* availableCoi
         fStakeableCoins = pwallet->StakeableCoins(availableCoins);
     }
 }
+#endif
 
 void CloreMiner(const CChainParams& chainparams)
 {
