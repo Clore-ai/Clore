@@ -310,8 +310,6 @@ libclore_server_a_SOURCES = \
   validation.cpp \
   validationinterface.cpp \
   versionbits.cpp \
-  stakeinput.cpp \
-  stakeconsensus.cpp \
   blocksignature.cpp \
   kernel.cpp \
   $(CLORE_CORE_H)
@@ -341,6 +339,9 @@ libclore_wallet_a_SOURCES = \
   wallet/wallet.cpp \
   wallet/walletdb.cpp \
   wallet/bip39.cpp \
+  stakeinput.cpp \
+  stakeconsensus.cpp \
+  crypto/aes.cpp \
   $(CLORE_CORE_H)
 endif
 
@@ -348,7 +349,6 @@ endif
 crypto_libclore_crypto_a_CPPFLAGS = $(AM_CPPFLAGS)
 crypto_libclore_crypto_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 crypto_libclore_crypto_a_SOURCES = \
-  crypto/aes.cpp \
   crypto/aes.h \
   crypto/chacha20.h \
   crypto/chacha20.cpp \
