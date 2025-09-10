@@ -3,7 +3,7 @@
 ## Prerequisites Checklist
 
 - [ ] 10,000 CLORE collateral ready
-- [ ] VPS with static IP (Ubuntu 20.04+ recommended)
+- [ ] VPS with static IP (Ubuntu 22.04+ required)
 - [ ] Ports 8788/tcp and SSH open
 - [ ] Authorized validator status confirmed
 
@@ -70,7 +70,7 @@ listvalidatorconf
 listauthorizedvalidators
 
 # Start validator
-startvalidator alias false mn1
+startvalidator alias false validator1
 ```
 
 ### Validator.conf Format
@@ -85,7 +85,7 @@ alias server_ip:8788 validator_private_key collateral_txid output_index
 
 ```bash
 # Daemon status
-systemctl status clored
+systemctl status clore_blockchaind
 clore-cli getblockcount
 clore-cli getconnectioncount
 
@@ -95,7 +95,7 @@ clore-cli getvalidatorinfo
 
 # Log monitoring
 tail -f ~/.clore/debug.log
-journalctl -f -u clored
+journalctl -f -u clore_blockchaind
 ```
 
 ### Expected Status Response
@@ -116,7 +116,7 @@ journalctl -f -u clored
 ### Service File
 
 ```bash
-sudo tee /etc/systemd/system/clored.service << EOF
+sudo tee /etc/systemd/system/clore_blockchaind.service << EOF
 [Unit]
 Description=CLORE Daemon
 After=network.target
@@ -137,7 +137,7 @@ TimeoutStopSec=60
 WantedBy=multi-user.target
 EOF
 
-sudo systemctl enable clored && sudo systemctl start clored
+sudo systemctl enable clore_blockchaind && sudo systemctl start clore_blockchaind
 ```
 
 ## Troubleshooting Commands
@@ -205,7 +205,7 @@ tail -f ~/.clore/debug.log | grep -i validator
 1. Stop old validator: `clore-cli stop`
 2. Setup new server with same private key
 3. Update IP in local validator.conf
-4. Start from local wallet: `startvalidator alias false mn1`
+4. Start from local wallet: `startvalidator alias false validator1`
 
 ### Key Recovery
 
@@ -239,7 +239,7 @@ tail -f ~/.clore/debug.log | grep -i validator
 - **Network Info**: `clore-cli getnetworkinfo`
 - **Block Height**: `clore-cli getblockcount`
 - **Authorization**: `clore-cli listauthorizedvalidators`
-- **Start Validator**: `startvalidator alias false mn1` (local wallet)
+- **Start Validator**: `startvalidator alias false validator1` (local wallet)
 
 ---
 

@@ -128,7 +128,7 @@ fValidatorPaymentsEnabled = true;  // Enable globally
 ### **Method 2: Command Line Flag**
 
 ```bash
-./clored -validatorpayments=1  # Enable via command line
+./clore_blockchaind -validatorpayments=1  # Enable via command line
 ```
 
 ### **Method 3: Runtime Configuration**
@@ -236,7 +236,7 @@ Block Reward: 100 CLORE
 
 ```bash
 # Enable payments on testnet
-./clored -testnet -validatorpayments=1
+./clore_blockchaind -testnet -validatorpayments=1
 
 # Monitor payment distribution
 ./clore-cli -testnet getvalidatorpayments
@@ -249,7 +249,7 @@ Block Reward: 100 CLORE
 
 ```bash
 # Local testing environment
-./clored -regtest -validatorpayments=1
+./clore_blockchaind -regtest -validatorpayments=1
 
 # Generate test scenarios
 ./clore-cli -regtest generatetoaddress 100 <address>
