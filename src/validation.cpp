@@ -11672,7 +11672,7 @@ static bool ContextualCheckBlockHeader(const CBlockHeader& block, CValidationSta
     const Consensus::Params& consensusParams = params.GetConsensus();
     LogPrintf("DEBUG: ContextualCheckBlockHeader calling GetNextWorkRequired\n");
     LogPrintf("DEBUG: ContextualCheckBlockHeader pindexPrev=%p, consensusParams valid\n", pindexPrev);
-    unsigned int nBitsRequired = GetNextWorkRequired(pindexPrev, nullptr, consensusParams);
+    unsigned int nBitsRequired = GetNextWorkRequired(pindexPrev, &block, consensusParams);
     LogPrintf("DEBUG: ContextualCheckBlockHeader GetNextWorkRequired returned %u\n", nBitsRequired);
     LogPrintf("DEBUG: ContextualCheckBlockHeader block.nBits=%u\n", block.nBits);
     if (block.nBits != nBitsRequired)
